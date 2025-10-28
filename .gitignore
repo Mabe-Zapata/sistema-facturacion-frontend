@@ -1,0 +1,36 @@
+# Build artifacts
+bin/
+obj/
+dist/
+out/
+publish/
+
+# IDE stuff
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Env
+.env
+.env.local
+.env.development
+.env.production
+
+# ASP.NET specific
+wwwroot/
+node_modules/
+
+# Backup or temp
+*.tmp
+*.bak
+
