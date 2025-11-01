@@ -1,16 +1,28 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+@inject NavigationManager NavigationManager
+
+<div class="@(isDarkMode ? "dark" : "")">
+    
+    <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+        
+        <NavMenu ToggleDarkMode="ToggleDarkMode" />
+
+        <main class="flex-1 p-4 sm:p-6 md:p-8">
+            <div class="max-w-7xl mx-auto">
+                @Body
+            </div>
+        </main>
+        
+        <Notification />
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
 </div>
+
+@code {
+    private bool isDarkMode = false;
+
+    private void ToggleDarkMode()
+    {
+        isDarkMode = !isDarkMode;
+    }
+}

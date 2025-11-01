@@ -1,7 +1,260 @@
 ﻿@page "/"
+@inject HttpClient Http
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio | Sistema de Facturación</PageTitle>
 
-<h1>Hello, world!</h1>
+@code {
+    private class InvoiceViewModel
+    {
+        public int Id { get; set; }
+        public string Numero { get; set; }
+        public string Cliente { get; set; }
+        public DateTime FechaEmision { get; set; }
+        public decimal Total { get; set; }
+        public string Estado { get; set; }
+    }
+    private class StatsViewModel
+    {
+        public decimal TotalFacturado { get; set; }
+        public int FacturasPendientes { get; set; }
+        public int ClientesActivos { get; set; }
+    }
+}
 
-Welcome to your new app.
+<div class="dashboard-container">
+    <div class="dashboard-wrapper">
+        <!-- Header Section -->
+        <div class="dashboard-header">
+            <div>
+                <h1 class="dashboard-title">
+                    Resumen General
+                </h1>
+                <p class="dashboard-subtitle">
+                    Bienvenido de nuevo, aquí está tu resumen del día
+                </p>
+            </div>
+            <button class="btn-new-invoice">
+                <i class="fa-solid fa-plus"></i>
+                <span>Nueva Factura</span>
+            </button>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="loading-container">
+                <div class="loading-content">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Cargando resumen...</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <!-- Card 1: Total Facturado -->
+                <div class="kpi-card kpi-card-blue">
+                    <div class="kpi-card-bg"></div>
+                    <div class="kpi-card-content">
+                        <div class="kpi-card-header">
+                            <div class="kpi-icon-wrapper">
+                                <i class="fa-solid fa-dollar-sign text-2xl"></i>
+                            </div>
+                            <div class="kpi-badge">
+                                <i class="fa-solid fa-calendar-days mr-1 text-xs"></i>
+                                Este mes
+                            </div>
+                        </div>
+                        <div class="kpi-label">Total Facturado</div>
+                        <div class="kpi-value">@stats.TotalFacturado.ToString("C")</div>
+                        <div class="kpi-trend">
+                            <i class="fa-solid fa-arrow-up text-xs mr-1"></i>
+                            <span>+12.5% vs mes anterior</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Facturas Pendientes -->
+                <div class="kpi-card kpi-card-orange">
+                    <div class="kpi-card-bg"></div>
+                    <div class="kpi-card-content">
+                        <div class="kpi-card-header">
+                            <div class="kpi-icon-wrapper">
+                                <i class="fa-solid fa-file-invoice text-2xl"></i>
+                            </div>
+                            <div class="kpi-badge">
+                                <i class="fa-solid fa-clock mr-1 text-xs"></i>
+                                Activas
+                            </div>
+                        </div>
+                        <div class="kpi-label">Facturas Pendientes</div>
+                        <div class="kpi-value">@stats.FacturasPendientes</div>
+                        <div class="kpi-trend">
+                            <i class="fa-solid fa-exclamation-circle text-xs mr-1"></i>
+                            <span>3 próximas a vencer</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Clientes Activos -->
+                <div class="kpi-card kpi-card-green">
+                    <div class="kpi-card-bg"></div>
+                    <div class="kpi-card-content">
+                        <div class="kpi-card-header">
+                            <div class="kpi-icon-wrapper">
+                                <i class="fa-solid fa-users text-2xl"></i>
+                            </div>
+                            <div class="kpi-badge">
+                                <i class="fa-solid fa-check-circle mr-1 text-xs"></i>
+                                Total
+                            </div>
+                        </div>
+                        <div class="kpi-label">Clientes Activos</div>
+                        <div class="kpi-value">@stats.ClientesActivos</div>
+                        <div class="kpi-trend">
+                            <i class="fa-solid fa-arrow-up text-xs mr-1"></i>
+                            <span>+5 nuevos este mes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Invoices Section -->
+            <div class="invoices-section">
+                <div class="invoices-header">
+                    <h2 class="invoices-title">
+                        Facturas Recientes
+                    </h2>
+                    <button class="btn-view-all">
+                        Ver todas
+                        <i class="fa-solid fa-arrow-right text-xs ml-2"></i>
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-wrapper">
+                        <table class="invoice-table">
+                            <thead>
+                                <tr class="table-header-row">
+                                    <th class="table-header">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-solid fa-hashtag text-xs"></i>
+                                            N° Factura
+                                        </div>
+                                    </th>
+                                    <th class="table-header">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-solid fa-user text-xs"></i>
+                                            Cliente
+                                        </div>
+                                    </th>
+                                    <th class="table-header">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-solid fa-calendar text-xs"></i>
+                                            Fecha
+                                        </div>
+                                    </th>
+                                    <th class="table-header">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-solid fa-coins text-xs"></i>
+                                            Total
+                                        </div>
+                                    </th>
+                                    <th class="table-header">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-solid fa-flag text-xs"></i>
+                                            Estado
+                                        </div>
+                                    </th>
+                                    <th class="table-header text-center">
+                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-body">
+                                @foreach (var f in recentInvoices)
+                                {
+                                    <tr class="table-row">
+                                        <td class="table-cell">
+                                            <span class="invoice-number">@f.Numero</span>
+                                        </td>
+                                        <td class="table-cell">
+                                            <div class="client-info">
+                                                <div class="client-avatar">
+                                                    @f.Cliente.Substring(0, 1)
+                                                </div>
+                                                <div class="client-details">
+                                                    <span class="client-name">@f.Cliente</span>
+                                                    <span class="client-type">Cliente empresarial</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="table-cell">
+                                            <span class="date-text">@f.FechaEmision.ToString("dd MMM yyyy")</span>
+                                        </td>
+                                        <td class="table-cell">
+                                            <span class="amount-text">@f.Total.ToString("C")</span>
+                                        </td>
+                                        <td class="table-cell">
+                                            <span class="status-badge status-@f.Estado.ToLower()">
+                                                <span class="status-dot"></span>
+                                                @f.Estado
+                                            </span>
+                                        </td>
+                                        <td class="table-cell">
+                                            <div class="action-buttons">
+                                                <button class="action-btn action-btn-view" title="Ver Detalles">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                                <button class="action-btn action-btn-pay" title="Registrar Pago">
+                                                    <i class="fa-solid fa-check-circle"></i>
+                                                </button>
+                                                <button class="action-btn action-btn-download" title="Descargar PDF">
+                                                    <i class="fa-solid fa-file-pdf"></i>
+                                                </button>
+                                                <button class="action-btn action-btn-more" title="Más opciones">
+                                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private StatsViewModel stats = new();
+    private List<InvoiceViewModel> recentInvoices = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            // Simulación de carga de datos (reemplazar con llamadas API reales)
+            await Task.Delay(1000);
+            stats = new StatsViewModel { TotalFacturado = 15432.50m, FacturasPendientes = 12, ClientesActivos = 86 };
+            recentInvoices = new List<InvoiceViewModel>
+            {
+                new InvoiceViewModel { Id = 1, Numero = "F-2025-001", Cliente = "TechCorp", FechaEmision = DateTime.Now.AddDays(-2), Total = 1200.00m, Estado = "Pagada" },
+                new InvoiceViewModel { Id = 2, Numero = "F-2025-002", Cliente = "Innova S.A.", FechaEmision = DateTime.Now.AddDays(-1), Total = 850.50m, Estado = "Pendiente" },
+                new InvoiceViewModel { Id = 3, Numero = "F-2025-003", Cliente = "Consultores Web", FechaEmision = DateTime.Now, Total = 2500.00m, Estado = "Vencida" }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar el dashboard: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

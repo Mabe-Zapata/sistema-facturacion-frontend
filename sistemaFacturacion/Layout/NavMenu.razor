@@ -1,39 +1,291 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">sistemaFacturacion</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿@implements IDisposable
+@using System.Threading
+@inject NavigationManager Navigation
+@inject HttpClient Http
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+<nav class="navbar-container">
+    <div class="navbar-wrapper">
+        <div class="navbar-content">
+
+            <!-- Logo y Links de navegación -->
+            <div class="navbar-brand-section">
+                <a href="/" class="navbar-logo">
+                    <div class="logo-icon-wrapper">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                    <span class="logo-text">FacturaPro</span>
+                </a>
+                
+                <div class="navbar-links-desktop">
+                    <NavLink href="/" Match="NavLinkMatch.All" class="nav-link" activeClass="nav-link-active">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Inicio</span>
+                    </NavLink>
+                    <NavLink href="/facturas" class="nav-link" activeClass="nav-link-active">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span>Facturas</span>
+                    </NavLink>
+                    <NavLink href="/clientes" class="nav-link" activeClass="nav-link-active">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Clientes</span>
+                    </NavLink>
+                </div>
+            </div>
+
+            <!-- Acciones de la derecha -->
+            <div class="navbar-actions">
+
+                <!-- Buscador -->
+                <div class="search-container" @onclick:stopPropagation="true">
+                    <div class="search-input-wrapper">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="search" 
+                               placeholder="Buscar factura, cliente..."
+                               class="search-input"
+                               @bind="searchQuery"
+                               @oninput="HandleSearchInput"
+                               @onfocus="() => isSearchVisible = true" />
+                        @if (!string.IsNullOrEmpty(searchQuery))
+                        {
+                            <button class="search-clear" @onclick="ClearSearch">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        }
+                    </div>
+
+                    @if (isSearchVisible && !string.IsNullOrEmpty(searchQuery))
+                    {
+                        <div class="search-results">
+                            @if (isSearchLoading)
+                            {
+                                <div class="search-loading">
+                                    <div class="loading-spinner-small"></div>
+                                    <span>Buscando...</span>
+                                </div>
+                            }
+                            else if (searchResults.Any())
+                            {
+                                <div class="search-results-list">
+                                    @foreach (var item in searchResults)
+                                    {
+                                        <div class="search-result-item" @onclick="() => NavigateToSearch(item.Id, item.Type)">
+                                            <div class="search-result-icon @(item.Type == "Factura" ? "icon-invoice" : "icon-client")">
+                                                <i class="@(item.Type == "Factura" ? "fa-solid fa-file-lines" : "fa-solid fa-user")"></i>
+                                            </div>
+                                            <div class="search-result-content">
+                                                <span class="search-result-name">@item.Name</span>
+                                                <span class="search-result-type">@item.Type</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="search-empty">
+                                    <i class="fa-solid fa-search text-3xl mb-2 text-gray-300 dark:text-gray-500"></i>
+                                    <p>No se encontraron resultados</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Toggle Dark Mode -->
+                <button @onclick="InvokeToggleDarkMode" class="navbar-icon-btn theme-toggle" aria-label="Cambiar tema">
+                    <i class="fa-solid fa-moon"></i>
+                    <i class="fa-solid fa-sun"></i>
+                </button>
+
+                <!-- Botón Nueva Factura -->
+                <button class="btn-new-invoice-nav">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nueva Factura</span>
+                </button>
+
+                <!-- Usuario / Auth -->
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="user-menu-container" @onclick:stopPropagation="true">
+                            <button class="user-menu-trigger" @onclick="ToggleUserMenu">
+                                <div class="user-avatar">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200 @(isUserMenuVisible ? "rotate-180" : "")"></i>
+                            </button>
+                            
+                            <div class="user-dropdown @(isUserMenuVisible ? "user-dropdown-visible" : "")">
+                                <div class="user-dropdown-header">
+                                    <div class="user-avatar-large">
+                                        <i class="fa-solid fa-user"></i>
+                                    </div>
+                                    <div class="user-info">
+                                        <span class="user-name">Jon Doe</span>
+                                        <span class="user-email">jon.doe@example.com</span>
+                                    </div>
+                                </div>
+                                <div class="user-dropdown-divider"></div>
+                                <div class="user-dropdown-menu">
+                                    <a href="/perfil" class="user-menu-item">
+                                        <i class="fa-solid fa-user-circle"></i>
+                                        <span>Mi Perfil</span>
+                                    </a>
+                                    <a href="/configuracion" class="user-menu-item">
+                                        <i class="fa-solid fa-gear"></i>
+                                        <span>Configuración</span>
+                                    </a>
+                                    <a href="/ayuda" class="user-menu-item">
+                                        <i class="fa-solid fa-circle-question"></i>
+                                        <span>Ayuda</span>
+                                    </a>
+                                </div>
+                                <div class="user-dropdown-divider"></div>
+                                <a href="/logout" class="user-menu-item user-menu-logout">
+                                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                    <span>Cerrar Sesión</span>
+                                </a>
+                            </div>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/login" class="btn-login">
+                            <i class="fa-solid fa-sign-in-alt"></i>
+                            <span>Iniciar Sesión</span>
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
+
+                <!-- Hamburger Menu (Mobile) -->
+                <button class="mobile-menu-btn" @onclick="ToggleMobileMenu" aria-label="Abrir menú">
+                    <span class="hamburger-line @(isMobileMenuVisible ? "hamburger-line-1-active" : "")"></span>
+                    <span class="hamburger-line @(isMobileMenuVisible ? "hamburger-line-2-active" : "")"></span>
+                    <span class="hamburger-line @(isMobileMenuVisible ? "hamburger-line-3-active" : "")"></span>
+                </button>
+            </div>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu @(isMobileMenuVisible ? "mobile-menu-visible" : "")" @onclick:stopPropagation="true">
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <span class="mobile-menu-title">Menú de Navegación</span>
+            </div>
+            
+            <div class="mobile-menu-links">
+                <NavLink href="/" Match="NavLinkMatch.All" class="mobile-nav-link" activeClass="mobile-nav-link-active" @onclick="CloseMobileMenu">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Inicio</span>
+                </NavLink>
+                <NavLink href="/facturas" class="mobile-nav-link" activeClass="mobile-nav-link-active" @onclick="CloseMobileMenu">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <span>Facturas</span>
+                </NavLink>
+                <NavLink href="/clientes" class="mobile-nav-link" activeClass="mobile-nav-link-active" @onclick="CloseMobileMenu">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Clientes</span>
+                </NavLink>
+            </div>
+
+            <div class="mobile-menu-divider"></div>
+
+            <button class="btn-new-invoice-mobile">
+                <i class="fa-solid fa-plus"></i>
+                <span>Nueva Factura</span>
+            </button>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    </div>
+
+    <!-- Backdrop -->
+    @if (isUserMenuVisible || (isSearchVisible && searchResults.Any()) || isMobileMenuVisible)
+    {
+        <div class="navbar-backdrop" @onclick="CloseAllMenus"></div>
+    }
+</nav>
 
 @code {
-    private bool collapseNavMenu = true;
+    [Parameter]
+    public EventCallback ToggleDarkMode { get; set; }
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private bool isMobileMenuVisible = false;
+    private bool isUserMenuVisible = false;
 
-    private void ToggleNavMenu()
+    private string searchQuery = string.Empty;
+    private List<SearchResult> searchResults = new();
+    private bool isSearchVisible = false;
+    private bool isSearchLoading = false;
+    private Timer searchTimer;
+
+    private class SearchResult
     {
-        collapseNavMenu = !collapseNavMenu;
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; } // "Factura" o "Cliente"
     }
+
+    protected override void OnInitialized()
+    {
+        searchTimer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
+    }
+
+    private void HandleSearchInput(ChangeEventArgs e)
+    {
+        searchQuery = e.Value?.ToString() ?? string.Empty;
+        isSearchVisible = true;
+        isSearchLoading = true;
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            isSearchLoading = false;
+            searchResults.Clear();
+            searchTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            StateHasChanged();
+            return;
+        }
+        searchTimer.Change(300, Timeout.Infinite);
+    }
+
+    private async void OnTimerElapsed(object? state)
+    {
+        await Task.Delay(500);
+        searchResults = new List<SearchResult>
+        {
+            new SearchResult { Id = 1, Name = $"Factura F-2025-{searchQuery}", Type = "Factura" },
+            new SearchResult { Id = 2, Name = $"{searchQuery} Corporation", Type = "Cliente" },
+            new SearchResult { Id = 3, Name = $"Factura F-2024-{searchQuery}", Type = "Factura" }
+        };
+        isSearchLoading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void NavigateToSearch(int id, string type)
+    {
+        if (type == "Factura") Navigation.NavigateTo($"/facturas/{id}");
+        else Navigation.NavigateTo($"/clientes/{id}");
+        CloseAllMenus();
+    }
+
+    private void ClearSearch()
+    {
+        searchQuery = string.Empty;
+        searchResults.Clear();
+        isSearchVisible = false;
+    }
+
+    private void ToggleMobileMenu() => isMobileMenuVisible = !isMobileMenuVisible;
+    private void ToggleUserMenu() => isUserMenuVisible = !isUserMenuVisible;
+    private void CloseMobileMenu() => isMobileMenuVisible = false;
+
+    private void CloseAllMenus()
+    {
+        isUserMenuVisible = false;
+        isSearchVisible = false;
+        isSearchLoading = false;
+        isMobileMenuVisible = false;
+        searchQuery = string.Empty;
+        searchResults.Clear();
+    }
+
+    private Task InvokeToggleDarkMode() => ToggleDarkMode.InvokeAsync();
+
+    public void Dispose() => searchTimer?.Dispose();
 }

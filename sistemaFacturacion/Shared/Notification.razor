@@ -1,0 +1,85 @@
+﻿@inject NotificationService NotificationService
+@implements IDisposable
+
+@if (_isVisible)
+{
+    <div class="fixed top-5 right-5 z-[2000] w-full max-w-sm">
+
+        <div class="notification-card @_cssClass animate-slideInRight">
+
+            <div class="flex-shrink-0 text-xl opacity-80">
+                @((MarkupString)_iconHtml)
+            </div>
+
+            <div class="flex-1 ml-3">
+                <span class="font-medium">@_message</span>
+            </div>
+
+            <button class="ml-4 p-1 rounded-md hover:bg-black/10 transition-colors" @onclick="HideNotification">
+                <i class="fa-solid fa-times text-lg"></i>
+            </button>
+        </div>
+    </div>
+}
+
+<style>
+    .notification-card {
+        @@apply relative w-full p-4 rounded-lg shadow-2xl flex items-center;
+    }
+</style>
+
+@code {
+    private bool _isVisible;
+    private string _message = "";
+    private string _cssClass = "";
+    private string _iconHtml = "";
+
+    protected override void OnInitialized()
+    {
+        NotificationService.OnShow += ShowNotification;
+        NotificationService.OnHide += HideNotification;
+    }
+
+    private void ShowNotification(string message, NotificationType type)
+    {
+        _message = message;
+        SetTypeStyles(type);
+        _isVisible = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HideNotification()
+    {
+        _isVisible = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetTypeStyles(NotificationType type)
+    {
+        switch (type)
+        {
+            case NotificationType.Success:
+                _cssClass = "bg-green-500 text-white";
+                _iconHtml = "<i class='fa-solid fa-check-circle'></i>";
+                break;
+            case NotificationType.Error:
+                _cssClass = "bg-red-500 text-white";
+                _iconHtml = "<i class='fa-solid fa-exclamation-triangle'></i>";
+                break;
+            case NotificationType.Info:
+                _cssClass = "bg-blue-500 text-white";
+                _iconHtml = "<i class='fa-solid fa-info-circle'></i>";
+                break;
+            case NotificationType.Warning:
+                _cssClass = "bg-yellow-500 text-black";
+                _iconHtml = "<i class='fa-solid fa-exclamation-circle'></i>";
+                break;
+        }
+    }
+
+    public void Dispose()
+    {
+        NotificationService.OnShow -= ShowNotification;
+        NotificationService.OnHide -= HideNotification;
+    }
+}
