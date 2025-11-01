@@ -1,0 +1,26 @@
+{
+  "name": "sistema-facturacion-frontend",
+  "version": "1.0.0",
+  "description": "> Proyecto académico desarrollado en .NET Core con arquitectura Onion y Blazor, con integración a la API del SRI (ambiente de pruebas).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "buildcss": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --minify",
+    "watchcss": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mabe-Zapata/sistema-facturacion-frontend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Mabe-Zapata/sistema-facturacion-frontend/issues"
+  },
+  "homepage": "https://github.com/Mabe-Zapata/sistema-facturacion-frontend#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.3"
+  }
+}
