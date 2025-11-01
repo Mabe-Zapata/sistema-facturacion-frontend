@@ -1,0 +1,104 @@
+name: CI Frontend (Blazor + Tailwind)
+
+on:
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'release/**'
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+
+concurrency:
+  group: ci-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guardrails:
+    name: Guardrails (GitFlow Rules)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prevent direct push to main
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: |
+          echo "❌ No se permite push directo a main. Usa PR desde release/hotfix."
+          exit 1
+
+      - name: Validate branch naming
+        run: |
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          echo "Rama actual: $BRANCH"
+          if [[ "$BRANCH" =~ ^(feature|bugfix|hotfix|release)\/[a-z0-9._-]+$ || "$BRANCH" =~ ^(develop|main)$ ]]; then
+            echo "✅ Nombre de rama válido."
+          else
+            echo "❌ Usa ramas tipo feature/*, bugfix/*, hotfix/* o release/*"
+            exit 2
+          fi
+
+      - name: Check commit message format
+        run: |
+          git log -1 --pretty=%s | grep -E "^(feat|fix|chore|docs|refactor|test|style): .+" || (
+            echo "❌ Mensaje de commit inválido. Usa formato conventional commits."
+            exit 3
+          )
+
+  setup:
+    name: Setup .NET & Node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - run: dotnet restore sistema-facturacion-frontend/sistema-facturacion-frontend.csproj
+      - run: npm ci
+        working-directory: sistema-facturacion-frontend
+
+  lint:
+    name: Lint & Code Format
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - run: dotnet format --verify-no-changes || (
+          echo "❌ Código mal formateado. Ejecuta 'dotnet format'."
+          exit 4
+        )
+
+  build:
+    name: Build Tailwind + Blazor
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build Tailwind CSS
+        working-directory: sistema-facturacion-frontend
+        run: |
+          npm ci
+          npx tailwindcss -i ./wwwroot/input.css -o ./wwwroot/css/output.css --minify
+
+      - name: Build Blazor project
+        run: dotnet build --configuration Release sistema-facturacion-frontend/sistema-facturacion-frontend.csproj
