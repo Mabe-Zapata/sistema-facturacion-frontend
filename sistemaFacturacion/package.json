@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "buildcss": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --minify",
-    "watchcss": "npx --max-old-space-size=4096 tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --watch"
+    "buildcss": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --minify",
+    "watchcss": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css --watch"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,8 @@
     "url": "https://github.com/Mabe-Zapata/sistema-facturacion-frontend/issues"
   },
   "homepage": "https://github.com/Mabe-Zapata/sistema-facturacion-frontend#readme",
-  "devDependencies": {
-    "tailwindcss": "^3.4.3"
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.16",
+    "tailwindcss": "^4.1.16"
   }
 }

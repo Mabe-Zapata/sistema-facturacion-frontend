@@ -1,374 +1,83 @@
-/* ============================================
-   NAVBAR - ESTILOS PRINCIPALES
-   ============================================ */
-
-/* Contenedor principal del navbar */
-.navbar-container {
-    @apply bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 border-b border-gray-100 dark:border-gray-700;
+.navbar-toggler {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-.navbar-wrapper {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+.top-row {
+    min-height: 3.5rem;
+    background-color: rgba(0,0,0,0.4);
 }
 
-.navbar-content {
-    @apply flex justify-between items-center h-16;
+.navbar-brand {
+    font-size: 1.1rem;
 }
 
-/* ============================================
-   LOGO Y MARCA
-   ============================================ */
-
-.navbar-brand-section {
-    @apply flex items-center gap-8;
+.bi {
+    display: inline-block;
+    position: relative;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+    top: -1px;
+    background-size: cover;
 }
 
-.navbar-logo {
-    @apply flex items-center gap-3 group cursor-pointer;
+.bi-house-door-fill-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-house-door-fill' viewBox='0 0 16 16'%3E%3Cpath d='M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5Z'/%3E%3C/svg%3E");
 }
 
-.logo-icon-wrapper {
-    @apply w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-6;
+.bi-plus-square-fill-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-plus-square-fill' viewBox='0 0 16 16'%3E%3Cpath d='M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z'/%3E%3C/svg%3E");
 }
 
-    .logo-icon-wrapper i {
-        @apply text-xl;
+.bi-list-nested-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-list-nested' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z'/%3E%3C/svg%3E");
+}
+
+.nav-item {
+    font-size: 0.9rem;
+    padding-bottom: 0.5rem;
+}
+
+    .nav-item:first-of-type {
+        padding-top: 1rem;
     }
 
-.logo-text {
-    @apply font-bold text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
-}
-
-/* ============================================
-   LINKS DE NAVEGACIÓN DESKTOP
-   ============================================ */
-
-.navbar-links-desktop {
-    @apply hidden md:flex items-center gap-2;
-}
-
-.nav-link {
-    @apply flex items-center gap-2 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700;
-}
-
-    .nav-link i {
-        @apply text-base;
+    .nav-item:last-of-type {
+        padding-bottom: 1rem;
     }
 
-.nav-link-active {
-    @apply text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-750 shadow-sm;
-}
-
-/* ============================================
-   ACCIONES DEL NAVBAR
-   ============================================ */
-
-.navbar-actions {
-    @apply flex items-center gap-3;
-}
-
-/* ============================================
-   BUSCADOR
-   ============================================ */
-
-.search-container {
-    @apply relative hidden sm:block;
-}
-
-.search-input-wrapper {
-    @apply relative flex items-center;
-}
-
-.search-input {
-    @apply bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl pl-10 pr-10 py-2.5 w-48 lg:w-64 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:w-72 placeholder-gray-500 dark:placeholder-gray-400;
-}
-
-.search-icon {
-    @apply absolute left-3 text-gray-400 dark:text-gray-500;
-}
-
-.search-clear {
-    @apply absolute right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors;
-}
-
-.search-results {
-    @apply absolute top-full mt-2 w-80 max-h-96 overflow-hidden bg-white dark:bg-gray-700 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-600 animate-slideDown;
-}
-
-.search-loading {
-    @apply flex items-center justify-center gap-3 p-6 text-gray-500 dark:text-gray-400;
-}
-
-.loading-spinner-small {
-    @apply w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin;
-}
-
-.search-results-list {
-    @apply overflow-y-auto max-h-96;
-}
-
-.search-result-item {
-    @apply flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0;
-}
-
-.search-result-icon {
-    @apply w-10 h-10 rounded-lg flex items-center justify-center text-white;
-}
-
-.icon-invoice {
-    @apply bg-gradient-to-br from-blue-500 to-indigo-600;
-}
-
-.icon-client {
-    @apply bg-gradient-to-br from-emerald-500 to-teal-600;
-}
-
-.search-result-content {
-    @apply flex flex-col flex-1;
-}
-
-.search-result-name {
-    @apply font-semibold text-gray-900 dark:text-white text-sm;
-}
-
-.search-result-type {
-    @apply text-xs text-gray-500 dark:text-gray-400;
-}
-
-.search-empty {
-    @apply flex flex-col items-center justify-center p-8 text-gray-500 dark:text-gray-400;
-}
-
-/* ============================================
-   BOTONES DE ICONOS
-   ============================================ */
-
-.navbar-icon-btn {
-    @apply h-10 w-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 transform hover:scale-105;
-}
-
-/* Theme Toggle */
-.theme-toggle .fa-sun {
-    @apply hidden;
-}
-
-.theme-toggle .fa-moon {
-    @apply block;
-}
-
-.dark .theme-toggle .fa-sun {
-    @apply block;
-}
-
-.dark .theme-toggle .fa-moon {
-    @apply hidden;
-}
-
-/* ============================================
-   BOTÓN NUEVA FACTURA
-   ============================================ */
-
-.btn-new-invoice-nav {
-    @apply hidden sm:flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 transform hover:scale-105 hover:shadow-lg;
-}
-
-    .btn-new-invoice-nav span {
-        @apply hidden lg:inline;
+    .nav-item ::deep a {
+        color: #d7d7d7;
+        border-radius: 4px;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        line-height: 3rem;
     }
 
-.btn-new-invoice-mobile {
-    @apply flex items-center justify-center gap-2 w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-5 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg;
+.nav-item ::deep a.active {
+    background-color: rgba(255,255,255,0.37);
+    color: white;
 }
 
-/* ============================================
-   MENÚ DE USUARIO
-   ============================================ */
-
-.user-menu-container {
-    @apply relative;
+.nav-item ::deep a:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
 }
 
-.user-menu-trigger {
-    @apply flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer;
-}
-
-.user-avatar {
-    @apply w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-md;
-}
-
-    .user-avatar i {
-        @apply text-sm;
+@media (min-width: 641px) {
+    .navbar-toggler {
+        display: none;
     }
 
-.user-dropdown {
-    @apply absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-700 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-600 opacity-0 invisible transform scale-95 transition-all duration-200 origin-top-right;
-}
-
-.user-dropdown-visible {
-    @apply opacity-100 visible scale-100;
-}
-
-.user-dropdown-header {
-    @apply flex items-center gap-3 p-4;
-}
-
-.user-avatar-large {
-    @apply w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg;
-}
-
-.user-info {
-    @apply flex flex-col flex-1;
-}
-
-.user-name {
-    @apply font-bold text-gray-900 dark:text-white text-sm;
-}
-
-.user-email {
-    @apply text-xs text-gray-500 dark:text-gray-400;
-}
-
-.user-dropdown-divider {
-    @apply border-t border-gray-200 dark:border-gray-600;
-}
-
-.user-dropdown-menu {
-    @apply py-2;
-}
-
-.user-menu-item {
-    @apply flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors;
-}
-
-    .user-menu-item i {
-        @apply w-5 text-gray-500 dark:text-gray-400;
+    .collapse {
+        /* Never collapse the sidebar for wide screens */
+        display: block;
     }
 
-.user-menu-logout {
-    @apply text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 dark:hover:bg-opacity-20;
-}
-
-    .user-menu-logout i {
-        @apply text-red-600 dark:text-red-400;
-    }
-
-/* ============================================
-   BOTÓN LOGIN
-   ============================================ */
-
-.btn-login {
-    @apply flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 font-semibold px-4 py-2 rounded-xl transition-all duration-200;
-}
-
-/* ============================================
-   MENÚ MOBILE
-   ============================================ */
-
-.mobile-menu-btn {
-    @apply md:hidden flex flex-col items-center justify-center w-10 h-10 gap-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200;
-}
-
-.hamburger-line {
-    @apply w-5 h-0.5 bg-gray-600 dark:bg-gray-300 rounded-full transition-all duration-300;
-}
-
-.hamburger-line-1-active {
-    @apply rotate-45 translate-y-2;
-}
-
-.hamburger-line-2-active {
-    @apply opacity-0;
-}
-
-.hamburger-line-3-active {
-    @apply -rotate-45 -translate-y-2;
-}
-
-.mobile-menu {
-    @apply md:hidden fixed top-16 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-xl transform -translate-y-full opacity-0 transition-all duration-300 max-h-screen overflow-y-auto;
-}
-
-.mobile-menu-visible {
-    @apply translate-y-0 opacity-100;
-}
-
-.mobile-menu-content {
-    @apply p-4;
-}
-
-.mobile-menu-header {
-    @apply pb-3 border-b border-gray-200 dark:border-gray-700 mb-4;
-}
-
-.mobile-menu-title {
-    @apply font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wide;
-}
-
-.mobile-menu-links {
-    @apply flex flex-col gap-2 mb-4;
-}
-
-.mobile-nav-link {
-    @apply flex items-center gap-3 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700;
-}
-
-    .mobile-nav-link i {
-        @apply text-lg w-5;
-    }
-
-.mobile-nav-link-active {
-    @apply text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 font-semibold;
-}
-
-.mobile-menu-divider {
-    @apply border-t border-gray-200 dark:border-gray-700 my-4;
-}
-
-/* ============================================
-   BACKDROP
-   ============================================ */
-
-.navbar-backdrop {
-    @apply fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-40;
-    animation: fadeIn 0.2s ease-out;
-}
-
-/* ============================================
-   ANIMACIONES
-   ============================================ */
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-slideDown {
-    animation: slideDown 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-
-@media (max-width: 640px) {
-    .search-input {
-        @apply w-40 focus:w-48;
+    .nav-scrollable {
+        /* Allow sidebar to scroll for tall menus */
+        height: calc(100vh - 3.5rem);
+        overflow-y: auto;
     }
 }
