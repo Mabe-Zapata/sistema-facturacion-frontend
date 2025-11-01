@@ -1,21 +1,19 @@
 ﻿@implements IDisposable
 @using System.Threading
 @inject NavigationManager Navigation
-@inject HttpClient Http
 
 <nav class="navbar-container">
     <div class="navbar-wrapper">
         <div class="navbar-content">
 
-            <!-- Logo y Links de navegación -->
             <div class="navbar-brand-section">
                 <a href="/" class="navbar-logo group">
                     <div class="logo-icon-wrapper">
-                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <img src="/favicon.png" alt="Logo FacturaPro" class="w-7 h-7" />
                     </div>
                     <span class="logo-text">FacturaPro</span>
                 </a>
-                
+
                 <div class="navbar-links-desktop">
                     <NavLink href="/" Match="NavLinkMatch.All" class="nav-link" activeClass="nav-link-active">
                         <i class="fa-solid fa-house"></i>
@@ -32,14 +30,12 @@
                 </div>
             </div>
 
-            <!-- Acciones de la derecha -->
             <div class="navbar-actions">
 
-                <!-- Buscador -->
                 <div class="search-container" @onclick:stopPropagation="true">
                     <div class="search-input-wrapper">
                         <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                        <input type="search" 
+                        <input type="search"
                                placeholder="Buscar factura, cliente..."
                                class="search-input"
                                @bind="searchQuery"
@@ -91,71 +87,62 @@
                     }
                 </div>
 
-                <!-- Toggle Dark Mode -->
                 <button @onclick="InvokeToggleDarkMode" class="navbar-icon-btn theme-toggle" aria-label="Cambiar tema">
                     <i class="fa-solid fa-moon"></i>
                     <i class="fa-solid fa-sun"></i>
                 </button>
 
-                <!-- Botón Nueva Factura -->
                 <button class="btn-new-invoice-nav">
                     <i class="fa-solid fa-plus"></i>
                     <span>Nueva Factura</span>
                 </button>
 
-                <!-- Usuario / Auth -->
-                <AuthorizeView>
-                    <Authorized>
-                        <div class="user-menu-container" @onclick:stopPropagation="true">
-                            <button class="user-menu-trigger" @onclick="ToggleUserMenu">
-                                <div class="user-avatar">
+                @if (_isLoggedIn)
+                {
+                    <div class="user-menu-container" @onclick:stopPropagation="true">
+                        <button class="user-menu-trigger" @onclick="ToggleUserMenu">
+                            <div class="user-avatar">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200 @(isUserMenuVisible ? "rotate-180" : "")"></i>
+                        </button>
+
+                        <div class="user-dropdown @(isUserMenuVisible ? "user-dropdown-visible" : "")">
+                            <div class="user-dropdown-header">
+                                <div class="user-avatar-large">
                                     <i class="fa-solid fa-user"></i>
                                 </div>
-                                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200 @(isUserMenuVisible ? "rotate-180" : "")"></i>
-                            </button>
-                            
-                            <div class="user-dropdown @(isUserMenuVisible ? "user-dropdown-visible" : "")">
-                                <div class="user-dropdown-header">
-                                    <div class="user-avatar-large">
-                                        <i class="fa-solid fa-user"></i>
-                                    </div>
-                                    <div class="user-info">
-                                        <span class="user-name">Jon Doe</span>
-                                        <span class="user-email">jon.doe@example.com</span>
-                                    </div>
+                                <div class="user-info">
+                                    <span class="user-name">Erick Guerron (Sim)</span>
+                                    <span class="user-email">erick.g@simulado.com</span>
                                 </div>
-                                <div class="user-dropdown-divider"></div>
-                                <div class="user-dropdown-menu">
-                                    <a href="/perfil" class="user-menu-item">
-                                        <i class="fa-solid fa-user-circle"></i>
-                                        <span>Mi Perfil</span>
-                                    </a>
-                                    <a href="/configuracion" class="user-menu-item">
-                                        <i class="fa-solid fa-gear"></i>
-                                        <span>Configuración</span>
-                                    </a>
-                                    <a href="/ayuda" class="user-menu-item">
-                                        <i class="fa-solid fa-circle-question"></i>
-                                        <span>Ayuda</span>
-                                    </a>
-                                </div>
-                                <div class="user-dropdown-divider"></div>
-                                <a href="/logout" class="user-menu-item user-menu-logout">
-                                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                                    <span>Cerrar Sesión</span>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <div class="user-dropdown-menu">
+                                <a href="/perfil" class="user-menu-item">
+                                    <i class="fa-solid fa-user-circle"></i>
+                                    <span>Mi Perfil</span>
+                                </a>
+                                <a href="/configuracion" class="user-menu-item">
+                                    <i class="fa-solid fa-gear"></i>
+                                    <span>Configuración</span>
                                 </a>
                             </div>
+                            <div class="user-dropdown-divider"></div>
+                            <button @onclick="() => _isLoggedIn = false" class="user-menu-item user-menu-logout w-full">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                <span>Cerrar Sesión</span>
+                            </button>
                         </div>
-                    </Authorized>
-                    <NotAuthorized>
-                        <a href="/login" class="btn-login">
-                            <i class="fa-solid fa-sign-in-alt"></i>
-                            <span>Iniciar Sesión</span>
-                        </a>
-                    </NotAuthorized>
-                </AuthorizeView>
-
-                <!-- Hamburger Menu (Mobile) -->
+                    </div>
+                }
+                else
+                {
+                    <button @onclick="() => _isLoggedIn = true" class="btn-login">
+                        <i class="fa-solid fa-sign-in-alt"></i>
+                        <span>Iniciar Sesión</span>
+                    </button>
+                }
                 <button class="mobile-menu-btn" @onclick="ToggleMobileMenu" aria-label="Abrir menú">
                     <span class="hamburger-line @(isMobileMenuVisible ? "hamburger-line-1-active" : "")"></span>
                     <span class="hamburger-line @(isMobileMenuVisible ? "hamburger-line-2-active" : "")"></span>
@@ -165,13 +152,12 @@
         </div>
     </div>
 
-    <!-- Mobile Menu -->
     <div class="mobile-menu @(isMobileMenuVisible ? "mobile-menu-visible" : "")" @onclick:stopPropagation="true">
         <div class="mobile-menu-content">
             <div class="mobile-menu-header">
                 <span class="mobile-menu-title">Menú de Navegación</span>
             </div>
-            
+
             <div class="mobile-menu-links">
                 <NavLink href="/" Match="NavLinkMatch.All" class="mobile-nav-link" activeClass="mobile-nav-link-active" @onclick="CloseMobileMenu">
                     <i class="fa-solid fa-house"></i>
@@ -196,8 +182,7 @@
         </div>
     </div>
 
-    <!-- Backdrop -->
-    @if (isUserMenuVisible || (isSearchVisible && searchResults.Any()) || isMobileMenuVisible)
+    @if ((isSearchVisible && searchResults.Any()) || isMobileMenuVisible)
     {
         <div class="navbar-backdrop" @onclick="CloseAllMenus"></div>
     }
@@ -206,6 +191,10 @@
 @code {
     [Parameter]
     public EventCallback ToggleDarkMode { get; set; }
+
+    // --- Simulación de Auth ---
+    private bool _isLoggedIn = false;
+    // -------------------------
 
     private bool isMobileMenuVisible = false;
     private bool isUserMenuVisible = false;
@@ -220,7 +209,7 @@
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; } // "Factura" o "Cliente"
+        public string Type { get; set; }
     }
 
     protected override void OnInitialized()
@@ -246,12 +235,15 @@
 
     private async void OnTimerElapsed(object? state)
     {
+        // Simulación de búsqueda (no usa HttpClient)
+        isSearchLoading = true;
+        await InvokeAsync(StateHasChanged);
         await Task.Delay(500);
+
         searchResults = new List<SearchResult>
         {
             new SearchResult { Id = 1, Name = $"Factura F-2025-{searchQuery}", Type = "Factura" },
             new SearchResult { Id = 2, Name = $"{searchQuery} Corporation", Type = "Cliente" },
-            new SearchResult { Id = 3, Name = $"Factura F-2024-{searchQuery}", Type = "Factura" }
         };
         isSearchLoading = false;
         await InvokeAsync(StateHasChanged);
@@ -271,8 +263,18 @@
         isSearchVisible = false;
     }
 
-    private void ToggleMobileMenu() => isMobileMenuVisible = !isMobileMenuVisible;
-    private void ToggleUserMenu() => isUserMenuVisible = !isUserMenuVisible;
+    private void ToggleMobileMenu()
+    {
+        isMobileMenuVisible = !isMobileMenuVisible;
+        if (isMobileMenuVisible) isUserMenuVisible = false; // Cierra un menú si el otro se abre
+    }
+
+    private void ToggleUserMenu()
+    {
+        isUserMenuVisible = !isUserMenuVisible;
+        if (isUserMenuVisible) isMobileMenuVisible = false; // Cierra un menú si el otro se abre
+    }
+
     private void CloseMobileMenu() => isMobileMenuVisible = false;
 
     private void CloseAllMenus()
