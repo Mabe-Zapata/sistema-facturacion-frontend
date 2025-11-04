@@ -385,7 +385,7 @@ window.interop = {
   },
   updateScrollVisibility : function(dotnetHelper) {
     window.onscroll = function() {
-        var scrollHeight = window.scrollY;
+        var scrollHeight = Math.round(window.scrollY);
         dotnetHelper.invokeMethodAsync('UpdateScrollVisibility', scrollHeight);
     }
   },
@@ -397,7 +397,7 @@ window.interop = {
   },
   registerScrollListener: function (dotnetHelper) {
       window.addEventListener('scroll', function () {
-          var scrollY = window.scrollY || window.pageYOffset;
+          var scrollY = Math.round(window.scrollY || window.pageYOffset);
           dotnetHelper.invokeMethodAsync("SetStickyClass", scrollY);
       });
 
@@ -407,7 +407,7 @@ window.interop = {
   },
   registerheaderScrollListener: function (dotnetHelper) {
       window.addEventListener('scroll', function () {
-          var scrollY = window.scrollY || window.pageYOffset;
+          var scrollY = Math.round(window.scrollY || window.pageYOffset);
           dotnetHelper.invokeMethodAsync("SetStickyClass1", scrollY);
       });
 
