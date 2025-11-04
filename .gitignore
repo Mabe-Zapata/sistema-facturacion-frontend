@@ -35,12 +35,6 @@ logs/
 # Esta carpeta puede contener miles de archivos y se restaura con 'npm install'
 node_modules/
 
-# Archivos generados (Frontend)
-# Esta es la corrección clave.
-# NO ignores 'wwwroot/' por completo.
-# En su lugar, ignora las carpetas *generadas* DENTRO de wwwroot.
-# (Ej. si 'npm run vyzor' crea una carpeta 'dist' en wwwroot)
-wwwroot/dist/
 
 # También ignoramos 'dist/' en la raíz, por si acaso
 dist/
