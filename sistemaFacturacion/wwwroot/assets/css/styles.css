@@ -35316,7 +35316,7 @@ ul.widgets-transactions-list li:last-child {
   display: none;
 }
 .app-sidebar {
-  width: 46rem;
+  width: 16rem;
   background: var(--menu-bg);
   border-inline-end: 1px solid var(--menu-border-color);
   position: fixed;

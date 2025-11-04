@@ -1,5 +1,9 @@
-using sistemaFacturacion.Components;
 using BlazorColorPicker;
+using Soenneker.Blazor.TomSelect.Registrars;
+using Soenneker.Blazor.FilePond.Registrars;
+using CurrieTechnologies.Razor.SweetAlert2;
+using Microsoft.Extensions.DependencyInjection;
+using sistemaFacturacion.Components;
 
 namespace sistemaFacturacion
 {
@@ -18,13 +22,16 @@ namespace sistemaFacturacion
             builder.Services.AddScoped<IActionService, ActionService>();
             builder.Services.AddWMBOS();
             builder.Services.AddWMBSC();
+            builder.Services.AddSweetAlert2();
+            builder.Services.AddFilePondInteropAsScoped();
+            builder.Services.AddTomSelectInteropAsScoped();
             builder.Services.AddScoped<MenuDataService>();
             builder.Services.AddScoped<NavScrollService>();
             builder.Services.AddSession();
             builder.Services.AddScoped<SessionService>();
             builder.Services.AddScoped<ScriptLoaderService>();
             builder.Services.AddHttpContextAccessor();    
-            builder.Services.AddDistributedMemoryCache();  
+            builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
             {
                 options.IdleTimeout = TimeSpan.FromMinutes(30); // Adjust timeout as needed
@@ -41,6 +48,8 @@ namespace sistemaFacturacion
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            app.UseStaticFiles();
 
             app.UseHttpsRedirection();
 

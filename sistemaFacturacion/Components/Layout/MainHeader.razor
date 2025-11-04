@@ -1,4 +1,4 @@
-@inject StateService stateService
+﻿@inject StateService stateService
 @inject IJSRuntime JSRuntime
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager 
 
@@ -30,7 +30,7 @@
                 </div>
                 <!-- End::header-element -->
 
-                <div class="header-element  header-search header-search-content d-md-block d-none">
+                <div class="header-element header-search header-search-content d-md-block d-none">
                     <!-- Start::header-link -->
                     <input type="text" class="header-search-bar form-control bg-white" id="header-search" placeholder="Search" spellcheck=false autocomplete="off" autocapitalize="off">
                     <a href="javascript:void(0);" class="header-search-icon border-0">
@@ -160,14 +160,14 @@
                     <!-- End::header-link|dropdown-toggle -->
                     <!-- Start::main-header-dropdown -->
                     <div class="main-header-dropdown dropdown-menu dropdown-menu-end" data-popper-placement="none">
-                        <div class="p-3 bg-primary text-fixed-white">
+                        <div class="bg-primary text-fixed-white p-3">
                             <div class="d-flex align-items-center justify-content-between">
-                                <p class="mb-0 fs-16">Cart Items<span class="badge bg-warning ms-1 fs-12 rounded-circle" id="cart-data">@CartItemsData.Count</span></p>
+                                <p class="fs-16 mb-0">Cart Items<span class="badge bg-warning fs-12 rounded-circle ms-1" id="cart-data">@CartItemsData.Count</span></p>
                                 <a href="javascript:void(0);" class="text-fixed-white text-decoration-underline fs-12">Continue Shopping <i class="ti ti-arrow-narrow-right"></i></a>
                             </div>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <ul class="list-unstyled mb-0 simplebar-scrollable-y" id="header-cart-items-scroll">
+                        <ul class="list-unstyled simplebar-scrollable-y mb-0" id="header-cart-items-scroll">
                             @foreach (var item in CartItemsData)
                             {
                                 <li class="dropdown-item">
@@ -203,13 +203,13 @@
                                                     </div>
                                                     <h6 class="fw-medium mb-0">$@item.DiscountedPrice</h6>
                                                 </div>
-                                                <div class="d-flex rounded align-items-center flex-nowrap order-qnt gap-2">
-                                                    <a href="javascript:void(0);" class="badge bg-white p-1 border text-muted fs-13 product-quantity-minus"  @onclick="@(() => DecreaseQuantity(item))">
+                                                <div class="d-flex align-items-center order-qnt flex-nowrap gap-2 rounded">
+                                                    <a href="javascript:void(0);" class="badge text-muted fs-13 product-quantity-minus border bg-white p-1"  @onclick="@(() => DecreaseQuantity(item))">
                                                         <i class="ri-subtract-line"></i>
                                                     </a>
-                                                    <input type="text" class="form-control form-control-cart border-0 text-center w-100"
+                                                    <input type="text" class="form-control form-control-cart w-100 border-0 text-center"
                                                         aria-label="quantity" id="@item.QuantityInputId" value="@item.Quantity">
-                                                    <a href="javascript:void(0);" class="badge bg-white p-1 border text-muted fs-13 product-quantity-plus" @onclick="@(() => IncreaseQuantity(item))">
+                                                    <a href="javascript:void(0);" class="badge text-muted fs-13 product-quantity-plus border bg-white p-1" @onclick="@(() => IncreaseQuantity(item))">
                                                         <i class="ri-add-line"></i>
                                                     </a>
                                                 </div>
@@ -220,18 +220,18 @@
                             }
                         </ul>
                         @if(CartItemsData.Count < 1){
-                            <div class="p-5 empty-item">
+                            <div class="empty-item p-5">
                                 <div class="text-center">
                                     <span class="avatar avatar-xl avatar-rounded bg-success-transparent">
                                         <i class="ti ti-shopping-cart fs-2"></i>
                                     </span>
-                                    <h6 class="fw-medium mb-1 mt-3">No items in your cart yet</h6>
-                                    <span class="mb-3 fw-normal fs-13 d-block">Add some to enjoy a seamless checkout experience! :)</span>
+                                    <h6 class="fw-medium mt-3 mb-1">No items in your cart yet</h6>
+                                    <span class="fw-normal fs-13 d-block mb-3">Add some to enjoy a seamless checkout experience! :)</span>
                                 </div>
                             </div>
                         }else{
-                            <div class="p-3 empty-header-item border-top">
-                                <div class="text-center d-grid">
+                            <div class="empty-header-item border-top p-3">
+                                <div class="d-grid text-center">
                                     <a href="javascript:void(0);" class="btn btn-primary btn-wave">Proceed to checkout</a>
                                 </div>
                             </div>
@@ -246,14 +246,14 @@
                     <!-- Start::header-link|dropdown-toggle -->
                     <a href="javascript:void(0);" class="header-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="messageDropdown" aria-expanded="false">
                         <svg xmlns="http://www.w3.org/2000/svg" class="header-link-icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"/><path d="M56,104a72,72,0,0,1,144,0c0,35.82,8.3,64.6,14.9,76A8,8,0,0,1,208,192H48a8,8,0,0,1-6.88-12C47.71,168.6,56,139.81,56,104Z" opacity="0.2"/><path d="M96,192a32,32,0,0,0,64,0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M56,104a72,72,0,0,1,144,0c0,35.82,8.3,64.6,14.9,76A8,8,0,0,1,208,192H48a8,8,0,0,1-6.88-12C47.71,168.6,56,139.81,56,104Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
-                        <span class="header-icon-pulse bg-secondary rounded pulse pulse-secondary"></span>
+                        <span class="header-icon-pulse bg-secondary pulse pulse-secondary rounded"></span>
                     </a>
                     <!-- End::header-link|dropdown-toggle -->
                     <!-- Start::main-header-dropdown -->
                     <div class="main-header-dropdown dropdown-menu dropdown-menu-end" data-popper-placement="none">
-                        <div class="p-3 bg-primary text-fixed-white">
+                        <div class="bg-primary text-fixed-white p-3">
                             <div class="d-flex align-items-center justify-content-between">
-                                <p class="mb-0 fs-16">Notifications</p>
+                                <p class="fs-16 mb-0">Notifications</p>
                                 <a href="javascript:void(0);" class="badge bg-light text-default border">Clear All</a>
                             </div>
                         </div>
@@ -272,7 +272,7 @@
                                         <span class="d-block text-muted fs-12">You have received a new message from John Doe</span>
                                         </div>
                                         <div class="text-end">
-                                        <span class="d-block mb-1 fs-12 text-muted">11:45am</span>
+                                        <span class="d-block fs-12 text-muted mb-1">11:45am</span>
                                         <span class="d-block text-primary d-none"><i class="ri-circle-fill fs-9"></i></span>
                                         </div>
                                 </div>
@@ -290,7 +290,7 @@
                                         <span class="d-block text-muted fs-12">Don't forget to submit your report by 3 PM today</span>
                                         </div>
                                         <div class="text-end">
-                                        <span class="d-block mb-1 fs-12 text-muted">02:16pm</span>
+                                        <span class="d-block fs-12 text-muted mb-1">02:16pm</span>
                                         <span class="d-block text-primary d-none"><i class="ri-circle-fill fs-9"></i></span>
                                         </div>
                                 </div>
@@ -308,7 +308,7 @@
                                         <span class="d-block text-muted fs-12">Jane Smith sent you a friend request</span>
                                         </div>
                                         <div class="text-end">
-                                        <span class="d-block mb-1 fs-12 text-muted">10:04am</span>
+                                        <span class="d-block fs-12 text-muted mb-1">10:04am</span>
                                         <span class="d-block text-primary"><i class="ri-circle-fill fs-9"></i></span>
                                         </div>
                                 </div>
@@ -326,7 +326,7 @@
                                         <span class="d-block text-muted fs-12">You have an upcoming event: Team Meeting on October 25 at 10 AM.</span>
                                         </div>
                                         <div class="text-end">
-                                        <span class="d-block mb-1 fs-12 text-muted">12:58pm</span>
+                                        <span class="d-block fs-12 text-muted mb-1">12:58pm</span>
                                         <span class="d-block text-primary"><i class="ri-circle-fill fs-9"></i></span>
                                         </div>
                                 </div>
@@ -344,13 +344,13 @@
                                         <span class="d-block text-muted fs-12">The file "Project_Proposal.pdf" has been uploaded successfully</span>
                                         </div>
                                         <div class="text-end">
-                                        <span class="d-block mb-1 fs-12 text-muted">05:13pm</span>
+                                        <span class="d-block fs-12 text-muted mb-1">05:13pm</span>
                                         <span class="d-block text-primary"><i class="ri-circle-fill fs-9"></i></span>
                                         </div>
                                 </div>
                             </li>
                         </ul>
-                        <div class="p-5 empty-item1 d-none">
+                        <div class="empty-item1 d-none p-5">
                             <div class="text-center">
                                 <span class="avatar avatar-xl avatar-rounded bg-secondary-transparent">
                                     <i class="ri-notification-off-line fs-2"></i>
@@ -383,10 +383,10 @@
                         </div>
                     </a>
                     <!-- End::header-link|dropdown-toggle -->
-                    <div class="main-header-dropdown dropdown-menu pt-0 overflow-hidden header-profile-dropdown dropdown-menu-end" aria-labelledby="mainHeaderProfile">
-                        <div class="p-3 bg-primary text-fixed-white">
+                    <div class="main-header-dropdown dropdown-menu header-profile-dropdown dropdown-menu-end overflow-hidden pt-0" aria-labelledby="mainHeaderProfile">
+                        <div class="bg-primary text-fixed-white p-3">
                             <div class="d-flex align-items-center justify-content-between">
-                                <p class="mb-0 fs-16">Profile</p>
+                                <p class="fs-16 mb-0">Profile</p>
                                 <a href="javascript:void(0);" class="text-fixed-white"><i class="ti ti-settings-cog"></i></a>
                             </div>
                         </div>
@@ -407,29 +407,29 @@
                         <div class="dropdown-divider"></div>
                         <ul class="list-unstyled mb-0">
                             <li>
-                                <ul class="list-unstyled mb-0 sub-list">
+                                <ul class="list-unstyled sub-list mb-0">
                                     <li>
-                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-user-circle me-2 fs-18"></i>View Profile</a>
+                                        <a class="dropdown-item d-flex align-items-center" href="/profile"><i class="ti ti-user-circle fs-18 me-2"></i>View Profile</a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-settings-cog me-2 fs-18"></i>Account Settings</a>
+                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-settings-cog fs-18 me-2"></i>Account Settings</a>
                                     </li>
                                 </ul>        
                             </li>
                             <li>
-                                <ul class="list-unstyled mb-0 sub-list">
+                                <ul class="list-unstyled sub-list mb-0">
                                     <li>
-                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-lifebuoy me-2 fs-18"></i>Support</a>
+                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-lifebuoy fs-18 me-2"></i>Support</a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-bolt me-2 fs-18"></i>Activity Log</a>
+                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-bolt fs-18 me-2"></i>Activity Log</a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-calendar me-2 fs-18"></i>Events</a>
+                                        <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-calendar fs-18 me-2"></i>Events</a>
                                     </li>
                                 </ul>        
                             </li>
-                            <li><a class="dropdown-item d-flex align-items-center" href="javascript:void(0);"><i class="ti ti-logout me-2 fs-18"></i>Log Out</a></li>
+                        <li><a class="dropdown-item d-flex align-items-center" href="/signin/basic"><i class="ti ti-logout fs-18 me-2"></i>Log Out</a></li>
                         </ul>
                     </div>
                 </li>  
