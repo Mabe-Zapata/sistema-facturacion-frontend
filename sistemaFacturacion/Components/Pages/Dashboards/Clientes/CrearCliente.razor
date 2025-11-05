@@ -1,0 +1,227 @@
+﻿@page "/dashboards/clientes/crear"
+@using System.ComponentModel.DataAnnotations
+
+<div class="page-header mb-3">
+    <h2 class="page-title fs-18">Crear Cliente</h2>
+    <p class="text-muted">Registra un nuevo cliente con validaciones de cédula/RUC y datos de contacto.</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <EditForm Model="@form" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <!-- Identificación -->
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Tipo de identificación</label>
+                    <InputSelect class="form-select" @bind-Value="form.TipoIdentificacion">
+                        <option value="">-- Selecciona --</option>
+                        <option value="Cedula">Cédula</option>
+                        <option value="RUC">RUC</option>
+                        <option value="Pasaporte">Pasaporte</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => form.TipoIdentificacion)" />
+                </div>
+
+                <div class="col-12 col-md-8">
+                    <label class="form-label">Identificación / RUC</label>
+                    <InputText class="form-control"
+                               @bind-Value="form.Identificacion"
+                               placeholder="@IdentPlaceholder" inputmode="numeric" />
+                    <small class="text-muted">
+                        @IdentHelpText
+                    </small>
+                    <ValidationMessage For="@(() => form.Identificacion)" />
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <!-- Datos personales -->
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Nombre</label>
+                    <InputText class="form-control" @bind-Value="form.Nombre" placeholder="Nombres" />
+                    <ValidationMessage For="@(() => form.Nombre)" />
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Apellido</label>
+                    <InputText class="form-control" @bind-Value="form.Apellido" placeholder="Apellidos" />
+                    <ValidationMessage For="@(() => form.Apellido)" />
+                </div>
+            </div>
+
+            <!-- Contacto -->
+            <div class="row g-3 mt-1">
+                <div class="col-12">
+                    <label class="form-label">Dirección</label>
+                    <InputText class="form-control" @bind-Value="form.Direccion" placeholder="Calle N° y Referencia" />
+                    <ValidationMessage For="@(() => form.Direccion)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Teléfono</label>
+                    <InputText class="form-control" @bind-Value="form.Telefono" inputmode="tel" placeholder="Ej: 0999999999" />
+                    <ValidationMessage For="@(() => form.Telefono)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Correo electrónico</label>
+                    <InputText class="form-control" @bind-Value="form.Correo" type="email" placeholder="usuario@dominio.com" />
+                    <ValidationMessage For="@(() => form.Correo)" />
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="ResetForm">Limpiar</button>
+                <a class="btn btn-light" href="/dashboards/clientes">Volver</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    // ViewModel con validaciones y reglas condicionales
+    public class ClienteCreateVM : IValidatableObject
+    {
+        [Required(ErrorMessage = "Seleccione el tipo de identificación.")]
+        public string? TipoIdentificacion { get; set; } // Cedula | RUC | Pasaporte
+
+        [Required(ErrorMessage = "La identificación es obligatoria.")]
+        public string? Identificacion { get; set; }
+
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", ErrorMessage = "El nombre solo debe contener letras.")]
+        [StringLength(80, ErrorMessage = "Máximo 80 caracteres.")]
+        public string? Nombre { get; set; }
+
+        [Required(ErrorMessage = "El apellido es obligatorio.")]
+        [RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", ErrorMessage = "El apellido solo debe contener letras.")]
+        [StringLength(80, ErrorMessage = "Máximo 80 caracteres.")]
+        public string? Apellido { get; set; }
+
+        [Required(ErrorMessage = "La dirección es obligatoria.")]
+        [StringLength(150, ErrorMessage = "Máximo 150 caracteres.")]
+        public string? Direccion { get; set; }
+
+        [Required(ErrorMessage = "El teléfono es obligatorio.")]
+        [RegularExpression(@"^\d{7,15}$", ErrorMessage = "El teléfono debe tener entre 7 y 15 dígitos.")]
+        public string? Telefono { get; set; }
+
+        [Required(ErrorMessage = "El correo es obligatorio.")]
+        [EmailAddress(ErrorMessage = "Correo inválido.")]
+        public string? Correo { get; set; }
+
+        // Validación condicional de Identificación según tipo
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (string.IsNullOrWhiteSpace(TipoIdentificacion) || string.IsNullOrWhiteSpace(Identificacion))
+                yield break;
+
+            var id = Identificacion.Trim();
+
+            if (TipoIdentificacion == "Cedula")
+            {
+                if (!EcuadorIdValidator.IsValidCedula(id))
+                    yield return new ValidationResult("Cédula inválida.", new[] { nameof(Identificacion) });
+            }
+            else if (TipoIdentificacion == "RUC")
+            {
+                if (!EcuadorIdValidator.IsLikelyValidRucNatural(id))
+                    yield return new ValidationResult("RUC inválido. Debe tener 13 dígitos, terminar en 001 y contener una cédula válida en los 10 primeros.", new[] { nameof(Identificacion) });
+            }
+            else if (TipoIdentificacion == "Pasaporte")
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(id, @"^[A-Za-z0-9]{6,12}$"))
+                    yield return new ValidationResult("Pasaporte inválido (6 a 12 caracteres alfanuméricos).", new[] { nameof(Identificacion) });
+            }
+        }
+    }
+
+    // Validator de Cédula/RUC (caso natural) para Ecuador
+    static class EcuadorIdValidator
+    {
+        public static bool IsValidCedula(string cedula)
+        {
+            if (string.IsNullOrWhiteSpace(cedula) || cedula.Length != 10 || !cedula.All(char.IsDigit))
+                return false;
+
+            // Provincia 01-24 (y 30 para exterior en algunos casos)
+            if (!int.TryParse(cedula.Substring(0, 2), out int provincia) || (provincia < 1 || (provincia > 24 && provincia != 30)))
+                return false;
+
+            // Tercer dígito < 6 para persona natural
+            if (cedula[2] < '0' || cedula[2] > '5')
+                return false;
+
+            // Coeficientes y módulo 10
+            int[] coef = { 2, 1, 2, 1, 2, 1, 2, 1, 2 };
+            int suma = 0;
+
+            for (int i = 0; i < 9; i++)
+            {
+                int prod = (cedula[i] - '0') * coef[i];
+                if (prod >= 10) prod -= 9;
+                suma += prod;
+            }
+
+            int decenaSuperior = ((suma + 9) / 10) * 10;
+            int digitoVerificador = decenaSuperior - suma;
+            if (digitoVerificador == 10) digitoVerificador = 0;
+
+            return digitoVerificador == (cedula[9] - '0');
+        }
+
+        // Validación básica de RUC de persona natural:
+        // - 13 dígitos
+        // - Últimos 3 = "001"
+        // - Primeros 10 forman una cédula válida
+        public static bool IsLikelyValidRucNatural(string ruc)
+        {
+            if (string.IsNullOrWhiteSpace(ruc) || ruc.Length != 13 || !ruc.All(char.IsDigit))
+                return false;
+
+            if (!ruc.EndsWith("001")) return false;
+
+            var cedula = ruc.Substring(0, 10);
+            return IsValidCedula(cedula);
+        }
+    }
+
+    private ClienteCreateVM form = new();
+
+    private string IdentPlaceholder =>
+        form.TipoIdentificacion switch
+        {
+            "Cedula" => "10 dígitos (Ecuador)",
+            "RUC" => "13 dígitos, termina en 001",
+            "Pasaporte" => "6-12 caracteres alfanuméricos",
+            _ => "Ingrese identificación"
+        };
+
+    private string IdentHelpText =>
+        form.TipoIdentificacion switch
+        {
+            "Cedula" => "Se validará provincia, tercer dígito (<6) y dígito verificador.",
+            "RUC" => "RUC de persona natural: primeros 10 = cédula válida y termina en 001.",
+            "Pasaporte" => "Se permiten letras y números (6 a 12).",
+            _ => "Seleccione un tipo para ver las reglas."
+        };
+
+    private void ResetForm() => form = new();
+
+    private void HandleValidSubmit()
+    {
+        // Aquí iría el llamado a tu API/servicio para persistir el cliente
+        // await _clientesService.CreateAsync(form);
+
+        // Por ahora solo muestra feedback de éxito:
+        Console.WriteLine($"Cliente registrado: {form.Nombre} {form.Apellido} ({form.TipoIdentificacion}: {form.Identificacion})");
+        ResetForm();
+        // Si usas toast/alert, puedes dispararlo aquí.
+    }
+}
