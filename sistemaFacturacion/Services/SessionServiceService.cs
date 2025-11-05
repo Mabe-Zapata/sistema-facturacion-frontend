@@ -5,6 +5,7 @@ using System.Text.Json;
 public class SessionService
 {
     private readonly ILocalStorageService _localStorage;
+    private const string TokenKey = "authToken";
 
     public SessionService(ILocalStorageService localStorage)
     {
@@ -50,6 +51,16 @@ public class SessionService
         {
             return null;
         }
+    }
+
+    public async Task SaveTokenAsync(string token)
+    {
+        await _localStorage.SetItemAsync(TokenKey, token);
+    }
+
+    public async Task<string> GetTokenAsync()
+    {
+        return await _localStorage.GetItemAsStringAsync(TokenKey); // Usar GetItemAsStringAsync para strings
     }
 
     public async Task ClearAllSession()

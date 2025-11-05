@@ -1,9 +1,11 @@
 ﻿@page "/ecommerce/products"
+@using Microsoft.AspNetCore.Authorization
 @using Soenneker.Blazor.TomSelect
 @using Soenneker.Blazor.TomSelect.Configuration
 @using Soenneker.Blazor.TomSelect.Enums
 @using Microsoft.AspNetCore.Components.QuickGrid
 @inject SweetAlertService Swal
+@attribute [Authorize]
 
 
 <div class="page-header-breadcrumb mb-3">

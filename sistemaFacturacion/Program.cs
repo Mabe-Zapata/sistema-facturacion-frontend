@@ -5,6 +5,7 @@ using Soenneker.Blazor.FilePond.Registrars;
 using CurrieTechnologies.Razor.SweetAlert2;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.Components.Authorization;
 using sistemaFacturacion;
 using sistemaFacturacion.Components;
 
@@ -30,13 +31,20 @@ namespace sistemaFacturacion
             builder.Services.AddTomSelectInteropAsScoped();
             builder.Services.AddBlazoredLocalStorage();
 
+            builder.Services.AddAuthorizationCore();
+            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<CustomAuthStateProvider>();
+            builder.Services.AddScoped<SessionService>();
+
+            builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+                provider.GetRequiredService<CustomAuthStateProvider>());
+
             builder.Services.AddSingleton<AppState>();
             builder.Services.AddScoped<StateService>();
             builder.Services.AddScoped<IActionService, ActionService>();
             builder.Services.AddScoped<MenuDataService>();
             builder.Services.AddScoped<NavScrollService>();
             builder.Services.AddScoped<ScriptLoaderService>();
-            builder.Services.AddScoped<SessionService>();
 
             builder.Services.AddWMBOS();
             builder.Services.AddWMBSC();

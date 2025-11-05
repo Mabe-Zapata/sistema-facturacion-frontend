@@ -1,5 +1,8 @@
-@page "/ecommerce/dashboard"
+﻿@page "/ecommerce/dashboard"
 @using ApexCharts
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
 
 
 <!-- Start::page-header -->
@@ -244,12 +247,12 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3 flex-wrap">
                             <div>
-                                <h4 class="mb-0 lh-1">38,256</h4>
+                                <h4 class="lh-1 mb-0">38,256</h4>
                             </div>
                             <div><span class="badge bg-primary-transparent ms-2 me-1">12.24%</span><span
                                     class="text-muted fs-11">Since last week</span></div>
                         </div>
-                        <ul class="pt-2 list-unstyled top-country-sales-list">
+                        <ul class="list-unstyled top-country-sales-list pt-2">
                             @foreach (var country in TopCountriesBySales)
                             {
                                 <li class="@(country == TopCountriesBySales.Last() ? "mb-0" : "")">
@@ -283,7 +286,7 @@
     <div class="col-xxl-3">
         <div class="row">
             <div class="col-xl-12">
-                <div class="card custom-card atm-card border-0 overflow-hidden">
+                <div class="card custom-card atm-card overflow-hidden border-0">
                     <div class="card-body">
                         <div class="atm-card-background-container">
                             <img src="../assets/images/ecommerce/png/21.png" alt="">
@@ -300,14 +303,14 @@
                                     </path>
                                 </svg>
                             </div>
-                            <h6 class="fw-semibold mb-0 flex-fill text-fixed-black">Debit Card</h6>
+                            <h6 class="fw-semibold flex-fill text-fixed-black mb-0">Debit Card</h6>
                             <div><span class="badge badge-sm bg-primary rounded-pill">Max Bank</span></div>
                         </div>
-                        <p class="fs-18 mb-3 text-fixed-black">**** **** **** ****</p>
-                        <div class="fs-15 mb-3 text-fixed-black">ELISA GIBSON ANABELLA</div>
-                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <p class="fs-18 text-fixed-black mb-3">**** **** **** ****</p>
+                        <div class="fs-15 text-fixed-black mb-3">ELISA GIBSON ANABELLA</div>
+                        <div class="d-flex align-items-center flex-wrap gap-3">
                             <div class="flex-fill">
-                                <span class="fs-13 mb-1 text-white-75 text-fixed-black">Exp Date:05/27</span>
+                                <span class="fs-13 text-white-75 text-fixed-black mb-1">Exp Date:05/27</span>
                             </div>
                             <div>
                                 <span class="fs-14 mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="32.003"
@@ -343,7 +346,7 @@
                         @foreach (var item in CustomersSatisfactionData)
                         {
                             <li class="list-group-item">
-                                <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="d-flex align-items-center mb-1 gap-2">
                                     <div class="fs-14 fw-semibold mb-0 @item.TextClass">@item.Percentage%</div>
                                     <div class="text-muted flex-fill fs-12">@item.Text</div>
                                     <div>
@@ -414,7 +417,7 @@
                     <div class="dropdown custom-invoice">
                         <a href="javascript:void(0);" class="btn btn-outline-light btn-wave waves-effect waves-light"
                             data-bs-toggle="dropdown" aria-expanded="false">Filters<i
-                                class="ri-arrow-down-s-line align-middle ms-1 d-inline-block"></i> </a>
+                                class="ri-arrow-down-s-line d-inline-block ms-1 align-middle"></i> </a>
                         <ul class="dropdown-menu" role="menu">
                             <li><a class="dropdown-item" href="javascript:void(0);">New</a></li>
                             <li><a class="dropdown-item" href="javascript:void(0);">Popular</a></li>
@@ -489,7 +492,7 @@
             </div>
             <div class="card-footer border-top-0">
                 <div class="d-flex align-items-center flex-wrap">
-                    <div> Showing 6 Entries <i class="bi bi-arrow-right ms-2 fw-semibold"></i> </div>
+                    <div> Showing 6 Entries <i class="bi bi-arrow-right fw-semibold ms-2"></i> </div>
                     <div class="ms-auto">
                         <nav aria-label="Page navigation" class="pagination-style-2">
                             <ul class="pagination mb-0 flex-wrap">

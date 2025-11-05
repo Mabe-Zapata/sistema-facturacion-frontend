@@ -1,5 +1,7 @@
-@page "/ecommerce/productdetails"
+﻿@page "/ecommerce/productdetails"
+@using Microsoft.AspNetCore.Authorization
 @inject IJSRuntime JSRuntime
+@attribute [Authorize]
 
 <!-- Start::page-header -->
 <div class="page-header-breadcrumb mb-3">
@@ -56,14 +58,14 @@
                                         <i class="ti ti-star-filled"></i>
                                         <i class="ti ti-star-half-filled"></i>
                                     </div>
-                                    <span class="text-muted ms-1 fs-13">4.5 (2.4k Reviews)</span>
+                                    <span class="text-muted fs-13 ms-1">4.5 (2.4k Reviews)</span>
                                 </div>
                                 <div class="mb-4">
-                                    <p class="mb-1 lh-1 fs-11 text-success fw-semibold">Special Offer</p>
-                                    <div class="mb-1 d-flex align-items-center"><span class="h3 fw-semibold mb-0"><sup
+                                    <p class="lh-1 fs-11 text-success fw-semibold mb-1">Special Offer</p>
+                                    <div class="d-flex align-items-center mb-1"><span class="h3 fw-semibold mb-0"><sup
                                                 class="fs-14">$</sup>129.99</span><span
-                                            class="ms-3 badge bg-danger-transparent">50% Off</span></div>
-                                    <p class="mb-0 text-muted">M.R.P : <s>$259.99</s></p>
+                                            class="badge bg-danger-transparent ms-3">50% Off</span></div>
+                                    <p class="text-muted mb-0">M.R.P : <s>$259.99</s></p>
                                 </div>
                                 <div class="mb-4">
                                     <h6 class="fw-semibold mb-3">Description :</h6>
@@ -77,7 +79,7 @@
                                 </div>
                                 <div class="mb-4">
                                     <h6 class="fw-semibold mb-3">Colors :</h6>
-                                    <div class="mb-0 d-flex flex-wrap gap-1">
+                                    <div class="d-flex mb-0 flex-wrap gap-1">
                                         <a class="color-1 product-colors selected" href="javascript:void(0)">
                                             <i class="ri-checkbox-blank-circle-fill"></i>
                                         </a>
@@ -97,7 +99,7 @@
                                 </div>
                                 <div class="mb-4">
                                     <h6 class="fw-semibold mb-3">Size:</h6>
-                                    <div class="mb-0 d-flex flex-wrap gap-1">
+                                    <div class="d-flex mb-0 flex-wrap gap-1">
                                         <a class="product-sizes selected" href="javascript:void(0)">
                                             6
                                         </a>
@@ -123,27 +125,27 @@
                                 </div>
                                 <div>
                                     <h6 class="fw-semibold mb-3">Quantity:</h6>
-                                    <div class="d-inline-flex rounded align-items-center flex-nowrap order-qnt gap-2 p-1 bg-light">
+                                    <div class="d-inline-flex align-items-center order-qnt bg-light flex-nowrap gap-2 rounded p-1">
                                         <a @onclick="DecreaseQuantity"
-                                        class="badge bg-white p-2 border text-muted fs-13 product-quantity-minus"
+                                        class="badge text-muted fs-13 product-quantity-minus border bg-white p-2"
                                         style="cursor: pointer;">
                                             <i class="ri-subtract-line"></i>
                                         </a>
 
                                         <input type="text"
-                                            class="form-control form-control-cart border-0 text-center w-100 shadow-none"
+                                            class="form-control form-control-cart w-100 border-0 text-center shadow-none"
                                             aria-label="quantity"
                                             @bind="quantity" @bind:event="oninput" />
 
                                         <a @onclick="IncreaseQuantity"
-                                        class="badge bg-white p-2 border text-muted fs-13 product-quantity-plus"
+                                        class="badge text-muted fs-13 product-quantity-plus border bg-white p-2"
                                         style="cursor: pointer;">
                                             <i class="ri-add-line"></i>
                                         </a>
                                     </div>
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center justify-content-center gap-2 mt-5 flex-wrap">
+                            <div class="d-flex align-items-center justify-content-center mt-5 flex-wrap gap-2">
                                 <a href="/ecommerce/cart" class="btn btn-primary btn-lg btn-w-lg border"><i
                                         class="ti ti-shopping-cart me-1"></i> Add To Cart</a>
                                 <a href="/ecommerce/checkout" class="btn btn-primary btn-lg btn-w-lg border">Buy Now</a>
@@ -168,7 +170,7 @@
                                             refund.</span>
                                     </div>
                                 </div>
-                                <div class="col-xxl-4 col-xl-4 col-lg-12 col-md-12 col-sm-12 col-12 mt-sm-0 mt-3">
+                                <div class="col-xxl-4 col-xl-4 col-lg-12 col-md-12 col-sm-12 mt-sm-0 col-12 mt-3">
                                     <div class="ecommerce-assurance p-sm-5 text-center">
                                         <div class="lh-1 mb-3">
                                             <span class="avatar avatar-md avatar-rounded bg-success svg-white">
@@ -186,7 +188,7 @@
                                             ensure top-notch quality and durability. Rest assured</span>
                                     </div>
                                 </div>
-                                <div class="col-xxl-4 col-xl-4 col-lg-12 col-md-12 col-sm-12 col-12 mt-sm-0 mt-3">
+                                <div class="col-xxl-4 col-xl-4 col-lg-12 col-md-12 col-sm-12 mt-sm-0 col-12 mt-3">
                                     <div class="ecommerce-assurance p-sm-5 text-center">
                                         <div class="lh-1 mb-3">
                                             <span class="avatar avatar-md avatar-rounded bg-success svg-white">
@@ -210,7 +212,7 @@
                                     <div class="col-xl-6">
                                         <h6 class="fw-semibold mb-3">Product Details :</h6>
                                         <div class="table-responsive">
-                                            <table class="table table-bordered text-lg-wrap product-details-table">
+                                            <table class="table-bordered text-lg-wrap product-details-table table">
                                                 <tbody>
                                                     <tr>
                                                         <th scope="row" class="fw-semibold">
@@ -305,16 +307,16 @@
                                 <div class="row">
                                     <div class="col-xxl-4 col-xl-12 col-lg-12 col-md-12 col-sm-12">
                                         <div class="d-flex align-items-top mb-3">
-                                            <div class="me-2 lh-1">
+                                            <div class="lh-1 me-2">
                                                 <i class="ri-star-fill fs-25 text-warning"></i>
                                             </div>
                                             <div class="lh-1">
                                                 <p class="mb-1">4.2 out of 5</p>
-                                                <p class="mb-0 text-muted fs-11">Based on (23,435) ratings</p>
+                                                <p class="text-muted fs-11 mb-0">Based on (23,435) ratings</p>
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-center mb-3">
-                                            <div class="fs-12 me-2 fw-semibold">5 <i class="ri-star-fill fs-10"></i>
+                                            <div class="fs-12 fw-semibold me-2">5 <i class="ri-star-fill fs-10"></i>
                                             </div>
                                             <div class="progress progress-xs flex-fill">
                                                 <div class="progress-bar bg-success" role="progressbar"
@@ -322,10 +324,10 @@
                                                     aria-valuemax="100">
                                                 </div>
                                             </div>
-                                            <div class="text-muted ms-2 fs-12">(10,893)</div>
+                                            <div class="text-muted fs-12 ms-2">(10,893)</div>
                                         </div>
                                         <div class="d-flex align-items-center mb-3">
-                                            <div class="fs-12 me-2 fw-semibold">4 <i class="ri-star-fill fs-10"></i>
+                                            <div class="fs-12 fw-semibold me-2">4 <i class="ri-star-fill fs-10"></i>
                                             </div>
                                             <div class="progress progress-xs flex-fill">
                                                 <div class="progress-bar bg-success" role="progressbar"
@@ -333,10 +335,10 @@
                                                     aria-valuemax="100">
                                                 </div>
                                             </div>
-                                            <div class="text-muted ms-2 fs-12">(6,534)</div>
+                                            <div class="text-muted fs-12 ms-2">(6,534)</div>
                                         </div>
                                         <div class="d-flex align-items-center mb-3">
-                                            <div class="fs-12 me-2 fw-semibold">3 <i class="ri-star-fill fs-10"></i>
+                                            <div class="fs-12 fw-semibold me-2">3 <i class="ri-star-fill fs-10"></i>
                                             </div>
                                             <div class="progress progress-xs flex-fill">
                                                 <div class="progress-bar bg-success" role="progressbar"
@@ -344,10 +346,10 @@
                                                     aria-valuemax="100">
                                                 </div>
                                             </div>
-                                            <div class="text-muted ms-2 fs-12">(4,342)</div>
+                                            <div class="text-muted fs-12 ms-2">(4,342)</div>
                                         </div>
                                         <div class="d-flex align-items-center mb-3">
-                                            <div class="fs-12 me-2 fw-semibold">2 <i class="ri-star-fill fs-10"></i>
+                                            <div class="fs-12 fw-semibold me-2">2 <i class="ri-star-fill fs-10"></i>
                                             </div>
                                             <div class="progress progress-xs flex-fill">
                                                 <div class="progress-bar bg-warning" role="progressbar"
@@ -355,17 +357,17 @@
                                                     aria-valuemax="100">
                                                 </div>
                                             </div>
-                                            <div class="text-muted ms-2 fs-12">(1,432)</div>
+                                            <div class="text-muted fs-12 ms-2">(1,432)</div>
                                         </div>
                                         <div class="d-flex align-items-center">
-                                            <div class="fs-12 me-2 fw-semibold">1 <i class="ri-star-fill fs-10"></i>
+                                            <div class="fs-12 fw-semibold me-2">1 <i class="ri-star-fill fs-10"></i>
                                             </div>
                                             <div class="progress progress-xs flex-fill">
                                                 <div class="progress-bar bg-danger" role="progressbar" style="width: 6%"
                                                     aria-valuenow="6" aria-valuemin="0" aria-valuemax="100">
                                                 </div>
                                             </div>
-                                            <div class="text-muted ms-2 fs-12">(1,453)</div>
+                                            <div class="text-muted fs-12 ms-2">(1,453)</div>
                                         </div>
                                     </div>
                                     <div class="col-xxl-8 col-xl-12 col-lg-12 col-md-12 col-sm-12 mt-xxl-0 mt-3">
@@ -378,31 +380,31 @@
                                                         </span>
                                                     </div>
                                                     <div class="lh-1 me-2">
-                                                        <p class="mb-1 fw-semibold fs-14">John Doe</p>
+                                                        <p class="fw-semibold fs-14 mb-1">John Doe</p>
                                                         <div class="mb-1">
                                                             <i
-                                                                class="ri-star-s-fill text-warning align-middle fs-12"></i>
+                                                                class="ri-star-s-fill text-warning fs-12 align-middle"></i>
                                                             <i
-                                                                class="ri-star-s-fill text-warning align-middle fs-12"></i>
+                                                                class="ri-star-s-fill text-warning fs-12 align-middle"></i>
                                                             <i
-                                                                class="ri-star-s-fill text-warning align-middle fs-12"></i>
+                                                                class="ri-star-s-fill text-warning fs-12 align-middle"></i>
                                                             <i
-                                                                class="ri-star-s-fill text-warning align-middle fs-12"></i>
+                                                                class="ri-star-s-fill text-warning fs-12 align-middle"></i>
                                                             <i
-                                                                class="ri-star-s-line text-warning align-middle fs-12"></i>
+                                                                class="ri-star-s-line text-warning fs-12 align-middle"></i>
                                                         </div>
                                                         <div class="fs-11 text-muted">
                                                             Reviewed on 24 May,2025
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="ps-sm-0 mt-sm-0 mt-3 ps-sm-0 ps-2">
+                                                <div class="ps-sm-0 mt-sm-0 ps-sm-0 mt-3 ps-2">
                                                     <span class="badge bg-success">Verified Purchase</span>
                                                 </div>
                                             </div>
-                                            <div class="ps-sm-3 ps-0 mb-3">
+                                            <div class="ps-sm-3 mb-3 ps-0">
                                                 <p class="fw-semibold mb-1 ps-2">Wonderful product&#128512;</p>
-                                                <p class="mb-0 text-muted ps-2">The comfort is unmatched! I love the
+                                                <p class="text-muted mb-0 ps-2">The comfort is unmatched! I love the
                                                     sleek design, and the Air Max cushioning is fantastic.</p>
                                             </div>
                                             <div class="product-images ps-sm-4 ps-0">

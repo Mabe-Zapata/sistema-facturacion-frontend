@@ -1,4 +1,7 @@
-@page "/ecommerce/cart"
+﻿@page "/ecommerce/cart"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
 
 <!-- Start::page-header -->
 <div class="page-header-breadcrumb mb-3">
@@ -42,7 +45,7 @@
                                             <div>
                                                 <span class="d-block text-muted mb-1">@item.Brand</span>
                                                 <h6 class="fw-semibold">@item.ProductName</h6>
-                                                <div class="d-flex align-items-center gap-2 fs-13">
+                                                <div class="d-flex align-items-center fs-13 gap-2">
                                                     <div>Color : <span class="fw-medium text-muted">@item.Color</span></div>
                                                     <div class="vr"></div>
                                                     <div>Size : <span class="fw-medium text-muted">@item.Size</span></div>
@@ -57,13 +60,13 @@
                                         <div class="fw-medium">$@item.UnitPrice</div>
                                     </td>
                                     <td class="@((item == CartItems.Last()) ? "border-bottom-0" : "")">
-                                        <div class="d-inline-flex rounded align-items-center flex-nowrap order-qnt gap-2 p-1 bg-light">
-                                            <a href="javascript:void(0);" class="badge bg-white p-2 border text-muted fs-13 product-quantity-minus" @onclick="() => DecrementQuantity(item)">
+                                        <div class="d-inline-flex align-items-center order-qnt bg-light flex-nowrap gap-2 rounded p-1">
+                                            <a href="javascript:void(0);" class="badge text-muted fs-13 product-quantity-minus border bg-white p-2" @onclick="() => DecrementQuantity(item)">
                                                 <i class="ri-subtract-line"></i>
                                             </a>
-                                            <input type="text" class="form-control form-control-cart border-0 text-center w-100 shadow-none"
+                                            <input type="text" class="form-control form-control-cart w-100 border-0 text-center shadow-none"
                                                 aria-label="quantity" value="@item.Quantity">
-                                            <a href="javascript:void(0);" class="badge bg-white p-2 border text-muted fs-13 product-quantity-plus" @onclick="() => IncrementQuantity(item)">
+                                            <a href="javascript:void(0);" class="badge text-muted fs-13 product-quantity-plus border bg-white p-2" @onclick="() => IncrementQuantity(item)">
                                                 <i class="ri-add-line"></i>
                                             </a>
                                         </div>
@@ -72,7 +75,7 @@
                                         <div class="fw-medium">$@item.Total.ToString("N2")</div>
                                     </td>
                                     <td class="@((item == CartItems.Last()) ? "border-bottom-0" : "")">
-                                        <div class="d-flex align-items-center gap-2 lh-1">
+                                        <div class="d-flex align-items-center lh-1 gap-2">
                                             <div>
                                                 <a href="javascript:void(0);" class="text-muted d-inline-flex align-items-center justify-content-center" @onclick="() => DeleteItem(item)">
                                                     <i class="ti ti-trash me-1"></i>Delete
@@ -94,13 +97,13 @@
                 </div>
                 @if(CartItems.Count < 1){
                        
-                    <div class="p-5 empty-item">
+                    <div class="empty-item p-5">
                         <div class="text-center">
                             <span class="avatar avatar-xl avatar-rounded bg-success-transparent">
                                 <i class="ti ti-shopping-cart fs-2"></i>
                             </span>
-                            <h6 class="fw-medium mb-1 mt-3">No items in your cart yet</h6>
-                            <span class="mb-3 fw-normal fs-13 d-block">Add some to enjoy a seamless checkout experience! :)</span>
+                            <h6 class="fw-medium mt-3 mb-1">No items in your cart yet</h6>
+                            <span class="fw-normal fs-13 d-block mb-3">Add some to enjoy a seamless checkout experience! :)</span>
                         </div>
                         <div class="text-center">
                             <a href="/ecommerce/products" class="btn btn-primary btn-wave">Shop Now</a>
