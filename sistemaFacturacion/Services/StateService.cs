@@ -70,7 +70,7 @@ public class AppState
                ThemeBackground1 == other.ThemeBackground1 &&
                BackgroundImage == other.BackgroundImage &&
                Equals(currentItem, other.currentItem);
-        }
+    }
 
     // Override GetHashCode if you override Equals
     public override int GetHashCode()
@@ -230,7 +230,7 @@ public class StateService
                 await headerColorFn("transparent");
             }
             else
-            {   
+            {
                 await menuColorFn(val);
             }
         }
@@ -248,7 +248,7 @@ public class StateService
     int screenSize = 1268;
     public async Task navigationStylesFn(string val, bool stateClick)
     {
-        
+
         if (string.IsNullOrEmpty(_currentState.MenuStyles) && val == "horizontal")
         {
             _currentState.MenuStyles = "menu-click";
@@ -259,7 +259,7 @@ public class StateService
         {
             _currentState.MenuStyles = "";
             _currentState.LayoutStyles = "doublemenu";
-    
+
         }
         // else
         // {
@@ -369,7 +369,8 @@ public class StateService
         {
             await _jsRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
         }
-        else{
+        else
+        {
             await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", $"{val}-closed");
         }
 
@@ -417,14 +418,14 @@ public class StateService
         await _jsRuntime.InvokeVoidAsync("interop.setCssVariable", "--primary-rgb", val);
         NotifyStateChanged();
     }
-    public async Task themeBackgroundFn(string val, string val2,bool stateClick)
+    public async Task themeBackgroundFn(string val, string val2, bool stateClick)
     {
         _currentState.ThemeBackground = val; // Update the color theme in the app state
         _currentState.ThemeBackground1 = val2; // Update the color theme in the app state
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-theme-mode", "dark");
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-header-styles", "dark");
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-menu-styles", "dark");
-         _currentState.ColorTheme = "dark";
+        _currentState.ColorTheme = "dark";
         if (stateClick)
         {
             _currentState.MenuColor = "dark";
@@ -463,7 +464,7 @@ public class StateService
         _currentState.BackgroundImage = "";                   // bgimg1, bgimg2, bgimg3, bgimg4, bgimg5
 
         // clearing localstorage
-        await _jsRuntime.InvokeVoidAsync("interop.clearAllLocalStorage"); 
+        await _jsRuntime.InvokeVoidAsync("interop.clearAllLocalStorage");
         await _jsRuntime.InvokeVoidAsync("interop.setclearCssVariables");
 
         // reseting to light
@@ -502,12 +503,14 @@ public class StateService
         if (innerWidth < 992)
         {
             await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "close");
-        }else{
-            
-            await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "double-menu-close");   
+        }
+        else
+        {
+
+            await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "double-menu-close");
         }
 
-  
+
 
         // resetting the menu Color
         await headerColorFn("transparent");
@@ -560,7 +563,7 @@ public class StateService
         string Vyzorbgcolor1 = _currentState.ThemeBackground1;
         if (!string.IsNullOrEmpty(Vyzorbgcolor))
         {
-            await themeBackgroundFn(Vyzorbgcolor, Vyzorbgcolor1,false);
+            await themeBackgroundFn(Vyzorbgcolor, Vyzorbgcolor1, false);
             _currentState.ColorTheme = "dark";
             // _currentState.MenuColor = "dark";
             // _currentState.HeaderColor = "dark";

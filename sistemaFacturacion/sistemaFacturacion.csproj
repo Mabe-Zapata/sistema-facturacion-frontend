@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.9" />
 	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.9" PrivateAssets="all" />
+	<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.9" />
     <PackageReference Include="NoUiSlider.Blazor" Version="0.1.5" />
     <PackageReference Include="Soenneker.Blazor.FilePond" Version="3.0.3203" />
     <PackageReference Include="Soenneker.Blazor.TomSelect" Version="3.0.3866" />

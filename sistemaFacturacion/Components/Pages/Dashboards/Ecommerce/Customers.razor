@@ -1,4 +1,5 @@
-@page "/ecommerce/customers"
+﻿@page "/ecommerce/customers"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.JSInterop
 @using Soenneker.Blazor.TomSelect
 @using Soenneker.Blazor.TomSelect.Configuration
@@ -7,6 +8,8 @@
 @using FlatpickrBlazor
 @using FlatpickrBlazor.Components
 @inject SweetAlertService Swal
+@attribute [Authorize]
+
 
 
 <div class="page-header-breadcrumb mb-3">
@@ -28,7 +31,7 @@
                            aria-label="search-customer" @bind-value="SearchTerm" @oninput="OnSearchInput">
                 </div>
 
-                <div class="d-flex gap-4 flex-wrap w-sm-50 justify-content-start justify-content-sm-end align-items-center">
+                <div class="d-flex w-sm-50 justify-content-start justify-content-sm-end align-items-center flex-wrap gap-4">
 
                     <div class="">
                         @if (isRendered)
@@ -65,7 +68,7 @@
                         </div>
                     </div>
 
-                    <div class=" d-grid">
+                    <div class="d-grid">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addtask"><i class="ri ri-add-line me-1"></i>Add Customer</button>
                     </div>
                 </div>
@@ -85,7 +88,7 @@
                         <TemplateColumn Title="Customer Name" SortBy="@sortByName" class="product-name1">
                             <ChildContent Context="p">
                                 <span><a href="javascript:void(0);">
-                                <div class="d-flex align-items-center gap-3 position-relative">
+                                <div class="d-flex align-items-center position-relative gap-3">
                                     <div class="lh-1">
                                         <span class="avatar avatar-lg bg-light">
                                             <img src="@p.CustomerImg" alt="Customer Image">
@@ -126,7 +129,7 @@
                     </QuickGrid>
                     @if (FilteredItems == null || !FilteredItems.Any())
                     {
-                        <div class="text-center pt-4">No matching records found</div>
+                        <div class="pt-4 text-center">No matching records found</div>
                     }
                     <Paginator State="pagination" />
                 </div>
