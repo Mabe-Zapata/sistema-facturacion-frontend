@@ -1,22 +1,25 @@
 ﻿@page "/dashboards/clientes/listar"
 @using ApexCharts
+@attribute [Authorize]
+
 
 @using System.ComponentModel.DataAnnotations 
+@using Microsoft.AspNetCore.Authorization
 <div class="page-header mb-3">
     <h2 class="page-title fs-18">Listado de Clientes</h2>
     <p class="text-muted">Búsqueda, filtros, tabla paginada y métricas rápidas.</p>
 </div>
 
 <!-- Filtros -->
-<div class="card border-0 shadow-sm mb-3">
+<div class="card mb-3 border-0 shadow-sm">
     <div class="card-body">
         <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-4">
+            <div class="col-md-4 col-12">
                 <label class="form-label">Buscar (nombre, apellido, identificación, correo, teléfono)</label>
                 <input class="form-control" @bind="filtroTexto" placeholder="Escribe para filtrar..." />
             </div>
 
-            <div class="col-6 col-md-3">
+            <div class="col-md-3 col-6">
                 <label class="form-label">Tipo de identificación</label>
                 <select class="form-select" @bind="filtroTipo">
                     <option value="">Todos</option>
@@ -26,7 +29,7 @@
                 </select>
             </div>
 
-            <div class="col-6 col-md-2">
+            <div class="col-md-2 col-6">
                 <label class="form-label">Tamaño de página</label>
                 <select class="form-select" @bind="pageSize">
                     <option value="5">5</option>
@@ -35,7 +38,7 @@
                 </select>
             </div>
 
-            <div class="col-12 col-md-3 d-grid">
+            <div class="col-md-3 d-grid col-12">
                 <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">Limpiar filtros</button>
             </div>
         </div>
@@ -44,7 +47,7 @@
 
 <!-- KPIs -->
 <div class="row g-3 mb-3">
-    <div class="col-6 col-xl-3">
+    <div class="col-xl-3 col-6">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="text-muted fs-12">Total (filtrado)</div>
@@ -52,7 +55,7 @@
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="col-xl-3 col-6">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="text-muted fs-12">Cédula</div>
@@ -60,7 +63,7 @@
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="col-xl-3 col-6">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="text-muted fs-12">RUC</div>
@@ -68,7 +71,7 @@
             </div>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
+    <div class="col-xl-3 col-6">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="text-muted fs-12">Pasaporte</div>
@@ -80,8 +83,8 @@
 
 <!-- Gráficos -->
 <div class="row g-3 mb-3">
-    <div class="col-12 col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
+    <div class="col-lg-6 col-12">
+        <div class="card h-100 border-0 shadow-sm">
             <div class="card-header bg-transparent">
                 <h6 class="mb-0">Clientes por Tipo de Identificación</h6>
             </div>
@@ -99,8 +102,8 @@
         </div>
     </div>
 
-    <div class="col-12 col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
+    <div class="col-lg-6 col-12">
+        <div class="card h-100 border-0 shadow-sm">
             <div class="card-header bg-transparent">
                 <h6 class="mb-0">Top dominios de correo</h6>
             </div>
@@ -121,7 +124,7 @@
 
 <!-- Tabla -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+    <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
         <h6 class="mb-0">Clientes</h6>
         <div class="d-flex gap-2">
             <button class="btn btn-sm btn-light" title="Anterior" @onclick="PrevPage" disabled="@(pageIndex==1)">«</button>
@@ -131,7 +134,7 @@
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table mb-0 align-middle">
+            <table class="mb-0 table align-middle">
                 <thead class="text-muted">
                     <tr>
                         <th @onclick="@(()=>OrdenarPor(nameof(ClienteRow.Nombre)))" role="button">Nombre</th>
@@ -148,7 +151,7 @@
                     @if (Paged.Count == 0)
                     {
                         <tr>
-                            <td colspan="8" class="text-center py-4 text-muted">No hay resultados.</td>
+                            <td colspan="8" class="text-muted py-4 text-center">No hay resultados.</td>
                         </tr>
                     }
                     else

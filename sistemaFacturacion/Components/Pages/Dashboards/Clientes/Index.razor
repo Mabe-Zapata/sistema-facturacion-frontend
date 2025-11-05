@@ -1,5 +1,8 @@
 ﻿@page "/dashboards/clientes"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components
+@attribute [Authorize]
+
 
 <div class="page-header mb-4">
     <h1 class="page-title fw-semibold fs-20">Gestión de Clientes</h1>
@@ -8,11 +11,11 @@
 
 <!-- Accesos rápidos -->
 <div class="row g-3 mb-4">
-    <div class="col-12 col-md-6 col-xl-3">
+    <div class="col-md-6 col-xl-3 col-12">
         <a href="/dashboards/clientes/crear" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
+            <div class="card hover-scale h-100 border-0 shadow-sm">
                 <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-primary-subtle">
+                    <div class="rounded-3 bg-primary-subtle p-3">
                         <i class="ri-user-add-line fs-3"></i>
                     </div>
                     <div>
@@ -24,11 +27,11 @@
         </a>
     </div>
 
-    <div class="col-12 col-md-6 col-xl-3">
+    <div class="col-md-6 col-xl-3 col-12">
         <a href="/dashboards/clientes/editar" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
+            <div class="card hover-scale h-100 border-0 shadow-sm">
                 <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-warning-subtle">
+                    <div class="rounded-3 bg-warning-subtle p-3">
                         <i class="ri-user-settings-line fs-3"></i>
                     </div>
                     <div>
@@ -40,11 +43,11 @@
         </a>
     </div>
 
-    <div class="col-12 col-md-6 col-xl-3">
+    <div class="col-md-6 col-xl-3 col-12">
         <a href="/dashboards/clientes/listar" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
+            <div class="card hover-scale h-100 border-0 shadow-sm">
                 <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-success-subtle">
+                    <div class="rounded-3 bg-success-subtle p-3">
                         <i class="ri-file-list-3-line fs-3"></i>
                     </div>
                     <div>
@@ -59,7 +62,7 @@
 
 <!-- KPIs rápidos -->
 <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl-3 col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="text-muted fs-12">Total clientes</div>
@@ -68,7 +71,7 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl-3 col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="text-muted fs-12">Clientes activos</div>
@@ -77,7 +80,7 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl-3 col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="text-muted fs-12">Clientes nuevos (30d)</div>
@@ -86,7 +89,7 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl-3 col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="text-muted fs-12">Correos rebotados</div>
@@ -98,13 +101,13 @@
 </div>
 
 <!-- Tabla rápida de últimos registros -->
-<div class="card border-0 shadow-sm mb-4">
+<div class="card mb-4 border-0 shadow-sm">
     <div class="card-header bg-transparent">
         <h6 class="mb-0">Últimos clientes registrados</h6>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table mb-0 align-middle">
+            <table class="mb-0 table align-middle">
                 <thead class="text-muted">
                     <tr>
                         <th>Nombre</th>
@@ -133,13 +136,13 @@
 
 <!-- Lista breve de tareas/siguientes acciones -->
 <div class="row g-3">
-    <div class="col-12 col-lg-6">
+    <div class="col-lg-6 col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-transparent">
                 <h6 class="mb-0">Acciones frecuentes</h6>
             </div>
             <div class="card-body">
-                <ul class="list-unstyled mb-0 d-grid gap-2">
+                <ul class="list-unstyled d-grid mb-0 gap-2">
                     <li><a class="link-primary" href="/dashboards/clientes/crear">➕ Registrar cliente</a></li>
                     <li><a class="link-primary" href="/dashboards/clientes/listar">🔎 Buscar por identificación</a></li>
                     <li><a class="link-primary" href="/dashboards/clientes/editar">✏️ Actualizar datos de contacto</a></li>
@@ -149,7 +152,7 @@
         </div>
     </div>
 
-    <div class="col-12 col-lg-6">
+    <div class="col-lg-6 col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-transparent">
                 <h6 class="mb-0">Notas</h6>

@@ -1,5 +1,7 @@
 ﻿@page "/dashboards/clientes/editar"
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 
 <div class="page-header mb-3">
     <h2 class="page-title fs-18">Editar Cliente</h2>
@@ -7,10 +9,10 @@
 </div>
 
 <!-- Buscador -->
-<div class="card border-0 shadow-sm mb-3">
+<div class="card mb-3 border-0 shadow-sm">
     <div class="card-body">
         <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-4">
+            <div class="col-md-4 col-12">
                 <label class="form-label">Tipo de identificación</label>
                 <InputSelect class="form-select" @bind-Value="search.Tipo">
                     <option value="">-- Selecciona --</option>
@@ -19,11 +21,11 @@
                     <option value="Pasaporte">Pasaporte</option>
                 </InputSelect>
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-md-6 col-12">
                 <label class="form-label">Identificación / RUC</label>
                 <InputText class="form-control" @bind-Value="search.Identificacion" placeholder="Ej: 0102030405 / 17900...001" />
             </div>
-            <div class="col-12 col-md-2 d-grid">
+            <div class="col-md-2 d-grid col-12">
                 <button class="btn btn-primary" @onclick="BuscarCliente">Buscar</button>
             </div>
         </div>
@@ -44,8 +46,8 @@
 else if (form is not null)
 {
     <!-- Resumen del cliente -->
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
+    <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
             <div class="d-flex align-items-center gap-3">
                 <div class="rounded-circle bg-primary-subtle p-3">
                     <i class="ri-user-3-line fs-4"></i>
@@ -73,12 +75,12 @@ else if (form is not null)
 
                 <!-- Identificación (bloqueada) -->
                 <div class="row g-3">
-                    <div class="col-12 col-md-4">
+                    <div class="col-md-4 col-12">
                         <label class="form-label">Tipo de identificación</label>
                         <InputText class="form-control" @bind-Value="form.TipoIdentificacion" readonly />
                         <small class="text-muted">Campo no editable.</small>
                     </div>
-                    <div class="col-12 col-md-8">
+                    <div class="col-md-8 col-12">
                         <label class="form-label">Identificación / RUC</label>
                         <InputText class="form-control" @bind-Value="form.Identificacion" readonly />
                         <small class="text-muted">Campo no editable.</small>
@@ -89,12 +91,12 @@ else if (form is not null)
 
                 <!-- Datos personales -->
                 <div class="row g-3">
-                    <div class="col-12 col-md-6">
+                    <div class="col-md-6 col-12">
                         <label class="form-label">Nombre</label>
                         <InputText class="form-control" @bind-Value="form.Nombre" />
                         <ValidationMessage For="@(() => form.Nombre)" />
                     </div>
-                    <div class="col-12 col-md-6">
+                    <div class="col-md-6 col-12">
                         <label class="form-label">Apellido</label>
                         <InputText class="form-control" @bind-Value="form.Apellido" />
                         <ValidationMessage For="@(() => form.Apellido)" />
@@ -108,12 +110,12 @@ else if (form is not null)
                         <InputText class="form-control" @bind-Value="form.Direccion" />
                         <ValidationMessage For="@(() => form.Direccion)" />
                     </div>
-                    <div class="col-12 col-md-6">
+                    <div class="col-md-6 col-12">
                         <label class="form-label">Teléfono</label>
                         <InputText class="form-control" @bind-Value="form.Telefono" inputmode="tel" />
                         <ValidationMessage For="@(() => form.Telefono)" />
                     </div>
-                    <div class="col-12 col-md-6">
+                    <div class="col-md-6 col-12">
                         <label class="form-label">Correo electrónico</label>
                         <InputText class="form-control" @bind-Value="form.Correo" type="email" />
                         <ValidationMessage For="@(() => form.Correo)" />
@@ -121,7 +123,7 @@ else if (form is not null)
                 </div>
 
                 <!-- Acciones -->
-                <div class="d-flex gap-2 mt-4">
+                <div class="d-flex mt-4 gap-2">
                     <button type="submit" class="btn btn-primary" disabled="@guardando">
                         @(guardando ? "Guardando..." : "Guardar cambios")
                     </button>
