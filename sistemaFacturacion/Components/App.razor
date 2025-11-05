@@ -1,17 +1,34 @@
-﻿@using System.Reflection
-@using Microsoft.AspNetCore.Components.WebAssembly.Services
-@inject LazyAssemblyLoader AssemblyLoader
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
 
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+        
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+            
+            <Authorizing>
+                <p>Verificando autorización...</p>
+            </Authorizing>
+
+            <NotAuthorized>
+                @if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    <p>No tienes permiso para ver esta página.</p>
+                }
+                else
+                {
+                    <RedirectToLogin />
+                }
+            </NotAuthorized>
+
+        </AuthorizeRouteView>
+        
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
-
     <NotFound>
         <PageTitle>Not found</PageTitle>
         <LayoutView Layout="@typeof(Layout.MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
+            <p role="alert">Lo sentimos, no hay nada en esta dirección.</p>
         </LayoutView>
     </NotFound>
 </Router>

@@ -385,7 +385,7 @@ window.interop = {
   },
   updateScrollVisibility : function(dotnetHelper) {
     window.onscroll = function() {
-        var scrollHeight = Math.round(window.scrollY);
+        var scrollHeight = window.scrollY;
         dotnetHelper.invokeMethodAsync('UpdateScrollVisibility', scrollHeight);
     }
   },
@@ -397,7 +397,7 @@ window.interop = {
   },
   registerScrollListener: function (dotnetHelper) {
       window.addEventListener('scroll', function () {
-          var scrollY = Math.round(window.scrollY || window.pageYOffset);
+          var scrollY = window.scrollY || window.pageYOffset;
           dotnetHelper.invokeMethodAsync("SetStickyClass", scrollY);
       });
 

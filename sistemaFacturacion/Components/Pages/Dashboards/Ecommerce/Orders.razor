@@ -1,9 +1,12 @@
 ﻿@page "/ecommerce/orders"
+@using Microsoft.AspNetCore.Authorization
 @using Soenneker.Blazor.TomSelect
 @using Soenneker.Blazor.TomSelect.Configuration
 @using Soenneker.Blazor.TomSelect.Enums
 @using Microsoft.AspNetCore.Components.QuickGrid
 @inject SweetAlertService Swal
+@attribute [Authorize]
+
 
 <div class="page-header-breadcrumb mb-3">
     <div class="d-flex align-center justify-content-between flex-wrap">

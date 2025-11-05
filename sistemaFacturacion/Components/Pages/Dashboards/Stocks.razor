@@ -1,4 +1,6 @@
-@page "/dashboards/stocks"
+﻿@page "/dashboards/stocks"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 
 
 
@@ -26,9 +28,9 @@
                             <div class="Carousel-slide">
                                 <div class="card custom-card mb-0">
                                     <div class="card-body">
-                                        <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                                             <div class="d-flex flex-fill align-items-center">
-                                                <div class="me-2 lh-1">
+                                                <div class="lh-1 me-2">
                                                     <span class="avatar avatar-md">
                                                         <img src="../assets/images/media/apps/apple.png" alt="" class="invert-1">
                                                     </span>
@@ -60,9 +62,9 @@
                             <div class="Carousel-slide">
                                 <div class="card custom-card mb-0">
                                     <div class="card-body">
-                                        <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                                             <div class="d-flex flex-fill align-items-center">
-                                                <div class="me-2 lh-1">
+                                                <div class="lh-1 me-2">
                                                     <span class="avatar avatar-md">
                                                         <img src="../assets/images/media/apps/google.png" alt="" class="invert-1">
                                                     </span>
@@ -94,9 +96,9 @@
                             <div class="Carousel-slide">
                                 <div class="card custom-card mb-0">
                                     <div class="card-body">
-                                        <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                                             <div class="d-flex flex-fill align-items-center">
-                                                <div class="me-2 lh-1">
+                                                <div class="lh-1 me-2">
                                                     <span class="avatar avatar-md">
                                                         <img src="../assets/images/media/apps/microsoft.png" alt="" class="invert-1">
                                                     </span>
@@ -128,9 +130,9 @@
                             <div class="Carousel-slide">
                                 <div class="card custom-card mb-0">
                                     <div class="card-body">
-                                        <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                                             <div class="d-flex flex-fill align-items-center">
-                                                <div class="me-2 lh-1">
+                                                <div class="lh-1 me-2">
                                                     <span class="avatar avatar-md">
                                                         <img src="../assets/images/media/apps/amazon.png" alt="" class="invert-1">
                                                     </span>
@@ -162,9 +164,9 @@
                             <div class="Carousel-slide">
                                 <div class="card custom-card mb-0">
                                     <div class="card-body">
-                                        <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                                             <div class="d-flex flex-fill align-items-center">
-                                                <div class="me-2 lh-1">
+                                                <div class="lh-1 me-2">
                                                     <span class="avatar avatar-md">
                                                         <img src="../assets/images/media/apps/tesla.png" alt="" class="invert-1">
                                                     </span>
@@ -196,9 +198,9 @@
                             <div class="Carousel-slide">
                                 <div class="card custom-card mb-0">
                                     <div class="card-body">
-                                        <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                                             <div class="d-flex flex-fill align-items-center">
-                                                <div class="me-2 lh-1">
+                                                <div class="lh-1 me-2">
                                                     <span class="avatar avatar-md">
                                                         <img src="../assets/images/media/apps/meta.png" alt="" class="invert-1">
                                                     </span>
@@ -230,9 +232,9 @@
                             <div class="Carousel-slide">
                                 <div class="card custom-card mb-0">
                                     <div class="card-body">
-                                        <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                                             <div class="d-flex flex-fill align-items-center">
-                                                <div class="me-2 lh-1">
+                                                <div class="lh-1 me-2">
                                                     <span class="avatar avatar-md">
                                                         <img src="../assets/images/media/apps/nvidia.png" alt="" class="invert-1">
                                                     </span>
@@ -286,7 +288,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="d-flex align-items-center gap-3 p-3 rounded border border-dashed flex-wrap">
+                <div class="d-flex align-items-center flex-wrap gap-3 rounded border border-dashed p-3">
                     <div>
                         <span class="avatar avatar-lg avatar-rounded">
                             <img src="../assets/images/media/apps/apple.png" alt="" class="invert-1">
@@ -360,8 +362,8 @@
         </h6>
         <div class="row">
             <div class="col-xxl-2 col-xl-4 col-lg-6 col-md-6 col-sm-12">
-                <div class="p-3 card custom-card border bg-white rounded">
-                    <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                <div class="card custom-card rounded border bg-white p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                         <div class="d-flex flex-fill align-items-center">
                             <div class="me-2">
                                 <span class="avatar avatar-rounded bg-light p-2">
@@ -369,7 +371,7 @@
                                 </span>
                             </div>
                             <div class="lh-1">
-                                <span class="fw-semibold d-block mb-2 text-default">Apple</span>
+                                <span class="fw-semibold d-block text-default mb-2">Apple</span>
                                 <span class="d-block text-muted fs-12">$12,289.44</span>
                             </div>
                         </div>
@@ -385,8 +387,8 @@
                 </div>
             </div>
             <div class="col-xxl-2 col-xl-4 col-lg-6 col-md-6 col-sm-12">
-                <div class="p-3 card custom-card border bg-white rounded">
-                    <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                <div class="card custom-card rounded border bg-white p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                         <div class="d-flex flex-fill align-items-center">
                             <div class="me-2">
                                 <span class="avatar avatar-rounded bg-light p-2">
@@ -394,7 +396,7 @@
                                 </span>
                             </div>
                             <div class="lh-1">
-                                <span class="fw-semibold d-block mb-2 text-default">Bitcoin</span>
+                                <span class="fw-semibold d-block text-default mb-2">Bitcoin</span>
                                 <span class="d-block text-muted fs-12">$58,151.02</span>
                             </div>
                         </div>
@@ -410,8 +412,8 @@
                 </div>
             </div>
             <div class="col-xxl-2 col-xl-4 col-lg-6 col-md-6 col-sm-12">
-                <div class="p-3 card custom-card border bg-white rounded">
-                    <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                <div class="card custom-card rounded border bg-white p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                         <div class="d-flex flex-fill align-items-center">
                             <div class="me-2">
                                 <span class="avatar avatar-rounded bg-light p-2">
@@ -419,7 +421,7 @@
                                 </span>
                             </div>
                             <div class="lh-1">
-                                <span class="fw-semibold d-block mb-2 text-default">Tesla</span>
+                                <span class="fw-semibold d-block text-default mb-2">Tesla</span>
                                 <span class="d-block text-muted fs-12">$14,452.36</span>
                             </div>
                         </div>
@@ -435,8 +437,8 @@
                 </div>
             </div>
             <div class="col-xxl-2 col-xl-4 col-lg-6 col-md-6 col-sm-12">
-                <div class="p-3 card custom-card border bg-white rounded">
-                    <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between mb-3">
+                <div class="card custom-card rounded border bg-white p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                         <div class="d-flex flex-fill align-items-center">
                             <div class="me-2">
                                 <span class="avatar avatar-rounded bg-light p-2">
@@ -444,7 +446,7 @@
                                 </span>
                             </div>
                             <div class="lh-1">
-                                <span class="fw-semibold d-block mb-2 text-default">Amazon</span>
+                                <span class="fw-semibold d-block text-default mb-2">Amazon</span>
                                 <span class="d-block text-muted fs-12">$63,251.11</span>
                             </div>
                         </div>
@@ -460,8 +462,8 @@
                 </div>
             </div>
             <div class="col-xxl-2 col-xl-4 col-lg-6 col-md-6 col-sm-12">
-                <div class="p-3 card custom-card border bg-white rounded">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                <div class="card custom-card rounded border bg-white p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap">
                         <div class="d-flex flex-fill align-items-center">
                             <div class="me-2">
                                 <span class="avatar avatar-rounded bg-light p-2">
@@ -469,7 +471,7 @@
                                 </span>
                             </div>
                             <div class="lh-1">
-                                <span class="fw-semibold d-block mb-2 text-default">Aliexpress</span>
+                                <span class="fw-semibold d-block text-default mb-2">Aliexpress</span>
                                 <span class="d-block text-muted fs-12">$5,401.50</span>
                             </div>
                         </div>
@@ -485,8 +487,8 @@
                 </div>
             </div>
             <div class="col-xxl-2 col-xl-4 col-lg-6 col-md-6 col-sm-12">
-                <div class="p-3 card custom-card border bg-white rounded">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                <div class="card custom-card rounded border bg-white p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap">
                         <div class="d-flex flex-fill align-items-center">
                             <div class="me-2">
                                 <span class="avatar avatar-rounded bg-light p-2">
@@ -494,7 +496,7 @@
                                 </span>
                             </div>
                             <div class="lh-1">
-                                <span class="fw-semibold d-block mb-2 text-default">Samsung</span>
+                                <span class="fw-semibold d-block text-default mb-2">Samsung</span>
                                 <span class="d-block text-muted fs-12">$10,732.12</span>
                             </div>
                         </div>
@@ -522,7 +524,7 @@
                 <div class="card-title">
                     Recent Activities
                 </div>
-                <a href="javascript:void(0);" class="fs-12 text-muted py-1 tag-link"> View All<i
+                <a href="javascript:void(0);" class="fs-12 text-muted tag-link py-1"> View All<i
                         class="ti ti-arrow-narrow-right ms-1"></i> </a>
             </div>
             <div class="card-body">
@@ -530,7 +532,7 @@
                     @foreach (var Data in RecentActivitiesData)
                     {
                         <li>
-                            <div class="d-flex gap-2 flex-wrap align-items-start justify-content-between mb-2">
+                            <div class="d-flex align-items-start justify-content-between mb-2 flex-wrap gap-2">
                                 <div class="d-flex flex-fill align-items-center">
                                     <div class="me-2">
                                         <span class="avatar avatar-md p-1">
@@ -538,7 +540,7 @@
                                         </span>
                                     </div>
                                     <div class="lh-1">
-                                        <span class="fw-semibold d-block mb-2 text-default">@Data.CompanyName</span>
+                                        <span class="fw-semibold d-block text-default mb-2">@Data.CompanyName</span>
                                         <span class="text-muted">@Data.Ticker</span>
                                     </div>
                                 </div>
@@ -572,7 +574,7 @@
                     <div class="dropdown">
                         <a href="javascript:void(0);" class="btn btn-primary btn-sm btn-wave waves-effect waves-light"
                             data-bs-toggle="dropdown" aria-expanded="false"> Sort By<i
-                                class="ri-arrow-down-s-line align-middle ms-1 d-inline-block"></i>
+                                class="ri-arrow-down-s-line d-inline-block ms-1 align-middle"></i>
                         </a>
                         <ul class="dropdown-menu" role="menu">
                             <li><a class="dropdown-item" href="javascript:void(0);">New</a></li>
@@ -611,7 +613,7 @@
                                             </span>
                                         </div>
                                         <div class="flex-fill lh-1"> <a href="javascript:void(0);"
-                                                class="d-block mb-1 fs-14 fw-medium">@Data.CompanyName</a>
+                                                class="d-block fs-14 fw-medium mb-1">@Data.CompanyName</a>
                                             <span class="d-block fs-12 text-muted text-muted">@Data.Ticker</span>
                                         </div>
                                     </div>
@@ -640,7 +642,7 @@
             </div>
             <div class="card-footer border-top-0">
                 <div class="d-flex align-items-center flex-wrap">
-                    <div> Showing 6 Entries <i class="bi bi-arrow-right ms-2 fw-semibold"></i> </div>
+                    <div> Showing 6 Entries <i class="bi bi-arrow-right fw-semibold ms-2"></i> </div>
                     <div class="ms-auto">
                         <nav aria-label="Page navigation" class="pagination-style-4">
                             <ul class="pagination mb-0">
