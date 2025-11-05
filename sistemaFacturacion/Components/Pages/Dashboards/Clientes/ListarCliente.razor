@@ -1,0 +1,309 @@
+﻿@page "/dashboards/clientes/listar"
+@using ApexCharts
+
+@using System.ComponentModel.DataAnnotations 
+<div class="page-header mb-3">
+    <h2 class="page-title fs-18">Listado de Clientes</h2>
+    <p class="text-muted">Búsqueda, filtros, tabla paginada y métricas rápidas.</p>
+</div>
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Buscar (nombre, apellido, identificación, correo, teléfono)</label>
+                <input class="form-control" @bind="filtroTexto" placeholder="Escribe para filtrar..." />
+            </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label">Tipo de identificación</label>
+                <select class="form-select" @bind="filtroTipo">
+                    <option value="">Todos</option>
+                    <option value="Cedula">Cédula</option>
+                    <option value="RUC">RUC</option>
+                    <option value="Pasaporte">Pasaporte</option>
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label">Tamaño de página</label>
+                <select class="form-select" @bind="pageSize">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3 d-grid">
+                <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">Limpiar filtros</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Total (filtrado)</div>
+                <div class="fs-3 fw-semibold">@FilteredCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Cédula</div>
+                <div class="fs-3 fw-semibold">@CountBy("Cedula")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">RUC</div>
+                <div class="fs-3 fw-semibold">@CountBy("RUC")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Pasaporte</div>
+                <div class="fs-3 fw-semibold">@CountBy("Pasaporte")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0">Clientes por Tipo de Identificación</h6>
+            </div>
+            <div class="card-body">
+              <ApexChart TItem="ChartSlice" Title="Tipos de Identificación" ChartType="ChartType.Donut" Height="260">
+    <ApexPointSeries TItem="ChartSlice"
+                     Items="DonutData"
+                     Name="Clientes"
+                     XValue="@(x => x.Label)"
+                     YValue="@(x => x.Value)" />
+    <ApexChartLegend Position="LegendPosition.Bottom" />
+</ApexChart>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0">Top dominios de correo</h6>
+            </div>
+            <div class="card-body">
+              <ApexChart TItem="ChartSlice" Title="Tipos de Identificación" ChartType="ChartType.Donut" Height="260">
+    <ApexPointSeries TItem="ChartSlice"
+                     Items="DonutData"
+                     Name="Clientes"
+                     XValue="@(x => x.Label)"
+                     YValue="@(x => x.Value)" />
+    <ApexChartLegend Position="LegendPosition.Bottom" />
+</ApexChart>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+        <h6 class="mb-0">Clientes</h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-light" title="Anterior" @onclick="PrevPage" disabled="@(pageIndex==1)">«</button>
+            <span class="align-self-center small text-muted">Página @pageIndex de @TotalPages</span>
+            <button class="btn btn-sm btn-light" title="Siguiente" @onclick="NextPage" disabled="@(pageIndex==TotalPages)">»</button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="text-muted">
+                    <tr>
+                        <th @onclick="@(()=>OrdenarPor(nameof(ClienteRow.Nombre)))" role="button">Nombre</th>
+                        <th @onclick="@(()=>OrdenarPor(nameof(ClienteRow.Apellido)))" role="button">Apellido</th>
+                        <th @onclick="@(()=>OrdenarPor(nameof(ClienteRow.Identificacion)))" role="button">Identificación/RUC</th>
+                        <th @onclick="@(()=>OrdenarPor(nameof(ClienteRow.TipoIdentificacion)))" role="button">Tipo</th>
+                        <th>Dirección</th>
+                        <th>Teléfono</th>
+                        <th @onclick="@(()=>OrdenarPor(nameof(ClienteRow.Correo)))" role="button">Correo</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Paged.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">No hay resultados.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var c in Paged)
+                        {
+                            <tr>
+                                <td>@c.Nombre</td>
+                                <td>@c.Apellido</td>
+                                <td>@c.Identificacion</td>
+                                <td>@c.TipoIdentificacion</td>
+                                <td>@c.Direccion</td>
+                                <td>@c.Telefono</td>
+                                <td>@c.Correo</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary me-1" href="/dashboards/clientes/editar">Editar</a>
+                                    <a class="btn btn-sm btn-outline-danger" href="/dashboards/clientes/eliminar">Eliminar</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    // --------- Datos demo (reemplaza por tu servicio/API) ----------
+    private record ClienteRow(
+        string TipoIdentificacion,
+        string Identificacion,
+        string Nombre,
+        string Apellido,
+        string Direccion,
+        string Telefono,
+        string Correo
+    );
+
+    private List<ClienteRow> Data = new()
+    {
+        new("Cedula","0102030405","María","Zapata","Calle A 123","0999999999","maria@demo.com"),
+        new("RUC","1790012345001","Erick","Guerrón","Av. B 555","0988888888","erick@empresa.com"),
+        new("Cedula","1104685321","Xabier","Pérez","Pasaje C 777","0977777777","xperez@gmail.com"),
+        new("Pasaporte","PA1234AA","Lucía","Moreira","Calle D 444","0966666666","lucia@demo.com"),
+        new("Cedula","1002003004","Diego","Mora","Av. C 101","0955555555","diego@hotmail.com"),
+        new("RUC","1790098765001","Mateo","Auz","Calle E 321","0944444444","mateo@empresa.com"),
+        new("Cedula","1717171717","Anthony","Vera","Av. Quito 999","0933333333","anthony@outlook.com"),
+        new("RUC","1790011122001","Mabe","Manzano","Calle F 222","0922222222","mabe@empresa.com"),
+        new("Cedula","0506070809","Carla","Reyes","Jirón G 111","0911111111","carla@yahoo.com"),
+        new("Pasaporte","PB0099ZZ","Brissa","Lozano","Av. H 909","0900000000","brissa@demo.com"),
+    };
+
+    // --------- Estado de UI / Filtros / Paginación -----------
+    private string? filtroTexto;
+    private string? filtroTipo;
+    private int pageIndex = 1;
+    private int pageSize = 10;
+    private string? sortBy; // nombre de propiedad
+    private bool sortAsc = true;
+
+    // Computados
+    private List<ClienteRow> Filtered =>
+    Ordenar(
+        Data.Where(c =>
+            (string.IsNullOrWhiteSpace(filtroTipo) || c.TipoIdentificacion.Equals(filtroTipo, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filtroTexto) ||
+              (c.Nombre + " " + c.Apellido + " " + c.Identificacion + " " + c.Correo + " " + c.Telefono)
+              .Contains(filtroTexto?.Trim() ?? string.Empty, StringComparison.OrdinalIgnoreCase)))
+    ).ToList();
+
+
+    private int FilteredCount => Filtered.Count;
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredCount / (double)pageSize));
+
+    private List<ClienteRow> Paged => Filtered
+        .Skip((pageIndex - 1) * pageSize)
+        .Take(pageSize)
+        .ToList();
+
+    private void LimpiarFiltros()
+    {
+        filtroTexto = null;
+        filtroTipo = null;
+        pageIndex = 1;
+    }
+
+    private void PrevPage()
+    {
+        if (pageIndex > 1) pageIndex--;
+    }
+
+    private void NextPage()
+    {
+        if (pageIndex < TotalPages) pageIndex++;
+    }
+
+    private void OrdenarPor(string propiedad)
+    {
+        if (sortBy == propiedad)
+            sortAsc = !sortAsc;
+        else
+        {
+            sortBy = propiedad;
+            sortAsc = true;
+        }
+        // reset a la primera página para evitar páginas vacías
+        pageIndex = 1;
+    }
+
+    private IEnumerable<ClienteRow> Ordenar(IEnumerable<ClienteRow> src)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy)) return src;
+
+        Func<ClienteRow, object?> key = sortBy switch
+        {
+            nameof(ClienteRow.Nombre) => c => c.Nombre,
+            nameof(ClienteRow.Apellido) => c => c.Apellido,
+            nameof(ClienteRow.Identificacion) => c => c.Identificacion,
+            nameof(ClienteRow.TipoIdentificacion) => c => c.TipoIdentificacion,
+            nameof(ClienteRow.Correo) => c => c.Correo,
+            _ => c => c.Nombre
+        };
+
+        return sortAsc ? src.OrderBy(key) : src.OrderByDescending(key);
+    }
+
+    private int CountBy(string tipo) => Filtered.Count(c => c.TipoIdentificacion.Equals(tipo, StringComparison.OrdinalIgnoreCase));
+
+    // --------- Datos para gráficos (ApexCharts) -----------
+    private record ChartSlice(string Label, int Value);
+
+    private List<ChartSlice> DonutData => new()
+    {
+        new("Cédula", CountBy("Cedula")),
+        new("RUC", CountBy("RUC")),
+        new("Pasaporte", CountBy("Pasaporte"))
+    };
+
+    private List<ChartSlice> BarData =>
+        Data
+            .Where(c => string.IsNullOrWhiteSpace(filtroTipo) || c.TipoIdentificacion.Equals(filtroTipo, StringComparison.OrdinalIgnoreCase))
+            .Where(c => string.IsNullOrWhiteSpace(filtroTexto) || c.Correo.Contains(filtroTexto.Trim(), StringComparison.OrdinalIgnoreCase))
+            .GroupBy(c => Dominio(c.Correo))
+            .Select(g => new ChartSlice(g.Key, g.Count()))
+            .OrderByDescending(x => x.Value)
+            .Take(5)
+            .ToList();
+
+    private static string Dominio(string correo)
+    {
+        var at = correo.IndexOf('@');
+        return at > 0 && at < correo.Length - 1 ? correo[(at + 1)..] : "(desconocido)";
+    }
+}
+
+
