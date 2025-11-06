@@ -2,12 +2,15 @@
 
 public class ClienteDto
 {
-    [JsonPropertyName("id")] public int Id { get; set; }             
-    [JsonPropertyName("nombre")] public string Nombre { get; set; } = "";
-    [JsonPropertyName("apellido")] public string Apellido { get; set; } = "";
-    [JsonPropertyName("identificacion")] public string Identificacion { get; set; } = "";
-    [JsonPropertyName("tipoIdentificacion")] public string TipoIdentificacion { get; set; } = "";
-    [JsonPropertyName("direccion")] public string Direccion { get; set; } = "";
-    [JsonPropertyName("telefono")] public string Telefono { get; set; } = "";
-    [JsonPropertyName("correoElectronico")] public string CorreoElectronico { get; set; } = "";
+    [JsonPropertyName("idCli")] public int IdCli { get; set; }
+    [JsonPropertyName("nomCli")] public string? NomCli { get; set; }
+    [JsonPropertyName("apeCli")] public string? ApeCli { get; set; }
+    [JsonPropertyName("ideCli")] public string? IdeCli { get; set; }
+    [JsonPropertyName("tipCli")] public string? TipCli { get; set; }
+    [JsonPropertyName("dirCli")] public string? DirCli { get; set; }
+    [JsonPropertyName("telCli")] public string? TelCli { get; set; }
+    [JsonPropertyName("corCli")] public string? CorCli { get; set; }
+    [JsonPropertyName("fecCli")] public DateTimeOffset FecCli { get; set; }
+    [JsonPropertyName("estCli")] public bool EstCli { get; set; }
+    //[JsonPropertyName("facturas")] public List<FacturaDto>? Facturas { get; set; }
 }

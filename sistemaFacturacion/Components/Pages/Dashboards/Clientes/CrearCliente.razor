@@ -13,11 +13,10 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-body">
-        <EditForm Model="@form" OnValidSubmit="@HandleValidSubmitAsync">
+        <EditForm Model="@form" OnValidSubmit="@HandleValidSubmitAsync" OnInvalidSubmit="@HandleInvalidAsync">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <!-- Identificación -->
             <div class="row g-3">
                 <div class="col-md-4 col-12">
                     <label class="form-label">Tipo de identificación</label>
@@ -44,7 +43,6 @@
 
             <hr class="my-4" />
 
-            <!-- Datos personales -->
             <div class="row g-3">
                 <div class="col-md-6 col-12">
                     <label class="form-label">Nombre</label>
@@ -58,7 +56,6 @@
                 </div>
             </div>
 
-            <!-- Contacto -->
             <div class="row g-3 mt-1">
                 <div class="col-12">
                     <label class="form-label">Dirección</label>
@@ -79,7 +76,6 @@
                 </div>
             </div>
 
-            <!-- Acciones -->
             <div class="d-flex mt-4 gap-2">
                 <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
                     @(isSubmitting ? "Guardando..." : "Guardar")
@@ -92,11 +88,10 @@
 </div>
 
 @code {
-    // ------------ VM y validadores ------------
     public class ClienteCreateVM : IValidatableObject
     {
         [Required(ErrorMessage = "Seleccione el tipo de identificación.")]
-        public string? TipoIdentificacion { get; set; } // Cedula | RUC | Pasaporte
+        public string? TipoIdentificacion { get; set; }
 
         [Required(ErrorMessage = "La identificación es obligatoria.")]
         public string? Identificacion { get; set; }
@@ -179,7 +174,6 @@
         }
     }
 
-    // ------------ Estado de la página ------------
     private ClienteCreateVM form = new();
     private bool isSubmitting = false;
 
@@ -203,7 +197,6 @@
 
     private void ResetForm() => form = new();
 
-    // ------------ Submit con SweetAlert ------------
     private async Task HandleValidSubmitAsync()
     {
         isSubmitting = true;
@@ -215,23 +208,51 @@
                 Nombre = form.Nombre?.Trim() ?? "",
                 Apellido = form.Apellido?.Trim() ?? "",
                 Identificacion = form.Identificacion?.Trim() ?? "",
-                TipoIdentificacion = (form.TipoIdentificacion ?? "").ToUpperInvariant(), // "CEDULA" | "RUC" | "PASAPORTE"
+                TipoIdentificacion = (form.TipoIdentificacion ?? "").ToUpperInvariant(),
                 Direccion = form.Direccion?.Trim() ?? "",
                 Telefono = form.Telefono?.Trim() ?? "",
                 CorreoElectronico = form.Correo?.Trim() ?? ""
             };
 
-            var creado = await ClientesApi.CreateAsync(req);
+            // Cambia object por ClienteDto
+            ClienteDto creado = await ClientesApi.CreateAsync(req);
 
-            // Éxito: modal con dos opciones
+            // Accede directamente a las propiedades (sin reflexión)
+            var idValue = creado.IdCli;
+            var nom = creado.NomCli ?? form.Nombre ?? "";
+            var ape = creado.ApeCli ?? form.Apellido ?? "";
+            var ide = creado.IdeCli ?? form.Identificacion ?? "";
+            var tip = creado.TipCli ?? form.TipoIdentificacion ?? "";
+
+            var displayNombre = Escape(nom);
+            var displayApellido = Escape(ape);
+            var idText = idValue > 0 ? idValue.ToString() : "pendiente";
+            var subInfo = $"{Escape(ide)} · {Escape(tip)}";
+
             var result = await Swal.FireAsync(new SweetAlertOptions
             {
                 Icon = SweetAlertIcon.Success,
                 Title = "Cliente creado",
-                Html = $"<div class='text-start'>✔️ <b>{Escape(creado.Nombre)} {Escape(creado.Apellido)}</b><br/>ID: <code>{Escape(creado.Id.ToString())}</code></div>",
+                Html = $@"
+                    <div style='text-align:left;font-size:14px;line-height:1.45'>
+                      <div style='display:flex;align-items:center;gap:.6rem;margin:0 0 .65rem'>
+                        <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' style='width:1.5rem;height:1.5rem;color:#22c55e;flex-shrink:0'>
+                            <path stroke-linecap='round' stroke-linejoin='round' d='M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z' />
+                        </svg>
+                        <div>
+                          <div style='font-weight:700;font-size:1rem'>{displayNombre} {displayApellido}</div>
+                          <div style='font-size:.83rem;color:#64748b'>{subInfo}</div>
+                        </div>
+                      </div>
+                      <div style='background:#f8fafc;border:1px solid #e5e7eb;border-radius:.5rem;padding:.6rem .75rem'>
+                        <div style='font-size:.72rem;color:#64748b;letter-spacing:.04em;margin-bottom:.15rem'>ID CLIENTE</div>
+                        <code style='font-size:1rem'>{Escape(idText)}</code>
+                      </div>
+                    </div>",
                 ShowCancelButton = true,
                 ConfirmButtonText = "Ver listado",
-                CancelButtonText = "Crear otro"
+                CancelButtonText = "Crear otro",
+                FocusConfirm = false
             });
 
             if (result.IsConfirmed)
@@ -279,7 +300,19 @@
         }
     }
 
-    // Helpers
+    private async Task HandleInvalidAsync(EditContext ctx)
+    {
+        var errores = ctx.GetValidationMessages().Take(3);
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Icon = SweetAlertIcon.Warning,
+            Title = "Completa los campos",
+            Html = string.Join("<br/>", errores.Select(Escape))
+        });
+    }
+
+
+
     private static string Trunca(string? s, int max)
         => string.IsNullOrWhiteSpace(s) ? "" : (s.Length <= max ? s : s[..max] + "…");
 
