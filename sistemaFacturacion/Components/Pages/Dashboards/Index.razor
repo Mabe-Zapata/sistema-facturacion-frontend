@@ -1,4 +1,4 @@
-﻿@page "/dashboard/sales"
+﻿@page "/dashboard/admin"
 @using ApexCharts
 @using System.Globalization
 @using FlatpickrBlazor
@@ -339,7 +339,7 @@
                         </div>
                     </div>
 
-                    <div class="card-body pt-4 pb-0">
+                    <div class="card-body pb-0 pt-4">
                         <ApexChart TItem="SalesPoint" Height="350" Options="SalesOptions">
                             <ApexPointSeries TItem="SalesPoint" Items="Sales" SeriesType="@SeriesType.Bar" Name="Subtotal" XValue="@(e => e.BucketLabel)" YAggregate="@(e => e.Sum(x => x.Subtotal))" />
                             <ApexPointSeries TItem="SalesPoint" Items="Sales" SeriesType="@SeriesType.Bar" Name="IVA" XValue="@(e => e.BucketLabel)" YAggregate="@(e => e.Sum(x => x.IVA))" />

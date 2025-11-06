@@ -3,12 +3,16 @@
 @inject IJSRuntime JSRuntime
 @inject StateService stateService
 @inject IActionService ActionService
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.JSInterop
 @using System.Text.Json
 @using System.Linq
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Routing
 @using WMBlazorOverlayScrollbars.WMBOS
+@inject AuthenticationStateProvider AuthStateProvider
+@inject SessionService SessionService
+@inject AuthService AuthService
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager 
 
     <div id="responsive-overlay" @onclick="() => responsivecloseFn()"></div>
@@ -108,28 +112,6 @@
                                 <!-- End::slide__category -->
                                 
                             }
-                            <li>
-                                <ul class="slide-menu child1 doublemenu_slide-menu">
-                                    <li class="text-fixed-white p-3 text-center">
-                                        <div class="doublemenu_slide-menu-background">
-                                            <img src="../assets/images/media/backgrounds/13.png" alt="">
-                                        </div>
-                                        <div class="d-flex flex-column align-items-center justify-content-between h-100">
-                                            <div class="fs-15 fw-medium">Dashboard AI Helper</div>
-                                            <div>
-                                                <span class="avatar avatar-lg p-1">
-                                                    <img src="../assets/images/media/media-80.png" alt="">
-                                                    <span class="top-right"></span>
-                                                    <span class="bottom-right"></span>
-                                                </span>
-                                            </div>
-                                            <div class="d-grid w-100">
-                                                <button class="btn btn-light border-0">Try Now</button>
-                                            </div>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </li>
                         </ul>
                         <ul class="doublemenu_bottom-menu main-menu border-top mb-0">
                             <!-- Start::slide -->
@@ -150,12 +132,15 @@
                             </li>
                             <!-- End::slide -->
                             <!-- Start::slide -->
-                            <li class="slide">
-                            <a href="/signin/basic" class="side-menu__item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"/><path d="M48,40H208a16,16,0,0,1,16,16V200a16,16,0,0,1-16,16H48a0,0,0,0,1,0,0V40A0,0,0,0,1,48,40Z" opacity="0.2"/><polyline points="112 40 48 40 48 216 112 216" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="112" y1="128" x2="224" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><polyline points="184 88 224 128 184 168" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
-                                    <span class="side-menu__label">Logout</span>
-                                </a>
-                            </li>
+                        <li class="slide">
+                            <a href="/" class="side-menu__item"
+                               @onclick="LogoutAsync"
+                               @onclick:preventDefault="true"
+                               @onclick:stopPropagation="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none" /><path d="M48,40H208a16,16,0,0,1,16,16V200a16,16,0,0,1-16,16H48a0,0,0,0,1,0,0V40A0,0,0,0,1,48,40Z" opacity="0.2" /><polyline points="112 40 48 40 48 216 112 216" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="112" y1="128" x2="224" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><polyline points="184 88 224 128 184 168" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /></svg>
+                                <span class="side-menu__label">Logout</span>
+                            </a>
+                        </li>
                             <!-- End::slide -->
                             <!-- Start::slide -->
                             <li class="slide">
@@ -691,10 +676,10 @@
                 item.Active = false;
                 item.Selected = false;
             }
-           //else
-           //{
-           //    RemoveActiveOtherMenus(item,targetObject);
-           //}
+            //else
+            //{
+            //    RemoveActiveOtherMenus(item,targetObject);
+            //}
 
             if (item.Children != null && item.Children.Any())
             {
@@ -713,7 +698,7 @@
         {
             var inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
             var navLayout =currentState?.NavigationStyles;
-                 // Loop through parent's children to reset Active and Selected
+            // Loop through parent's children to reset Active and Selected
             if (parent?.Children != null && topParent != null && targetObject != null)
             {
                 foreach (var item in parent.Children)
@@ -725,12 +710,12 @@
                 }
             }
             if( navLayout !="horizontal" || inner  < 992) {
-               if (parent != null){parent.Active = true;}  
+                if (parent != null){parent.Active = true;}  
             } 
             if (parent != null){parent.Selected = true;}
-           
+
             topParent= parent;
-           if (parent != null)
+            if (parent != null)
             {
                 SetMenuAncestorsActive(parent);
             }
@@ -773,7 +758,7 @@
 
     private void RemoveActiveOtherMenus(MainMenuItems item, MainMenuItems targetObject)
     {
-        
+
         if (item != null)
         {
             if(item.Title !=  targetObject.Title) {
@@ -789,7 +774,7 @@
                     RemoveActiveOtherMenus(child,targetObject);
                 }
             }
-            
+
         }
     }
 
@@ -864,17 +849,17 @@
     {
         var toggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
         var inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
-        
+
         if (toggled == "close") {
             await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "open");
         }
-         else {
+        else {
             await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
         }
     }
     // Responsive Close End
 
-    
+
     public void Dispose(){
         JSRuntime.InvokeVoidAsync("resizeFunctions.detachScrollListener");
     }
@@ -884,6 +869,28 @@
         var val = currentState.ColorTheme == "light" ? "dark" : "light";
         await JSRuntime.InvokeAsync<string>("interop.setLocalStorageItem", "Vyzorcolortheme", val);
         await stateService.colorthemeFn(val, true);
+    }
+
+    private async Task LogoutAsync()
+    {
+        try
+        {
+            // (Opcional) informa al backend si tienes endpoint para invalidar refresh token
+            await AuthService.LogoutAsync(); // si no existe, omite esta línea
+        }
+        catch { /* no bloquear por errors del endpoint */ }
+
+        // limpia almacenamiento local y header Authorization
+        await SessionService.RemoveTokenAsync(); // o RemoveTokenAsync()
+
+        if (AuthStateProvider is CustomAuthStateProvider cap)
+            cap.NotifyUserLogout();
+
+        // cierra submenús/estados visuales si aplica
+        closeMenuFn();
+
+        // redirige al login (tu "/" o "/index")
+        Navigation.NavigateTo("/", forceLoad: true);
     }
 }
 
