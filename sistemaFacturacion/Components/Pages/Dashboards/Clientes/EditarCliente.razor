@@ -1,6 +1,10 @@
 ﻿@page "/dashboards/clientes/editar"
 @using System.ComponentModel.DataAnnotations
+@using CurrieTechnologies.Razor.SweetAlert2
 @using Microsoft.AspNetCore.Authorization
+@using sistemaFacturacion
+@inject IClientesApiClient ClientesApi
+@inject SweetAlertService Swal
 @attribute [Authorize]
 
 <div class="page-header mb-3">
@@ -8,7 +12,6 @@
     <p class="text-muted">Busca por Identificación/RUC y actualiza datos permitidos.</p>
 </div>
 
-<!-- Buscador -->
 <div class="card mb-3 border-0 shadow-sm">
     <div class="card-body">
         <div class="row g-2 align-items-end">
@@ -26,15 +29,15 @@
                 <InputText class="form-control" @bind-Value="search.Identificacion" placeholder="Ej: 0102030405 / 17900...001" />
             </div>
             <div class="col-md-2 d-grid col-12">
-                <button class="btn btn-primary" @onclick="BuscarCliente">Buscar</button>
+                <button class="btn btn-primary" @onclick="BuscarCliente" disabled="@cargando">
+                    @(cargando ? "Buscando..." : "Buscar")
+                </button>
             </div>
         </div>
 
-        @if (searchError is not null)
+        @if (!string.IsNullOrWhiteSpace(searchError))
         {
-            <div class="alert alert-danger mt-3 mb-0">
-                @searchError
-            </div>
+            <div class="alert alert-danger mb-0 mt-3">@searchError</div>
         }
     </div>
 </div>
@@ -45,7 +48,6 @@
 }
 else if (form is not null)
 {
-    <!-- Resumen del cliente -->
     <div class="card mb-3 border-0 shadow-sm">
         <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
             <div class="d-flex align-items-center gap-3">
@@ -66,14 +68,12 @@ else if (form is not null)
         </div>
     </div>
 
-    <!-- Formulario de edición -->
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <EditForm Model="@form" OnValidSubmit="@HandleValidSubmit">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 
-                <!-- Identificación (bloqueada) -->
                 <div class="row g-3">
                     <div class="col-md-4 col-12">
                         <label class="form-label">Tipo de identificación</label>
@@ -89,7 +89,6 @@ else if (form is not null)
 
                 <hr class="my-4" />
 
-                <!-- Datos personales -->
                 <div class="row g-3">
                     <div class="col-md-6 col-12">
                         <label class="form-label">Nombre</label>
@@ -103,7 +102,6 @@ else if (form is not null)
                     </div>
                 </div>
 
-                <!-- Contacto -->
                 <div class="row g-3 mt-1">
                     <div class="col-12">
                         <label class="form-label">Dirección</label>
@@ -122,7 +120,6 @@ else if (form is not null)
                     </div>
                 </div>
 
-                <!-- Acciones -->
                 <div class="d-flex mt-4 gap-2">
                     <button type="submit" class="btn btn-primary" disabled="@guardando">
                         @(guardando ? "Guardando..." : "Guardar cambios")
@@ -139,43 +136,30 @@ else if (yaBusco)
 }
 
 @code {
-    // --- ViewModel para edición (sin editar identificación) ---
     public class ClienteEditVM
     {
-        // No editables
-        public string? TipoIdentificacion { get; set; }
-        public string? Identificacion { get; set; }
+        // Sólo lectura en UI
+        public string? TipoIdentificacion { get; set; }  // tipCli
+        public string? Identificacion { get; set; }      // ideCli
 
         // Editables
-        [Required(ErrorMessage = "El nombre es obligatorio.")]
-        [RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", ErrorMessage = "Solo letras y espacios.")]
-        [StringLength(80)]
-        public string? Nombre { get; set; }
+        [Required, RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"), StringLength(80)]
+        public string? Nombre { get; set; }              // nomCli
 
-        [Required(ErrorMessage = "El apellido es obligatorio.")]
-        [RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", ErrorMessage = "Solo letras y espacios.")]
-        [StringLength(80)]
-        public string? Apellido { get; set; }
+        [Required, RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"), StringLength(80)]
+        public string? Apellido { get; set; }            // apeCli
 
-        [Required(ErrorMessage = "La dirección es obligatoria.")]
-        [StringLength(150)]
-        public string? Direccion { get; set; }
+        [Required, StringLength(150)]
+        public string? Direccion { get; set; }           // dirCli
 
-        [Required(ErrorMessage = "El teléfono es obligatorio.")]
-        [RegularExpression(@"^\d{7,15}$", ErrorMessage = "Entre 7 y 15 dígitos.")]
-        public string? Telefono { get; set; }
+        [Required, RegularExpression(@"^\d{7,15}$")]
+        public string? Telefono { get; set; }            // telCli
 
-        [Required(ErrorMessage = "El correo es obligatorio.")]
-        [EmailAddress(ErrorMessage = "Correo inválido.")]
-        public string? Correo { get; set; }
+        [Required, EmailAddress]
+        public string? Correo { get; set; }              // corCli
     }
 
-    // --- Modelo para búsqueda ---
-    private class SearchVM
-    {
-        public string? Tipo { get; set; }
-        public string? Identificacion { get; set; }
-    }
+    private class SearchVM { public string? Tipo { get; set; } public string? Identificacion { get; set; } }
 
     private SearchVM search = new();
     private ClienteEditVM? form;
@@ -183,6 +167,7 @@ else if (yaBusco)
     private bool cargando = false;
     private bool guardando = false;
     private bool yaBusco = false;
+    private int? clienteId; // idCli para PUT
 
     private async Task BuscarCliente()
     {
@@ -190,79 +175,148 @@ else if (yaBusco)
         cargando = true;
         yaBusco = true;
         form = null;
+        clienteId = null;
+        StateHasChanged();
 
-        // Validaciones mínimas del buscador
         if (string.IsNullOrWhiteSpace(search.Tipo) || string.IsNullOrWhiteSpace(search.Identificacion))
         {
             searchError = "Selecciona el tipo y escribe la identificación.";
             cargando = false;
-            StateHasChanged();
             return;
         }
 
+        search.Identificacion = new string(search.Identificacion.Where(char.IsDigit).ToArray());
+
         try
         {
-            // TODO: Reemplazar por llamada a tu servicio/API
-            await Task.Delay(400); // Simula latencia
-            var cliente = DemoRepo.FirstOrDefault(x =>
-                x.TipoIdentificacion.Equals(search.Tipo, StringComparison.OrdinalIgnoreCase) &&
-                x.Identificacion == search.Identificacion.Trim());
+            var cliente = await ClientesApi.GetByDocumentoAsync(search.Tipo!, search.Identificacion!);
 
             if (cliente is null)
             {
-                form = null;
-            }
-            else
-            {
-                form = new ClienteEditVM
+
+                string nTipo = (search.Tipo ?? "").Trim().ToUpperInvariant();
+                string nDoc = new string((search.Identificacion ?? "").Where(char.IsDigit).ToArray());
+
+                var all = await ClientesApi.GetAllAsync();
+                var sugerencias = all
+                    .Where(c =>
+                        string.Equals((c.TipCli ?? "").Trim(), nTipo, StringComparison.OrdinalIgnoreCase) &&
+                        new string((c.IdeCli ?? "").Where(char.IsDigit).ToArray()).StartsWith(nDoc)
+                    )
+                    .Take(5)
+                    .ToList();
+
+                if (sugerencias.Count == 0)
                 {
-                    TipoIdentificacion = cliente.TipoIdentificacion,
-                    Identificacion = cliente.Identificacion,
-                    Nombre = cliente.Nombre,
-                    Apellido = cliente.Apellido,
-                    Direccion = cliente.Direccion,
-                    Telefono = cliente.Telefono,
-                    Correo = cliente.Correo
-                };
+                    await Swal.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Sin resultados",
+                        Text = "No se encontró un cliente con esos datos.",
+                        Icon = SweetAlertIcon.Warning
+                    });
+                    return;
+                }
+
+                var html = string.Join("<br/>",
+                    sugerencias.Select(s => $"{s.NomCli} {s.ApeCli} — {s.IdeCli}"));
+
+                await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Title = "¿Quisiste decir?",
+                    Html = html,
+                    Icon = SweetAlertIcon.Info
+                });
+
+                return;
             }
+
+            clienteId = cliente.IdCli;
+            form = new ClienteEditVM
+            {
+                TipoIdentificacion = cliente.TipCli,
+                Identificacion = cliente.IdeCli,
+                Nombre = cliente.NomCli,
+                Apellido = cliente.ApeCli,
+                Direccion = cliente.DirCli,
+                Telefono = cliente.TelCli,
+                Correo = cliente.CorCli
+            };
+
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Position = SweetAlertPosition.TopEnd,
+                Icon = SweetAlertIcon.Success,
+                Title = "Cliente cargado",
+                ShowConfirmButton = false,
+                Timer = 1200
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Error al buscar",
+                Html = $"<small>{ex.Message}</small>",
+                Icon = SweetAlertIcon.Error
+            });
         }
         finally
         {
             cargando = false;
+            StateHasChanged();
         }
     }
 
     private async Task HandleValidSubmit()
     {
+        if (clienteId is null) return;
+
+        var confirm = await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "¿Guardar cambios?",
+            Text = "Se actualizarán los datos de contacto del cliente.",
+            Icon = SweetAlertIcon.Question,
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sí, guardar",
+            CancelButtonText = "Cancelar"
+        });
+        if (!confirm.IsConfirmed) return;
+
         guardando = true;
+
         try
         {
-            // TODO: Llamar a tu API para actualizar.
-            await Task.Delay(400); // Simula persistencia
-            Console.WriteLine($"Actualizado: {form?.Nombre} {form?.Apellido}");
-            // Aquí puedes disparar un toast/alert de éxito.
+            // El API espera: direccion, telefono, correoElectronico
+            var payload = new ClienteContactoUpdate
+            {
+                Direccion = form!.Direccion!,
+                Telefono = form!.Telefono!,
+                CorreoElectronico = form!.Correo!
+            };
+
+            await ClientesApi.UpdateContactoAsync(clienteId.Value, payload);
+
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Position = SweetAlertPosition.TopEnd,
+                Icon = SweetAlertIcon.Success,
+                Title = "Cambios guardados",
+                ShowConfirmButton = false,
+                Timer = 1500
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "No se pudo guardar",
+                Html = $"<small>{ex.Message}</small>",
+                Icon = SweetAlertIcon.Error
+            });
         }
         finally
         {
             guardando = false;
         }
     }
-
-    // --- Repositorio Mock (sólo demo visual) ---
-    private record ClienteDemo(
-        string TipoIdentificacion,
-        string Identificacion,
-        string Nombre,
-        string Apellido,
-        string Direccion,
-        string Telefono,
-        string Correo
-    );
-
-    private static readonly List<ClienteDemo> DemoRepo = new()
-    {
-        new("Cedula","0102030405","María","Zapata","Calle A 123","0999999999","maria@demo.com"),
-        new("RUC","1790012345001","Erick","Guerrón","Av. B 555","0988888888","erick@demo.com"),
-        new("Cedula","1104685321","Xabier","Pérez","Pasaje C 777","0977777777","xperez@demo.com"),
-    };
 }

@@ -8,4 +8,5 @@ public interface IClientesApiClient
     Task<ClienteDto?> GetByIdAsync(int id, CancellationToken ct = default); 
     Task<ClienteDto> CreateAsync(ClienteCreateRequest request, CancellationToken ct = default);
     Task UpdateContactoAsync(int id, ClienteContactoUpdate request, CancellationToken ct = default);
+    Task<ClienteDto?> GetByDocumentoAsync(string tipo, string identificacion, CancellationToken ct = default);
 }

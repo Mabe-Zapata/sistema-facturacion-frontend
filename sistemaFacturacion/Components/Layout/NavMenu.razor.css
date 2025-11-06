@@ -8,7 +8,7 @@
     .main-sidebar-header .header-logo .desktop-logo,
     .main-sidebar-header .header-logo .desktop-dark {
         width: auto;
-        height: 85px; /* Tamaño sidebar */
+        height: 155px; /* Tamaño sidebar */
         object-fit: contain;
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
