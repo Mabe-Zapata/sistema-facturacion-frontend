@@ -1,99 +1,148 @@
 ﻿@page "/"
 @page "/index"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @layout Components.Layout.CustomLayout
-@attribute [AllowAnonymous]  
+@attribute [AllowAnonymous]
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="authentication-background">
-    <div class="authentication-basic-background">
-        <img src="../assets/images/media/backgrounds/9.png" alt="">
-    </div>
+    @if (!_isCheckingAuth)
+    {
+        <div class="authentication-basic-background">
+            <img src="../assets/images/media/backgrounds/9.png" alt="">
+        </div>
 
-    <div class="container">
-        <div class="row justify-content-center align-items-center authentication authentication-basic h-100">
-            <div class="col-xxl-4 col-xl-5 col-lg-6 col-md-6 col-sm-8 col-12">
-                <div class="card custom-card my-4 border-0">
-                    <div class="card-body p-sm-5 p-4">
-                        <div class="mb-4">
-                            <a href="/index">
-                                <img src="../assets/images/brand-logos/toggle-logo.png" alt="logo" class="desktop-dark">
-                            </a>
-                        </div>
-                        <div>
-                            <h4 class="fw-semibold mb-1">Hi,Welcome back!</h4>
-                            <p class="text-muted fw-normal mb-4">Please enter your credentials</p>
-                        </div>
+        <div class="container">
+            <div class="row justify-content-center align-items-center authentication authentication-basic h-100">
+                <div class="col-xxl-4 col-xl-5 col-lg-6 col-md-6 col-sm-8 col-12">
+                    <div class="card custom-card my-4 border-0">
+                        <div class="card-body p-sm-5 p-4">
+                            <div class="mb-4">
+                                <a href="/index">
+                                    <img src="../assets/images/brand-logos/toggle-logo.png" alt="logo" class="desktop-dark">
+                                </a>
+                            </div>
+                            <div>
+                                <h4 class="fw-semibold mb-1">Hi, Welcome back!</h4>
+                                <p class="text-muted fw-normal mb-4">Please enter your credentials</p>
+                            </div>
 
-                        <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
-                            <DataAnnotationsValidator /> <div class="row gy-3">
-                                <div class="col-xl-12">
-                                    <label for="signin-email" class="form-label text-default">Email</label>
-                                    <InputText @bind-Value="loginModel.Username" type="text" class="form-control" id="signin-email" placeholder="Enter Email" />
-                                    <ValidationMessage For="@(() => loginModel.Username)" />
-                                </div>
-                                <div class="col-xl-12 mb-2">
-                                    <label for="signin-password" class="form-label text-default d-block">Password</label>
-                                    <div class="position-relative">
-                                        <PasswordToggle @bind-Password="loginModel.Password" />
-                                        <ValidationMessage For="@(() => loginModel.Password)" />
+                            <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+                                <DataAnnotationsValidator />
+                                <div class="row gy-3">
+                                    <div class="col-xl-12">
+                                        <label for="signin-email" class="form-label text-default">Email</label>
+                                        <InputText @bind-Value="loginModel.Username" type="text" class="form-control" id="signin-email" placeholder="Enter Email" />
+                                        <ValidationMessage For="@(() => loginModel.Username)" />
                                     </div>
-                                    <div class="mt-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="" id="defaultCheck1" checked>
-                                            <label class="form-check-label" for="defaultCheck1">
-                                                Remember me
-                                            </label>
-                                            <a href="/resetPassword" class="link-danger fw-medium fs-12 float-end">Forget password ?</a>
+                                    <div class="col-xl-12 mb-2">
+                                        <label for="signin-password" class="form-label text-default d-block">Password</label>
+                                        <div class="position-relative">
+                                            <PasswordToggle @bind-Password="loginModel.Password" />
+                                            <ValidationMessage For="@(() => loginModel.Password)" />
+                                        </div>
+                                        <div class="mt-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1" checked>
+                                                <label class="form-check-label" for="defaultCheck1">
+                                                    Remember me
+                                                </label>
+                                                <a href="/resetPassword" class="link-danger fw-medium fs-12 float-end">Forget password ?</a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            @if (!string.IsNullOrEmpty(errorMessage))
-                            {
-                                <div class="alert alert-danger mt-2">@errorMessage</div>
-                            }
 
-                            <div class="d-grid mt-3">
-                                <button type="submit" class="btn btn-primary">Sign In</button>
+                                @if (!string.IsNullOrEmpty(errorMessage))
+                                {
+                                    <div class="alert alert-danger mt-2">@errorMessage</div>
+                                }
+
+                                <div class="d-grid mt-3">
+                                    <button type="submit" class="btn btn-primary" disabled="@_isLoggingIn">
+                                        @if (_isLoggingIn)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            <span>Signing In...</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Sign In</span>
+                                        }
+                                    </button>
+                                </div>
+                            </EditForm>
+                            <div class="authentication-barrier my-3 text-center">
+                                <span class="op-4 fs-13">OR</span>
                             </div>
-                        </EditForm>
-                        <div class="authentication-barrier my-3 text-center">
-                            <span class="op-4 fs-13">OR</span>
-                        </div>
-                        <div class="d-grid mb-3">
-                            <button class="btn btn-white btn-w-lg d-flex align-items-center justify-content-center flex-fill mb-3 border">
-                                <span class="avatar avatar-xs">
-                                    <img src="../assets/images/media/apps/google.png" alt="">
-                                </span>
-                                <span class="lh-1 fs-13 text-default fw-medium ms-2">Signup with Google</span>
-                            </button>
-                            <button class="btn btn-white btn-w-lg d-flex align-items-center justify-content-center flex-fill border">
-                                <span class="avatar avatar-xs flex-shrink-0">
-                                    <img src="../assets/images/media/apps/facebook.png" alt="">
-                                </span>
-                                <span class="lh-1 fs-13 text-default fw-medium ms-2">Signup with Facebook</span>
-                            </button>
-                        </div>
-                        <div class="fw-medium mt-3 text-center">
-                            Dont have an account? <a href="/register" class="text-primary">Sign Up</a>
+                            <div class="d-grid mb-3">
+                                <button class="btn btn-white btn-w-lg d-flex align-items-center justify-content-center flex-fill mb-3 border">
+                                    <span class="avatar avatar-xs">
+                                        <img src="../assets/images/media/apps/google.png" alt="">
+                                    </span>
+                                    <span class="lh-1 fs-13 text-default fw-medium ms-2">Signup with Google</span>
+                                </button>
+                                <button class="btn btn-white btn-w-lg d-flex align-items-center justify-content-center flex-fill border">
+                                    <span class="avatar avatar-xs flex-shrink-0">
+                                        <img src="../assets/images/media/apps/facebook.png" alt="">
+                                    </span>
+                                    <span class="lh-1 fs-13 text-default fw-medium ms-2">Signup with Facebook</span>
+                                </button>
+                            </div>
+                            <div class="fw-medium mt-3 text-center">
+                                Dont have an account? <a href="/register" class="text-primary">Sign Up</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
+    else
+    {
+        <!-- Pantalla de carga mientras verifica autenticación -->
+        <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+            <div class="text-center">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-3">Verificando sesión...</p>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
     private LoginRequest loginModel = new() { Username = "", Password = "" };
     private string? errorMessage;
+    private bool _isCheckingAuth = true;
+    private bool _isLoggingIn = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Verificar si el usuario ya está autenticado
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            // Usuario ya autenticado, redirigir al dashboard
+            NavigationManager.NavigateTo("/dashboard/sales", replace: true);
+            return;
+        }
+
+        // Usuario no autenticado, mostrar formulario de login
+        _isCheckingAuth = false;
+    }
 
     private async Task HandleLogin()
     {
         errorMessage = null;
+        _isLoggingIn = true;
+
         try
         {
             bool success = await AuthService.LoginAsync(loginModel);
@@ -105,13 +154,14 @@
             else
             {
                 errorMessage = "Usuario o contraseña incorrectos.";
+                _isLoggingIn = false;
             }
         }
         catch (Exception ex)
         {
             errorMessage = "Error de conexión. Inténtelo de nuevo.";
+            _isLoggingIn = false;
             Console.WriteLine($"Error en login: {ex.Message}");
         }
     }
-}
 }
