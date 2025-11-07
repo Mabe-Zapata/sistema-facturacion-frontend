@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using CurrieTechnologies.Razor.SweetAlert2
 @attribute [Authorize]
+@inject IJSRuntime JSRuntime
 @inject IClientesApiClient ClientesApi
 @inject NavigationManager Navigation
 @inject SweetAlertService Swal
@@ -205,45 +206,73 @@ else
 }
 
 @code {
-  private List<ClienteDto> clientes = new();
-  private int totalClientes = 0;
-  private bool cargando = true;
-  private string? error;
+    private List<ClienteDto> clientes = new();
+    private int totalClientes = 0;
+    private bool cargando = true;
+    private string? error;
 
-  private string? filtroTexto;
-  private string? filtroTipo;
-  private string? filtroEstado;
-  private string? ordenFecha;
+    private string? filtroTexto;
+    private string? filtroTipo;
+    private string? filtroEstado;
+    private string? ordenFecha;
 
-  private int pageIndex = 1;
+    private int pageIndex = 1;
 
-  private int _pageSize = 10;
-  private int pageSize
-  {
-    get => _pageSize;
-    set
+    private int _pageSize = 10;
+    private int pageSize
     {
-      if (_pageSize != value)
-      {
-        _pageSize = value;
-        pageIndex = 1; // 🔧 evita @onchange duplicado con @bind
-      }
+        get => _pageSize;
+        set
+        {
+            if (_pageSize != value)
+            {
+                _pageSize = value;
+                pageIndex = 1; // 🔧 evita @onchange duplicado con @bind
+            }
+        }
     }
-  }
 
-  private string? sortBy;
-  private bool sortAsc = true;
+    private string? sortBy;
+    private bool sortAsc = true;
 
-  protected override async Task OnInitializedAsync() => await CargarClientes();
+    protected override async Task OnInitializedAsync() => await CargarClientes();
 
-  private async Task CargarClientes()
-  {
-    try
+    private async Task CargarClientes()
     {
-      cargando = true; error = null;
-      clientes = await ClientesApi.GetAllAsync();
-      totalClientes = clientes.Count;
-      await Swal.FireAsync(new SweetAlertOptions { Toast = true, Position = SweetAlertPosition.TopEnd, Icon = SweetAlertIcon.Success, Title = $"✓ {totalClientes} clientes cargados", ShowConfirmButton = false, Timer = 2000, TimerProgressBar = true });
+        try
+        {
+            cargando = true; error = null;
+            clientes = await ClientesApi.GetAllAsync();
+            totalClientes = clientes.Count;
+            bool isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+            if (isDark)
+            {
+                await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Toast = true,
+                    Position = SweetAlertPosition.TopEnd,
+                    Icon = SweetAlertIcon.Success,
+                    Title = $"✓ {totalClientes} clientes cargados",
+                    ShowConfirmButton = false,
+                    Timer = 2000,
+                    TimerProgressBar = true,
+                    Background = "#1e1e1e", 
+                    Color = "#e6e6e6"
+                });
+            }else
+            {
+                await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Toast = true,
+                    Position = SweetAlertPosition.TopEnd,
+                    Icon = SweetAlertIcon.Success,
+                    Title = $"✓ {totalClientes} clientes cargados",
+                    ShowConfirmButton = false,
+                    Timer = 2000,
+                    TimerProgressBar = true,
+                });
+            }
+
     }
     catch (HttpRequestException ex)
     {
@@ -254,8 +283,34 @@ else
   }
 
   private async Task RecargarDatos()
-  {
-    await Swal.FireAsync(new SweetAlertOptions { Toast = true, Position = SweetAlertPosition.TopEnd, Icon = SweetAlertIcon.Info, Title = "Recargando datos...", ShowConfirmButton = false, Timer = 1000 });
+  {     
+        bool isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+        if (isDark)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Toast = true,
+                Position = SweetAlertPosition.TopEnd,
+                Icon = SweetAlertIcon.Info,
+                Title = "Recargando datos...",
+                ShowConfirmButton = false,
+                Timer = 1000,
+                Background = "#1e1e1e",
+                Color = "#e6e6e6"
+            });
+        }
+        else
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Toast = true,
+                Position = SweetAlertPosition.TopEnd,
+                Icon = SweetAlertIcon.Info,
+                Title = "Recargando datos...",
+                ShowConfirmButton = false,
+                Timer = 1000
+            });
+        }
     await CargarClientes();
   }
 

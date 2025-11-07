@@ -61,6 +61,7 @@
     "shepherd.js": "^11.2.0",
     "sortablejs": "^1.15.2",
     "swiper": "^11.2.6",
+    "toastify-js": "^1.12.0",
     "tom-select": "^2.3.1",
     "vanilla-wizard": "^0.0.7"
   }

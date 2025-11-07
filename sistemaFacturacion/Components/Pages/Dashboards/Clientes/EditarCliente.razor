@@ -7,6 +7,7 @@
 @attribute [Authorize]
 @inject IClientesApiClient ClientesApi
 @inject SweetAlertService Swal
+@inject IJSRuntime JSRuntime
 
 <div class="page-header mb-3">
     <h2 class="page-title fs-18">Editar Cliente</h2>
@@ -18,7 +19,7 @@
         <div class="row g-2 align-items-end">
             <div class="col-md-4 col-12">
                 <label class="form-label">Tipo de identificación</label>
-                <InputSelect class="form-select" @bind-Value="TipoSeleccionado">
+                <InputSelect class="form-select" @bind-Value="TipoSeleccionado" @onchange="OnTipoChanged">
                     <option value="">-- Selecciona --</option>
                     <option value="CEDULA">Cédula</option>
                     <option value="RUC">RUC</option>
@@ -27,15 +28,14 @@
             </div>
             <div class="col-md-6 col-12">
                 <label class="form-label">Identificación / RUC</label>
-                <InputText class="form-control"
+                <InputText id="ident-edit-input"
+                           class="form-control"
                            @bind-Value="search.Identificacion"
-                           placeholder="Ej: 0102030405 / 17900...001"
-                           inputmode="numeric"
-                           pattern="[0-9]*"
+                           placeholder="@IdentPlaceholder"
+                           inputmode="@(TipoSeleccionado == "PASAPORTE" ? "text" : "numeric")"
                            maxlength="@MaxDocLenStr"
-                           onkeydown="return (event.key>='0' && event.key<='9') || ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].includes(event.key)"
-                           onkeypress="return event.charCode>=48 && event.charCode<=57"
-                           @oninput="e => search.Identificacion = ApplyDigitsAndCap(e.Value?.ToString())" />
+                           autocomplete="off"
+                           @oninput="e => search.Identificacion = CleanIdentByTipo(e.Value?.ToString())" />
             </div>
             <div class="col-md-2 d-grid col-12">
                 <button class="btn btn-primary" @onclick="BuscarCliente" disabled="@cargando">@(cargando ? "Buscando..." : "Buscar")</button>
@@ -127,6 +127,55 @@ else if (yaBusco)
     <div class="alert alert-warning">No se encontró un cliente con esos datos.</div>
 }
 
+<script>
+    (function () {
+      const g = {};
+      function attachDigitsOnly(el, max) {
+        if (!el || el.dataset.guardDigits === "1") return;
+        el.dataset.guardDigits = "1";
+        function filter() {
+          let v = el.value.replace(/\D+/g, "");
+          if (max && max > 0) v = v.slice(0, max);
+          if (v !== el.value) { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); }
+        }
+        el.addEventListener("input", filter);
+        el.addEventListener("paste", () => setTimeout(filter, 0));
+        el.addEventListener("keypress", (e) => { if (!/[0-9]/.test(e.key)) e.preventDefault(); });
+      }
+      function attachAlnum(el, max) {
+        if (!el || el.dataset.guardAlnum === "1") return;
+        el.dataset.guardAlnum = "1";
+        function filter() {
+          let v = el.value.replace(/[^A-Za-z0-9]/g, "");
+          if (max && max > 0) v = v.slice(0, max);
+          if (v !== el.value) { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); }
+        }
+        el.addEventListener("input", filter);
+        el.addEventListener("paste", () => setTimeout(filter, 0));
+        el.addEventListener("keypress", (e) => { if (!/[A-Za-z0-9]/.test(e.key)) e.preventDefault(); });
+      }
+      window.initIdentEditGuard = function (mode, max) {
+        const el = document.getElementById("ident-edit-input");
+        if (!el) return;
+        if (mode === "digits") attachDigitsOnly(el, max || 0);
+        else attachAlnum(el, max || 0);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      };
+      window.setIdentEditMode = function (mode, max) {
+        const el = document.getElementById("ident-edit-input");
+        if (!el) return;
+        if (mode === "digits") {
+          el.dataset.guardAlnum = "";
+          attachDigitsOnly(el, max || 0);
+        } else {
+          el.dataset.guardDigits = "";
+          attachAlnum(el, max || 0);
+        }
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      };
+    })();
+</script>
+
 @code {
     [Parameter] public int? IdFromRoute { get; set; }
     private int? _loadedFromId;
@@ -151,15 +200,15 @@ else if (yaBusco)
     private bool guardando = false;
     private bool yaBusco = false;
     private int? clienteId;
+    private bool _initDone = false;
 
-    // --- binding reactivo del tipo para recalcular longitud y recortar ---
     private string? TipoSeleccionado
     {
         get => search.Tipo;
         set
         {
             search.Tipo = (value ?? "").Trim().ToUpperInvariant();
-            search.Identificacion = ApplyDigitsAndCap(search.Identificacion);
+            search.Identificacion = CleanIdentByTipo(search.Identificacion);
         }
     }
 
@@ -167,17 +216,51 @@ else if (yaBusco)
     {
         "CEDULA" => 10,
         "RUC" => 13,
-        "PASAPORTE" => null, // sin límite definido
+        "PASAPORTE" => 12,
         _ => null
     };
     private string? MaxDocLenStr => MaxDocLen?.ToString();
 
     private static string DigitsOnly(string? s) => new string((s ?? "").Where(char.IsDigit).ToArray());
-    private string ApplyDigitsAndCap(string? s)
+    private static string AlnumOnly(string? s) => new string((s ?? "").Where(char.IsLetterOrDigit).ToArray());
+
+    private string CleanIdentByTipo(string? s)
     {
-        var d = DigitsOnly(s);
-        if (MaxDocLen is int m && d.Length > m) d = d[..m];
-        return d;
+        var tipo = (search.Tipo ?? "").ToUpperInvariant();
+        string v = s ?? "";
+        if (tipo == "CEDULA" || tipo == "RUC") v = DigitsOnly(v);
+        else if (tipo == "PASAPORTE") v = AlnumOnly(v);
+        if (MaxDocLen is int m && v.Length > m) v = v[..m];
+        return v;
+    }
+
+    private string IdentPlaceholder =>
+        (search.Tipo ?? "") switch
+        {
+            "CEDULA" => "10 dígitos",
+            "RUC" => "13 dígitos",
+            "PASAPORTE" => "6-12 alfanuméricos",
+            _ => "Ej: 0102030405 / 17900...001"
+        };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initDone)
+        {
+            var mode = ((search.Tipo ?? "").ToUpperInvariant() is "CEDULA" or "RUC") ? "digits" : "alnum";
+            var max = MaxDocLen ?? 0;
+            await JSRuntime.InvokeVoidAsync("initIdentEditGuard", mode, max);
+            _initDone = true;
+        }
+    }
+
+    private async Task OnTipoChanged(ChangeEventArgs _)
+    {
+        var mode = ((search.Tipo ?? "").ToUpperInvariant() is "CEDULA" or "RUC") ? "digits" : "alnum";
+        var max = MaxDocLen ?? 0;
+        await JSRuntime.InvokeVoidAsync("setIdentEditMode", mode, max);
+        search.Identificacion = CleanIdentByTipo(search.Identificacion);
+        StateHasChanged();
     }
 
     protected override async Task OnParametersSetAsync()
@@ -197,12 +280,12 @@ else if (yaBusco)
         { searchError = "Selecciona el tipo y escribe la identificación."; cargando = false; return; }
 
         search.Tipo = (search.Tipo ?? "").Trim().ToUpperInvariant();
-        search.Identificacion = ApplyDigitsAndCap(search.Identificacion);
+        search.Identificacion = CleanIdentByTipo(search.Identificacion);
 
         if (string.IsNullOrWhiteSpace(search.Identificacion) || search.Identificacion.Length < 3)
         {
             cargando = false;
-            await Swal.FireAsync(new SweetAlertOptions { Title = "Muy corto", Text = "Escribe al menos 3 dígitos para buscar.", Icon = SweetAlertIcon.Info });
+            await Swal.FireAsync(new SweetAlertOptions { Title = "Muy corto", Text = "Escribe al menos 3 caracteres para buscar.", Icon = SweetAlertIcon.Info });
             return;
         }
 
@@ -212,10 +295,10 @@ else if (yaBusco)
             if (cliente is null)
             {
                 var nTipo = (search.Tipo ?? "").Trim().ToUpperInvariant();
-                var nDoc = ApplyDigitsAndCap(search.Identificacion);
+                var nDoc = CleanIdentByTipo(search.Identificacion);
                 var all = await ClientesApi.GetAllAsync();
                 var sugerencias = all.Where(c => string.Equals((c.TipCli ?? "").Trim(), nTipo, StringComparison.OrdinalIgnoreCase)
-                                              && DigitsOnly(c.IdeCli).StartsWith(nDoc))
+                                              && ((nTipo is "CEDULA" or "RUC") ? DigitsOnly(c.IdeCli) : AlnumOnly(c.IdeCli)).StartsWith(nDoc))
                                      .ToList();
                 if (sugerencias.Count == 0)
                 {
@@ -225,8 +308,8 @@ else if (yaBusco)
 
                 var total = sugerencias.Count;
                 var top = sugerencias.Take(15).ToDictionary(
-                    s => DigitsOnly(s.IdeCli),
-                    s => $"{s.NomCli} {s.ApeCli}\n{DigitsOnly(s.IdeCli)}"
+                    s => ((nTipo is "CEDULA" or "RUC") ? DigitsOnly(s.IdeCli) : AlnumOnly(s.IdeCli)),
+                    s => $"{s.NomCli} {s.ApeCli}\n{((nTipo is "CEDULA" or "RUC") ? DigitsOnly(s.IdeCli) : AlnumOnly(s.IdeCli))}"
                 );
 
                 var pick = await Swal.FireAsync(new SweetAlertOptions
@@ -253,7 +336,7 @@ else if (yaBusco)
 
                 if (pick.IsConfirmed && !string.IsNullOrWhiteSpace(pick.Value))
                 {
-                    search.Identificacion = ApplyDigitsAndCap(pick.Value);
+                    search.Identificacion = CleanIdentByTipo(pick.Value);
                     await BuscarCliente();
                 }
                 return;
@@ -268,6 +351,7 @@ else if (yaBusco)
         }
         finally { cargando = false; StateHasChanged(); }
     }
+
     private async Task HandleValidSubmit()
     {
         if (clienteId is null) return;
@@ -326,6 +410,6 @@ else if (yaBusco)
         };
 
         search.Tipo = (cliente.TipCli ?? "").Trim().ToUpperInvariant();
-        search.Identificacion = ApplyDigitsAndCap(cliente.IdeCli);
+        search.Identificacion = CleanIdentByTipo(cliente.IdeCli);
     }
 }

@@ -112,6 +112,15 @@
     <!-- Custom JavaScript Interop -->
     <script src="js/javaScriptInterop.js"></script>
     <script src="js/resizeInterop.js"></script>
+
+    <script>
+        window.isAppInDarkMode = () => {
+ 
+            const theme = document.documentElement.getAttribute('data-theme-mode');
+
+            return theme === 'dark';
+        }
+    </script>
 </body>
 
 </html>
