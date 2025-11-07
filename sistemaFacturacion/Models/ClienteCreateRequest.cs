@@ -9,4 +9,6 @@ public class ClienteCreateRequest
     [JsonPropertyName("direccion")] public string Direccion { get; set; } = "";
     [JsonPropertyName("telefono")] public string Telefono { get; set; } = "";
     [JsonPropertyName("correoElectronico")] public string CorreoElectronico { get; set; } = "";
+    [JsonPropertyName("fechaCreacion")] public DateTime? FechaCreacion {  get; set; } = DateTime.Now;
+    [JsonPropertyName("estado")] public Boolean? EstadoCliente { get; set; } = false;
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -18,8 +19,11 @@ public class ClientesApiClient : IClientesApiClient
     public ClientesApiClient(HttpClient http) => _http = http;
 
     public async Task<List<ClienteDto>> GetAllAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<ClienteDto>>(Endpoint, _json, ct) ?? new();
+    {
+        var response = await _http.GetFromJsonAsync<List<ClienteApiResponse>>(Endpoint, _json, ct);
 
+        return response?.ToClienteDtoList() ?? new List<ClienteDto>();
+    }
     public async Task<ClienteDto?> GetByIdAsync(int id, CancellationToken ct = default)
         => await _http.GetFromJsonAsync<ClienteDto>($"{Endpoint}/{id}", _json, ct);
 
@@ -72,6 +76,7 @@ public class ClientesApiClient : IClientesApiClient
         {
             var apiShape = JsonSerializer.Deserialize<ClienteByDocApiDto>(body, opts);
             if (apiShape is null) return null;
+
 
             return new ClienteDto
             {

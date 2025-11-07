@@ -1,2 +1,11 @@
-﻿body {
+﻿.metrics .card {
+    height: 100%;
 }
+
+.table td.text-end {
+    white-space: nowrap;
+}
+
+    .table td.text-end .btn {
+        vertical-align: middle;
+    }

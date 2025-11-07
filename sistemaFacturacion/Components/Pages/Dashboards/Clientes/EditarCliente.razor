@@ -1,11 +1,12 @@
 ﻿@page "/dashboards/clientes/editar"
+@page "/dashboards/clientes/editar/{IdFromRoute:int}"
 @using System.ComponentModel.DataAnnotations
+@using System.Linq
 @using CurrieTechnologies.Razor.SweetAlert2
 @using Microsoft.AspNetCore.Authorization
-@using sistemaFacturacion
+@attribute [Authorize]
 @inject IClientesApiClient ClientesApi
 @inject SweetAlertService Swal
-@attribute [Authorize]
 
 <div class="page-header mb-3">
     <h2 class="page-title fs-18">Editar Cliente</h2>
@@ -17,24 +18,29 @@
         <div class="row g-2 align-items-end">
             <div class="col-md-4 col-12">
                 <label class="form-label">Tipo de identificación</label>
-                <InputSelect class="form-select" @bind-Value="search.Tipo">
+                <InputSelect class="form-select" @bind-Value="TipoSeleccionado">
                     <option value="">-- Selecciona --</option>
-                    <option value="Cedula">Cédula</option>
+                    <option value="CEDULA">Cédula</option>
                     <option value="RUC">RUC</option>
-                    <option value="Pasaporte">Pasaporte</option>
+                    <option value="PASAPORTE">Pasaporte</option>
                 </InputSelect>
             </div>
             <div class="col-md-6 col-12">
                 <label class="form-label">Identificación / RUC</label>
-                <InputText class="form-control" @bind-Value="search.Identificacion" placeholder="Ej: 0102030405 / 17900...001" />
+                <InputText class="form-control"
+                           @bind-Value="search.Identificacion"
+                           placeholder="Ej: 0102030405 / 17900...001"
+                           inputmode="numeric"
+                           pattern="[0-9]*"
+                           maxlength="@MaxDocLenStr"
+                           onkeydown="return (event.key>='0' && event.key<='9') || ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].includes(event.key)"
+                           onkeypress="return event.charCode>=48 && event.charCode<=57"
+                           @oninput="e => search.Identificacion = ApplyDigitsAndCap(e.Value?.ToString())" />
             </div>
             <div class="col-md-2 d-grid col-12">
-                <button class="btn btn-primary" @onclick="BuscarCliente" disabled="@cargando">
-                    @(cargando ? "Buscando..." : "Buscar")
-                </button>
+                <button class="btn btn-primary" @onclick="BuscarCliente" disabled="@cargando">@(cargando ? "Buscando..." : "Buscar")</button>
             </div>
         </div>
-
         @if (!string.IsNullOrWhiteSpace(searchError))
         {
             <div class="alert alert-danger mb-0 mt-3">@searchError</div>
@@ -51,20 +57,13 @@ else if (form is not null)
     <div class="card mb-3 border-0 shadow-sm">
         <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
             <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-primary-subtle p-3">
-                    <i class="ri-user-3-line fs-4"></i>
-                </div>
+                <div class="rounded-circle bg-primary-subtle p-3"><i class="ri-user-3-line fs-4"></i></div>
                 <div>
                     <h5 class="mb-0">@form.Nombre @form.Apellido</h5>
-                    <small class="text-muted">
-                        @form.TipoIdentificacion: <strong>@form.Identificacion</strong>
-                    </small>
+                    <small class="text-muted">@form.TipoIdentificacion: <strong>@form.Identificacion</strong></small>
                 </div>
             </div>
-            <div class="d-flex gap-2">
-                <span class="badge text-bg-success">Activo</span>
-                <span class="badge text-bg-light">Clientes</span>
-            </div>
+            <div class="d-flex gap-2"><span class="badge text-bg-success">Activo</span><span class="badge text-bg-light">Clientes</span></div>
         </div>
     </div>
 
@@ -73,7 +72,6 @@ else if (form is not null)
             <EditForm Model="@form" OnValidSubmit="@HandleValidSubmit">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
-
                 <div class="row g-3">
                     <div class="col-md-4 col-12">
                         <label class="form-label">Tipo de identificación</label>
@@ -86,9 +84,7 @@ else if (form is not null)
                         <small class="text-muted">Campo no editable.</small>
                     </div>
                 </div>
-
                 <hr class="my-4" />
-
                 <div class="row g-3">
                     <div class="col-md-6 col-12">
                         <label class="form-label">Nombre</label>
@@ -101,7 +97,6 @@ else if (form is not null)
                         <ValidationMessage For="@(() => form.Apellido)" />
                     </div>
                 </div>
-
                 <div class="row g-3 mt-1">
                     <div class="col-12">
                         <label class="form-label">Dirección</label>
@@ -119,11 +114,8 @@ else if (form is not null)
                         <ValidationMessage For="@(() => form.Correo)" />
                     </div>
                 </div>
-
                 <div class="d-flex mt-4 gap-2">
-                    <button type="submit" class="btn btn-primary" disabled="@guardando">
-                        @(guardando ? "Guardando..." : "Guardar cambios")
-                    </button>
+                    <button type="submit" class="btn btn-primary" disabled="@guardando">@(guardando ? "Guardando..." : "Guardar cambios")</button>
                     <a class="btn btn-light" href="/dashboards/clientes">Volver</a>
                 </div>
             </EditForm>
@@ -136,27 +128,18 @@ else if (yaBusco)
 }
 
 @code {
+    [Parameter] public int? IdFromRoute { get; set; }
+    private int? _loadedFromId;
+
     public class ClienteEditVM
     {
-        // Sólo lectura en UI
-        public string? TipoIdentificacion { get; set; }  // tipCli
-        public string? Identificacion { get; set; }      // ideCli
-
-        // Editables
-        [Required, RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"), StringLength(80)]
-        public string? Nombre { get; set; }              // nomCli
-
-        [Required, RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"), StringLength(80)]
-        public string? Apellido { get; set; }            // apeCli
-
-        [Required, StringLength(150)]
-        public string? Direccion { get; set; }           // dirCli
-
-        [Required, RegularExpression(@"^\d{7,15}$")]
-        public string? Telefono { get; set; }            // telCli
-
-        [Required, EmailAddress]
-        public string? Correo { get; set; }              // corCli
+        public string? TipoIdentificacion { get; set; }
+        public string? Identificacion { get; set; }
+        [Required, RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"), StringLength(80)] public string? Nombre { get; set; }
+        [Required, RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"), StringLength(80)] public string? Apellido { get; set; }
+        [Required, StringLength(150)] public string? Direccion { get; set; }
+        [Required, RegularExpression(@"^\d{7,15}$")] public string? Telefono { get; set; }
+        [Required, EmailAddress] public string? Correo { get; set; }
     }
 
     private class SearchVM { public string? Tipo { get; set; } public string? Identificacion { get; set; } }
@@ -167,156 +150,182 @@ else if (yaBusco)
     private bool cargando = false;
     private bool guardando = false;
     private bool yaBusco = false;
-    private int? clienteId; // idCli para PUT
+    private int? clienteId;
+
+    // --- binding reactivo del tipo para recalcular longitud y recortar ---
+    private string? TipoSeleccionado
+    {
+        get => search.Tipo;
+        set
+        {
+            search.Tipo = (value ?? "").Trim().ToUpperInvariant();
+            search.Identificacion = ApplyDigitsAndCap(search.Identificacion);
+        }
+    }
+
+    private int? MaxDocLen => (search.Tipo ?? "").ToUpperInvariant() switch
+    {
+        "CEDULA" => 10,
+        "RUC" => 13,
+        "PASAPORTE" => null, // sin límite definido
+        _ => null
+    };
+    private string? MaxDocLenStr => MaxDocLen?.ToString();
+
+    private static string DigitsOnly(string? s) => new string((s ?? "").Where(char.IsDigit).ToArray());
+    private string ApplyDigitsAndCap(string? s)
+    {
+        var d = DigitsOnly(s);
+        if (MaxDocLen is int m && d.Length > m) d = d[..m];
+        return d;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IdFromRoute is int rid && rid > 0 && _loadedFromId != rid)
+        {
+            _loadedFromId = rid;
+            await CargarPorId(rid);
+        }
+    }
 
     private async Task BuscarCliente()
     {
-        searchError = null;
-        cargando = true;
-        yaBusco = true;
-        form = null;
-        clienteId = null;
-        StateHasChanged();
+        searchError = null; cargando = true; yaBusco = true; form = null; clienteId = null; StateHasChanged();
 
-        if (string.IsNullOrWhiteSpace(search.Tipo) || string.IsNullOrWhiteSpace(search.Identificacion))
+        if (string.IsNullOrWhiteSpace(search.Tipo))
+        { searchError = "Selecciona el tipo y escribe la identificación."; cargando = false; return; }
+
+        search.Tipo = (search.Tipo ?? "").Trim().ToUpperInvariant();
+        search.Identificacion = ApplyDigitsAndCap(search.Identificacion);
+
+        if (string.IsNullOrWhiteSpace(search.Identificacion) || search.Identificacion.Length < 3)
         {
-            searchError = "Selecciona el tipo y escribe la identificación.";
             cargando = false;
+            await Swal.FireAsync(new SweetAlertOptions { Title = "Muy corto", Text = "Escribe al menos 3 dígitos para buscar.", Icon = SweetAlertIcon.Info });
             return;
         }
-
-        search.Identificacion = new string(search.Identificacion.Where(char.IsDigit).ToArray());
 
         try
         {
             var cliente = await ClientesApi.GetByDocumentoAsync(search.Tipo!, search.Identificacion!);
-
             if (cliente is null)
             {
-
-                string nTipo = (search.Tipo ?? "").Trim().ToUpperInvariant();
-                string nDoc = new string((search.Identificacion ?? "").Where(char.IsDigit).ToArray());
-
+                var nTipo = (search.Tipo ?? "").Trim().ToUpperInvariant();
+                var nDoc = ApplyDigitsAndCap(search.Identificacion);
                 var all = await ClientesApi.GetAllAsync();
-                var sugerencias = all
-                    .Where(c =>
-                        string.Equals((c.TipCli ?? "").Trim(), nTipo, StringComparison.OrdinalIgnoreCase) &&
-                        new string((c.IdeCli ?? "").Where(char.IsDigit).ToArray()).StartsWith(nDoc)
-                    )
-                    .Take(5)
-                    .ToList();
-
+                var sugerencias = all.Where(c => string.Equals((c.TipCli ?? "").Trim(), nTipo, StringComparison.OrdinalIgnoreCase)
+                                              && DigitsOnly(c.IdeCli).StartsWith(nDoc))
+                                     .ToList();
                 if (sugerencias.Count == 0)
                 {
-                    await Swal.FireAsync(new SweetAlertOptions
-                    {
-                        Title = "Sin resultados",
-                        Text = "No se encontró un cliente con esos datos.",
-                        Icon = SweetAlertIcon.Warning
-                    });
+                    await Swal.FireAsync(new SweetAlertOptions { Title = "Sin resultados", Text = "No se encontró un cliente con esos datos.", Icon = SweetAlertIcon.Warning });
                     return;
                 }
 
-                var html = string.Join("<br/>",
-                    sugerencias.Select(s => $"{s.NomCli} {s.ApeCli} — {s.IdeCli}"));
+                var total = sugerencias.Count;
+                var top = sugerencias.Take(15).ToDictionary(
+                    s => DigitsOnly(s.IdeCli),
+                    s => $"{s.NomCli} {s.ApeCli}\n{DigitsOnly(s.IdeCli)}"
+                );
 
-                await Swal.FireAsync(new SweetAlertOptions
+                var pick = await Swal.FireAsync(new SweetAlertOptions
                 {
                     Title = "¿Quisiste decir?",
-                    Html = html,
-                    Icon = SweetAlertIcon.Info
+                    Icon = SweetAlertIcon.Question,
+                    Input = SweetAlertInputType.Radio,
+                    InputOptions = top,
+                    ShowCancelButton = true,
+                    ConfirmButtonText = "Usar selección",
+                    CancelButtonText = "Cancelar",
+                    Width = "600px",
+                    CustomClass = new SweetAlertCustomClass { Popup = "swal2-suggest" },
+                    Html =
+                        "<style>" +
+                        ".swal2-suggest .swal2-html-container{margin:0;padding:0}" +
+                        ".swal2-suggest .swal2-radio{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-height:360px;overflow:auto;padding-right:4px;margin-top:6px}" +
+                        ".swal2-suggest .swal2-radio label{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;border:1px solid #eef0f3;border-radius:10px;background:#fff;margin:0}" +
+                        ".swal2-suggest .swal2-radio input{margin-top:2px}" +
+                        ".swal2-suggest .swal2-radio span{white-space:pre-line;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.2;font-size:0.92rem;word-break:break-word}" +
+                        "</style>" +
+                        (total > top.Count ? $"<div class='text-muted small mt-2'>Mostrando {top.Count} de {total}. Refina la búsqueda para ver más.</div>" : null)
                 });
 
+                if (pick.IsConfirmed && !string.IsNullOrWhiteSpace(pick.Value))
+                {
+                    search.Identificacion = ApplyDigitsAndCap(pick.Value);
+                    await BuscarCliente();
+                }
                 return;
             }
 
-            clienteId = cliente.IdCli;
-            form = new ClienteEditVM
-            {
-                TipoIdentificacion = cliente.TipCli,
-                Identificacion = cliente.IdeCli,
-                Nombre = cliente.NomCli,
-                Apellido = cliente.ApeCli,
-                Direccion = cliente.DirCli,
-                Telefono = cliente.TelCli,
-                Correo = cliente.CorCli
-            };
-
-            await Swal.FireAsync(new SweetAlertOptions
-            {
-                Position = SweetAlertPosition.TopEnd,
-                Icon = SweetAlertIcon.Success,
-                Title = "Cliente cargado",
-                ShowConfirmButton = false,
-                Timer = 1200
-            });
+            MapearForm(cliente);
+            await Swal.FireAsync(new SweetAlertOptions { Position = SweetAlertPosition.TopEnd, Icon = SweetAlertIcon.Success, Title = "Cliente cargado", ShowConfirmButton = false, Timer = 1200 });
         }
         catch (HttpRequestException ex)
         {
-            await Swal.FireAsync(new SweetAlertOptions
-            {
-                Title = "Error al buscar",
-                Html = $"<small>{ex.Message}</small>",
-                Icon = SweetAlertIcon.Error
-            });
+            await Swal.FireAsync(new SweetAlertOptions { Title = "Error al buscar", Html = $"<small>{ex.Message}</small>", Icon = SweetAlertIcon.Error });
         }
-        finally
-        {
-            cargando = false;
-            StateHasChanged();
-        }
+        finally { cargando = false; StateHasChanged(); }
     }
-
     private async Task HandleValidSubmit()
     {
         if (clienteId is null) return;
-
-        var confirm = await Swal.FireAsync(new SweetAlertOptions
-        {
-            Title = "¿Guardar cambios?",
-            Text = "Se actualizarán los datos de contacto del cliente.",
-            Icon = SweetAlertIcon.Question,
-            ShowCancelButton = true,
-            ConfirmButtonText = "Sí, guardar",
-            CancelButtonText = "Cancelar"
-        });
+        var confirm = await Swal.FireAsync(new SweetAlertOptions { Title = "¿Guardar cambios?", Text = "Se actualizarán los datos de contacto del cliente.", Icon = SweetAlertIcon.Question, ShowCancelButton = true, ConfirmButtonText = "Sí, guardar", CancelButtonText = "Cancelar" });
         if (!confirm.IsConfirmed) return;
 
         guardando = true;
-
         try
         {
-            // El API espera: direccion, telefono, correoElectronico
-            var payload = new ClienteContactoUpdate
-            {
-                Direccion = form!.Direccion!,
-                Telefono = form!.Telefono!,
-                CorreoElectronico = form!.Correo!
-            };
-
+            var payload = new ClienteContactoUpdate { Direccion = form!.Direccion!, Telefono = form!.Telefono!, CorreoElectronico = form!.Correo! };
             await ClientesApi.UpdateContactoAsync(clienteId.Value, payload);
-
-            await Swal.FireAsync(new SweetAlertOptions
-            {
-                Position = SweetAlertPosition.TopEnd,
-                Icon = SweetAlertIcon.Success,
-                Title = "Cambios guardados",
-                ShowConfirmButton = false,
-                Timer = 1500
-            });
+            await Swal.FireAsync(new SweetAlertOptions { Position = SweetAlertPosition.TopEnd, Icon = SweetAlertIcon.Success, Title = "Cambios guardados", ShowConfirmButton = false, Timer = 1500 });
         }
         catch (HttpRequestException ex)
         {
-            await Swal.FireAsync(new SweetAlertOptions
-            {
-                Title = "No se pudo guardar",
-                Html = $"<small>{ex.Message}</small>",
-                Icon = SweetAlertIcon.Error
-            });
+            await Swal.FireAsync(new SweetAlertOptions { Title = "No se pudo guardar", Html = $"<small>{ex.Message}</small>", Icon = SweetAlertIcon.Error });
         }
-        finally
+        finally { guardando = false; }
+    }
+
+    private async Task CargarPorId(int id)
+    {
+        cargando = true; searchError = null; form = null; clienteId = null; yaBusco = true;
+        try
         {
-            guardando = false;
+            var cliente = await ClientesApi.GetByIdAsync(id);
+            if (cliente is null || string.IsNullOrWhiteSpace(cliente.NomCli))
+            {
+                var all = await ClientesApi.GetAllAsync();
+                cliente = all.FirstOrDefault(x => x.IdCli == id);
+            }
+            if (cliente is null) { await Swal.FireAsync(new() { Title = "No encontrado", Icon = SweetAlertIcon.Warning }); return; }
+
+            MapearForm(cliente);
+            await Swal.FireAsync(new() { Position = SweetAlertPosition.TopEnd, Icon = SweetAlertIcon.Success, Title = "Cliente cargado", ShowConfirmButton = false, Timer = 1200 });
         }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new() { Title = "Error al buscar", Html = $"<small>{ex.Message}</small>", Icon = SweetAlertIcon.Error });
+        }
+        finally { cargando = false; StateHasChanged(); }
+    }
+
+    private void MapearForm(ClienteDto cliente)
+    {
+        clienteId = cliente.IdCli;
+        form = new ClienteEditVM
+        {
+            TipoIdentificacion = (cliente.TipCli ?? "").Trim().ToUpperInvariant(),
+            Identificacion = cliente.IdeCli,
+            Nombre = cliente.NomCli,
+            Apellido = cliente.ApeCli,
+            Direccion = cliente.DirCli,
+            Telefono = cliente.TelCli,
+            Correo = cliente.CorCli
+        };
+
+        search.Tipo = (cliente.TipCli ?? "").Trim().ToUpperInvariant();
+        search.Identificacion = ApplyDigitsAndCap(cliente.IdeCli);
     }
 }
