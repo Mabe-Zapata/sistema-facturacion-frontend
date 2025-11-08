@@ -1,2 +1,12 @@
-﻿body {
+﻿/* EditarProducto.razor.css */
+@import './CrearProducto.razor.css';
+
+.titulo-form {
+    color: #38bdf8;
+}
+
+.alerta-exito {
+    background-color: rgba(14, 165, 233, 0.15);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    color: #0ea5e9;
 }

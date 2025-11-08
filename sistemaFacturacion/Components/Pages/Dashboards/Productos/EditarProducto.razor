@@ -1,5 +1,118 @@
-﻿<h3>EditarProducto</h3>
+﻿@page "/productos/editar"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+
+<h2 class="titulo-form">Editar producto</h2>
+<p class="descripcion-form">
+    Modifica los datos del producto seleccionado. Solo campos editables: tipo, nombre, descripción y precio.
+</p>
+
+<EditForm Model="@producto" OnValidSubmit="ActualizarProducto">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-grid">
+        <div class="campo">
+            <label for="id">ID del producto</label>
+            <InputText id="id" class="form-control" @bind-Value="producto.IdPro" readonly />
+        </div>
+
+        <div class="campo">
+            <label for="tipo">Tipo de producto</label>
+            <InputText id="tipo" @bind-Value="producto.TipPro" class="form-control" />
+            <ValidationMessage For="@(() => producto.TipPro)" />
+        </div>
+
+        <div class="campo">
+            <label for="nombre">Nombre</label>
+            <InputText id="nombre" @bind-Value="producto.NomPro" class="form-control" />
+            <ValidationMessage For="@(() => producto.NomPro)" />
+        </div>
+
+        <div class="campo descripcion">
+            <label for="descripcion">Descripción</label>
+            <InputTextArea id="descripcion" @bind-Value="producto.DesPro" class="form-control" rows="3" />
+            <ValidationMessage For="@(() => producto.DesPro)" />
+        </div>
+
+        <div class="campo">
+            <label for="precio">Precio ($)</label>
+            <InputNumber id="precio" @bind-Value="producto.PrePro" class="form-control" />
+            <ValidationMessage For="@(() => producto.PrePro)" />
+        </div>
+
+        <div class="campo">
+            <label for="estado">Estado</label>
+            <select id="estado" @bind="producto.EstPro" class="form-control">
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="acciones">
+        <button type="submit" class="btn-guardar">💾 Actualizar producto</button>
+        <button type="button" class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+    </div>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(mensajeExito))
+{
+    <div class="alerta-exito">@mensajeExito</div>
+}
 
 @code {
+    private ProductoModel producto = new();
+    private string? mensajeExito;
 
+    protected override void OnInitialized()
+    {
+        // Mock: datos existentes
+        producto = new ProductoModel
+        {
+            IdPro = "1",           // <-- string para que InputText no se queje
+            TipPro = "Electrónico",
+            NomPro = "Audífonos A12",
+            DesPro = "Airpods Pro con mejor calidad de sonido",
+            PrePro = 4.50m,
+            EstPro = true
+        };
+    }
+
+    // ✅ Firma correcta para OnValidSubmit
+    private async Task ActualizarProducto(EditContext editContext)
+    {
+        // si quieres, puedes verificar editContext.Validate() aquí
+        mensajeExito = $"✅ Producto '{producto.NomPro}' actualizado correctamente.";
+        await Task.CompletedTask;
+    }
+
+    private void Cancelar()
+    {
+        mensajeExito = null;
+        OnInitialized(); // recarga mock
+    }
+
+    public class ProductoModel
+    {
+        // Usa string para que el InputText readonly no requiera conversión
+        public string? IdPro { get; set; }
+
+        [Required(ErrorMessage = "El tipo es obligatorio.")]
+        [StringLength(50, ErrorMessage = "Máximo 50 caracteres.")]
+        public string? TipPro { get; set; }
+
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [StringLength(100, ErrorMessage = "Máximo 100 caracteres.")]
+        public string? NomPro { get; set; }
+
+        [Required(ErrorMessage = "La descripción es obligatoria.")]
+        [StringLength(200, ErrorMessage = "Máximo 200 caracteres.")]
+        public string? DesPro { get; set; }
+
+        [Range(0.1, 9999.99, ErrorMessage = "Debe ingresar un precio válido.")]
+        public decimal PrePro { get; set; }
+
+        public bool EstPro { get; set; }
+    }
 }

@@ -1,5 +1,237 @@
-﻿<h3>ListarProducto</h3>
+﻿@page "/productos/listar"
+@using System.Globalization
+@inject NavigationManager Nav
+
+<h2 class="titulo-lista">Listado de productos</h2>
+<p class="descripcion-lista">Consulta, búsqueda, filtros y acciones rápidas sobre los productos.</p>
+
+<div class="toolbar">
+    <div class="filtros">
+        <div class="filtro">
+            <label for="buscar">Buscar</label>
+            <input id="buscar" class="input" placeholder="Nombre, tipo, descripción o proveedor..."
+                   @bind="filtroTexto" @bind:event="oninput" />
+        </div>
+
+        <div class="filtro">
+            <label for="estado">Estado</label>
+            <select id="estado" class="input" @bind="filtroEstado">
+                <option value="Todos">Todos</option>
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+            </select>
+        </div>
+
+        <div class="filtro">
+            <label for="tam">Tamaño página</label>
+            <select id="tam" class="input" @bind="pageSize">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="acciones">
+        <a class="btn btn-primary" href="/productos/crear">➕ Nuevo producto</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th class="th-id">ID</th>
+                    <th class="th-click" @onclick="() => CambiarOrden(nameof(Producto.NomPro))">Nombre @OrdenIcon(nameof(Producto.NomPro))</th>
+                    <th class="th-click" @onclick="() => CambiarOrden(nameof(Producto.TipPro))">Tipo @OrdenIcon(nameof(Producto.TipPro))</th>
+                    <th>Descripción</th>
+                    <th class="th-click" @onclick="() => CambiarOrden(nameof(Producto.PrePro))">Precio @OrdenIcon(nameof(Producto.PrePro))</th>
+                    <th>Proveedor</th>
+                    <th>Estado</th>
+                    <th class="th-acciones">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (paginaActual.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="sin-datos">No hay productos que coincidan con los filtros.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var p in paginaActual)
+                    {
+                        <tr>
+                            <td>@p.IdPro</td>
+                            <td>@p.NomPro</td>
+                            <td>@p.TipPro</td>
+                            <td class="col-descripcion">@p.DesPro</td>
+                            <td>@p.PrePro.ToString("C2", new CultureInfo("es-EC"))</td>
+                            <td>@p.Proveedor</td>
+                            <td>
+                                @if (p.EstPro)
+                                {
+                                    <span class="badge badge-success">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-muted">Inactivo</span>
+                                }
+                            </td>
+                            <td class="acciones-row">
+                                <button class="btn btn-sm" @onclick="() => Editar(p)">✏ Editar</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => Eliminar(p)">🗑 Eliminar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="paginacion">
+        <button class="btn btn-sm" @onclick="Prev" disabled="@(!PuedePrev)">« Anterior</button>
+        <span class="page-indicator">Página @pagina de @totalPaginas</span>
+        <button class="btn btn-sm" @onclick="Next" disabled="@(!PuedeNext)">Siguiente »</button>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="alerta">@mensaje</div>
+}
 
 @code {
+    // ---------- Modelo (mock) ----------
+    public class Producto
+    {
+        public int IdPro { get; set; }
+        public string TipPro { get; set; } = "";
+        public string NomPro { get; set; } = "";
+        public string DesPro { get; set; } = "";
+        public decimal PrePro { get; set; }
+        public bool EstPro { get; set; }
+        public string Proveedor { get; set; } = "";
+    }
 
+    // ---------- Estado UI ----------
+    private List<Producto> productos = new();
+    private string filtroTexto = "";
+    private string filtroEstado = "Todos";
+    private int pageSize = 10;
+    private int pagina = 1;
+    private string? sortCol = nameof(Producto.NomPro);
+    private bool sortAsc = true;
+
+    private string? mensaje;
+
+    // Colecciones calculadas
+    private List<Producto> filtrados => FiltrarOrdenar(productos);
+    private int totalPaginas => Math.Max(1, (int)Math.Ceiling(filtrados.Count / (double)pageSize));
+    private List<Producto> paginaActual => filtrados.Skip((pagina - 1) * pageSize).Take(pageSize).ToList();
+
+    // Flags de paginación
+    private bool PuedePrev => pagina > 1;
+    private bool PuedeNext => pagina < totalPaginas;
+
+    protected override void OnInitialized()
+    {
+        // ---------- Datos quemados ----------
+        productos = new()
+        {
+            new () { IdPro = 1, TipPro = "Electrónica", NomPro = "Audífonos A12", DesPro = "Inalámbricos, cancelación de ruido", PrePro = 4.50m, EstPro = true,  Proveedor = "TechSound" },
+            new () { IdPro = 2, TipPro = "Hogar",        NomPro = "Taza Crazy Cup", DesPro = "Cerámica 350ml, edición Crazy Cups", PrePro = 2.75m, EstPro = true,  Proveedor = "Crazy Cups" },
+            new () { IdPro = 3, TipPro = "Oficina",      NomPro = "Mouse MX",      DesPro = "Mouse inalámbrico, 1600 DPI",       PrePro = 8.99m, EstPro = true,  Proveedor = "LogiPro" },
+            new () { IdPro = 4, TipPro = "Electrónica",  NomPro = "Teclado K60",   DesPro = "Mecánico, retroiluminado",          PrePro = 12.40m,EstPro = false, Proveedor = "KeyFactory" },
+            new () { IdPro = 5, TipPro = "Gamer",        NomPro = "Pad XL",        DesPro = "Alfombrilla extendida 90x30cm",     PrePro = 3.20m, EstPro = true,  Proveedor = "GxGear" },
+            new () { IdPro = 6, TipPro = "Salud",        NomPro = "Botella H2O",   DesPro = "1L libre de BPA",                    PrePro = 1.80m, EstPro = false, Proveedor = "BlueLife" },
+            new () { IdPro = 7, TipPro = "ElectroHogar", NomPro = "Licuadora X1",  DesPro = "600W vaso vidrio",                   PrePro = 22.00m,EstPro = true,  Proveedor = "HomeMax" },
+            new () { IdPro = 8, TipPro = "Oficina",      NomPro = "Silla Ergo",    DesPro = "Ergonómica malla",                   PrePro = 45.90m,EstPro = true,  Proveedor = "OfficePro" },
+            new () { IdPro = 9, TipPro = "Gamer",        NomPro = "Headset RGB",   DesPro = "7.1 virtual mic retráctil",          PrePro = 19.99m,EstPro = true,  Proveedor = "GxGear" },
+            new () { IdPro = 10,TipPro = "Electrónica",  NomPro = "Cargador 20W",  DesPro = "USB-C PD, compacto",                 PrePro = 5.10m, EstPro = false, Proveedor = "PowerNow" },
+        };
+    }
+
+    // ---------- Acciones ----------
+    private void Editar(Producto p)
+    {
+        // Si luego manejas ID por querystring: Nav.NavigateTo($"/productos/editar/{p.IdPro}");
+        Nav.NavigateTo("/productos/editar");
+    }
+
+    private void Eliminar(Producto p)
+    {
+        productos.Remove(p);
+        mensaje = $"🗑 Producto '{p.NomPro}' eliminado del listado (simulado).";
+        // Reset de página si se vacía la actual
+        if ((pagina - 1) * pageSize >= filtrados.Count && pagina > 1)
+            pagina--;
+    }
+
+    private void Prev()
+    {
+        if (PuedePrev) pagina--;
+    }
+
+    private void Next()
+    {
+        if (PuedeNext) pagina++;
+    }
+
+    // ---------- Filtrado / Orden ----------
+    private void CambiarOrden(string columna)
+    {
+        if (sortCol == columna) sortAsc = !sortAsc;
+        else { sortCol = columna; sortAsc = true; }
+    }
+
+    private MarkupString OrdenIcon(string columna)
+    {
+        if (sortCol != columna) return (MarkupString)@"<span class=""orden"">↕</span>";
+        return sortAsc
+            ? (MarkupString)@"<span class=""orden"">↑</span>"
+            : (MarkupString)@"<span class=""orden"">↓</span>";
+    }
+
+    private List<Producto> FiltrarOrdenar(List<Producto> origen)
+    {
+        IEnumerable<Producto> q = origen;
+
+        // Filtro texto
+        if (!string.IsNullOrWhiteSpace(filtroTexto))
+        {
+            var txt = filtroTexto.Trim().ToLowerInvariant();
+            q = q.Where(p =>
+                p.NomPro.ToLowerInvariant().Contains(txt) ||
+                p.TipPro.ToLowerInvariant().Contains(txt) ||
+                p.DesPro.ToLowerInvariant().Contains(txt) ||
+                p.Proveedor.ToLowerInvariant().Contains(txt));
+        }
+
+        // Filtro estado
+        q = filtroEstado switch
+        {
+            "Activo" => q.Where(p => p.EstPro),
+            "Inactivo" => q.Where(p => !p.EstPro),
+            _ => q
+        };
+
+        // Orden
+        Func<Producto, object> key = sortCol switch
+        {
+            nameof(Producto.NomPro) => p => p.NomPro,
+            nameof(Producto.TipPro) => p => p.TipPro,
+            nameof(Producto.PrePro) => p => p.PrePro,
+            _ => p => p.IdPro
+        };
+        q = sortAsc ? q.OrderBy(key) : q.OrderByDescending(key);
+
+        // Reinicia página si se sale de rango al cambiar filtros
+        if ((pagina - 1) * pageSize >= q.Count() && pagina > 1)
+            pagina = 1;
+
+        return q.ToList();
+    }
 }
