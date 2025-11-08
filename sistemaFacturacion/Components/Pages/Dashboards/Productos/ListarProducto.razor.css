@@ -1,4 +1,27 @@
-﻿:root {
+﻿/* ===========================================================
+   🎨 Paleta base (modo claro por defecto)
+   =========================================================== */
+:root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --text: #1f2937;
+    --accent: #0ea5e9;
+    --accent-2: #38bdf8;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --border: #e5e7eb;
+    --hover: #f3f4f6;
+    --badge-muted-bg: #f1f5f9;
+    --badge-muted-text: #374151;
+}
+
+/* ===========================================================
+   🌙 Modo oscuro
+   =========================================================== */
+html[data-theme-mode="dark"],
+body[data-theme-mode="dark"],
+.dark {
     --bg: #1e1e2f;
     --card: #2b2b3c;
     --muted: #b0b0b0;
@@ -8,6 +31,17 @@
     --success: #22c55e;
     --danger: #ef4444;
     --border: #3a3a4a;
+    --hover: rgba(255,255,255,.03);
+    --badge-muted-bg: rgba(255,255,255,.08);
+    --badge-muted-text: #cfcfe1;
+}
+
+/* ===========================================================
+   🧱 Estructura general
+   =========================================================== */
+body {
+    background: var(--bg);
+    color: var(--text);
 }
 
 .titulo-lista {
@@ -23,6 +57,9 @@
     font-size: .95rem;
 }
 
+/* ===========================================================
+   🔍 Toolbar y filtros
+   =========================================================== */
 .toolbar {
     display: flex;
     gap: 1rem;
@@ -50,12 +87,13 @@
     }
 
 .input {
-    background: #1c1c2b;
+    background: var(--card);
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: .5rem .6rem;
     min-width: 220px;
+    transition: border-color .2s, box-shadow .2s;
 }
 
     .input:focus {
@@ -64,6 +102,9 @@
         box-shadow: 0 0 0 2px rgba(14,165,233,.25);
     }
 
+/* ===========================================================
+   🧩 Botones
+   =========================================================== */
 .btn {
     background: #444;
     color: #ddd;
@@ -71,10 +112,20 @@
     padding: .55rem .9rem;
     border-radius: 8px;
     cursor: pointer;
+    transition: background .2s, color .2s;
 }
 
     .btn:hover {
         background: #555;
+    }
+
+html[data-theme-mode="light"] .btn {
+    background: #e5e7eb;
+    color: #111;
+}
+
+    html[data-theme-mode="light"] .btn:hover {
+        background: #d1d5db;
     }
 
 .btn-sm {
@@ -91,14 +142,17 @@
     }
 
 .btn-danger {
-    background: #b3261e;
+    background: var(--danger);
     color: #fff;
 }
 
     .btn-danger:hover {
-        background: #cc3a31;
+        background: #b91c1c;
     }
 
+/* ===========================================================
+   🪟 Card y tabla
+   =========================================================== */
 .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -118,10 +172,11 @@
 }
 
     .tabla thead {
-        background: #232336;
+        background: var(--hover);
     }
 
-    .tabla th, .tabla td {
+    .tabla th,
+    .tabla td {
         border-bottom: 1px solid var(--border);
         padding: .7rem .8rem;
         text-align: left;
@@ -129,7 +184,7 @@
     }
 
     .tabla tbody tr:hover {
-        background: rgba(255,255,255,.03);
+        background: var(--hover);
     }
 
 .th-click {
@@ -152,6 +207,9 @@
     text-overflow: ellipsis;
 }
 
+/* ===========================================================
+   🏷️ Badges
+   =========================================================== */
 .badge {
     display: inline-block;
     padding: .15rem .5rem;
@@ -166,11 +224,14 @@
 }
 
 .badge-muted {
-    background: rgba(255,255,255,.08);
+    background: var(--badge-muted-bg);
     border: 1px solid var(--border);
-    color: #cfcfe1;
+    color: var(--badge-muted-text);
 }
 
+/* ===========================================================
+   ⚙️ Acciones y paginación
+   =========================================================== */
 .acciones-row {
     display: flex;
     gap: .5rem;
@@ -183,6 +244,7 @@
     gap: .8rem;
     padding: .8rem;
     border-top: 1px solid var(--border);
+    background: var(--card);
 }
 
 .page-indicator {
@@ -195,6 +257,9 @@
     margin-left: .25rem;
 }
 
+/* ===========================================================
+   🧾 Mensajes y estados
+   =========================================================== */
 .sin-datos {
     text-align: center;
     color: var(--muted);
@@ -208,4 +273,42 @@
     color: var(--accent);
     padding: .7rem 1rem;
     border-radius: 10px;
+}
+
+
+/* Ajusta contraste en modo oscuro */
+html[data-theme-mode="dark"] .tabla th,
+html[data-theme-mode="dark"] .tabla td,
+.dark .tabla th,
+.dark .tabla td {
+    color: #ffffff !important;
+}
+
+/* Encabezados un poco más suaves */
+html[data-theme-mode="dark"] .tabla thead th {
+    color: #e5e7eb !important;
+    background: #232336 !important;
+}
+
+
+/* ===========================================================
+   📱 Responsivo
+   =========================================================== */
+@media (max-width: 992px) {
+    .filtros {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filtro {
+        width: 100%;
+    }
+
+    .input {
+        width: 100%;
+    }
+
+    .th-acciones {
+        width: auto;
+    }
 }

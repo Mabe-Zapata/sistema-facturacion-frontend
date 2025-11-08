@@ -1,4 +1,5 @@
-﻿@page "/productos/listar"
+﻿@page "/dashboards/productos/listar"
+
 @using System.Globalization
 @inject NavigationManager Nav
 
@@ -158,7 +159,7 @@
     private void Editar(Producto p)
     {
         // Si luego manejas ID por querystring: Nav.NavigateTo($"/productos/editar/{p.IdPro}");
-        Nav.NavigateTo("/productos/editar");
+        Nav.NavigateTo("dashboards/productos/editar");
     }
 
     private void Eliminar(Producto p)

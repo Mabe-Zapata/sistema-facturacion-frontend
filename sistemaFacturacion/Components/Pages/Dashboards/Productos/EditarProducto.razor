@@ -1,11 +1,11 @@
-﻿@page "/productos/editar"
+﻿@page "/dashboards/productos/editar"
+@page "/dashboards/productos/editar/{id:int}"
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Forms
 
 <h2 class="titulo-form">Editar producto</h2>
-<p class="descripcion-form">
-    Modifica los datos del producto seleccionado. Solo campos editables: tipo, nombre, descripción y precio.
-</p>
+<p class="descripcion-form">Modifica los datos del producto seleccionado. Solo campos editables: tipo, nombre, descripción y precio.</p>
 
 <EditForm Model="@producto" OnValidSubmit="ActualizarProducto">
     <DataAnnotationsValidator />
@@ -62,27 +62,42 @@
 }
 
 @code {
+    [Parameter] public int? id { get; set; }
+
     private ProductoModel producto = new();
     private string? mensajeExito;
 
     protected override void OnInitialized()
     {
-        // Mock: datos existentes
-        producto = new ProductoModel
+        // Mock: si llegó un id por la ruta, simula carga; si no, usa demo por defecto
+        if (id is not null)
         {
-            IdPro = "1",           // <-- string para que InputText no se queje
-            TipPro = "Electrónico",
-            NomPro = "Audífonos A12",
-            DesPro = "Airpods Pro con mejor calidad de sonido",
-            PrePro = 4.50m,
-            EstPro = true
-        };
+            producto = new ProductoModel
+            {
+                IdPro = id.ToString(),
+                TipPro = "Electrónico",
+                NomPro = "Audífonos A12",
+                DesPro = "Airpods Pro con mejor calidad de sonido",
+                PrePro = 4.50m,
+                EstPro = true
+            };
+        }
+        else
+        {
+            producto = new ProductoModel
+            {
+                IdPro = "1",
+                TipPro = "Electrónico",
+                NomPro = "Audífonos A12",
+                DesPro = "Airpods Pro con mejor calidad de sonido",
+                PrePro = 4.50m,
+                EstPro = true
+            };
+        }
     }
 
-    // ✅ Firma correcta para OnValidSubmit
-    private async Task ActualizarProducto(EditContext editContext)
+    private async Task ActualizarProducto(EditContext _)
     {
-        // si quieres, puedes verificar editContext.Validate() aquí
         mensajeExito = $"✅ Producto '{producto.NomPro}' actualizado correctamente.";
         await Task.CompletedTask;
     }
@@ -90,12 +105,11 @@
     private void Cancelar()
     {
         mensajeExito = null;
-        OnInitialized(); // recarga mock
+        OnInitialized();
     }
 
     public class ProductoModel
     {
-        // Usa string para que el InputText readonly no requiera conversión
         public string? IdPro { get; set; }
 
         [Required(ErrorMessage = "El tipo es obligatorio.")]
