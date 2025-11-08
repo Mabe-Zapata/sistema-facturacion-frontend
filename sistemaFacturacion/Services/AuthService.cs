@@ -1,7 +1,9 @@
-﻿using System.Net.Http;
+﻿using Microsoft.AspNetCore.Components.Authorization;
+using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components.Authorization;
+using static System.Net.WebRequestMethods;
 
 public class AuthService
 {
@@ -9,6 +11,7 @@ public class AuthService
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly SessionService _sessionService;
 
+    public sealed record RecoverPasswordResult(bool Success, bool NotFound, string? Message);
     public AuthService(HttpClient httpClient,
                        AuthenticationStateProvider authenticationStateProvider,
                        SessionService sessionService)
@@ -48,6 +51,31 @@ public class AuthService
             Console.WriteLine($"Error completo: {ex}");
             throw;
         }
+    }
+
+    public async Task<RecoverPasswordResult> RecoverPasswordAsync(string email, CancellationToken ct = default)
+    {
+        using var resp = await _httpClient.PostAsJsonAsync("api/auth/recover-password", new { email }, ct);
+
+        if (resp.IsSuccessStatusCode)
+            return new RecoverPasswordResult(true, false, null);
+
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            var txt = await resp.Content.ReadAsStringAsync(ct);
+            var msg = string.IsNullOrWhiteSpace(txt) ? "Usuario no encontrado." : txt;
+            return new RecoverPasswordResult(false, true, msg);
+        }
+
+        var body = await resp.Content.ReadAsStringAsync(ct);
+        var fallback = string.IsNullOrWhiteSpace(body) ? "No se pudo procesar la solicitud." : body;
+        return new RecoverPasswordResult(false, false, fallback);
+    }
+
+    public async Task<bool> SendPasswordResetEmailAsync(string email, CancellationToken ct = default)
+    {
+        var r = await RecoverPasswordAsync(email, ct);
+        return r.Success; 
     }
 
     public async Task LogoutAsync()
