@@ -1,43 +1,37 @@
-﻿/* --- Fondo claro SOLO para la vista de login --- */
-.authentication-background {
+﻿.authentication-background {
     position: relative;
-    min-height: 100vh; /* asegura alto para las capas */
+    min-height: 100vh;
     overflow: hidden;
 }
 
-.authentication-background .auth-bg-wrapper {
-    position: absolute;
-    inset: 0;
-    background: #eefbf8;
-    z-index: 0; /* por detrás del contenido */
+.auth-bg-wrapper {
+    position: relative;
+    min-height: 100vh;
 }
 
-/* Mantén la imagen, pero deja que se vea el color claro */
-.authentication-background .authentication-basic-background {
+.authentication-basic-background {
     position: absolute;
     inset: 0;
-    z-index: 1; /* sobre el color */
+    z-index: 0;
 }
 
-    .authentication-background .authentication-basic-background img {
+    .authentication-basic-background img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        opacity: 0.18; /* ajusta 0.10–0.30 según gusto */
-        pointer-events: none;
-        user-select: none;
+        opacity: 0.3;
     }
 
-/* Contenido del formulario por encima de todo */
-.authentication-background .container,
-.authentication-background .authentication {
-    position: relative;
-    z-index: 2;
+#login-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
 }
 
-/* Opcional: en pantallas pequeñas asegura altura completa */
-@media (max-width: 576px) {
-    .authentication-background {
-        min-height: 100dvh;
-    }
+.container {
+    position: relative;
+    z-index: 2;
 }

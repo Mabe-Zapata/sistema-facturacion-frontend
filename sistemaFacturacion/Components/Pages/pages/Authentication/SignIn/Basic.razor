@@ -2,111 +2,95 @@
 @page "/index"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components
+
 @layout Components.Layout.CustomLayout
 @attribute [AllowAnonymous]
+@inject IJSRuntime JS
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
+@implements IAsyncDisposable
 
 <div class="authentication-background">
     @if (!_isCheckingAuth)
-{
+    {
         <div class="auth-bg-wrapper">
-        <div class="authentication-basic-background">
-            <img src="../assets/images/media/backgrounds/9.png" alt="">
-        </div>
+            <div class="authentication-basic-background">
+                <img src="../assets/images/media/backgrounds/9.png" alt="">
+            </div>
 
-        <div class="container">
-            <div class="row justify-content-center align-items-center authentication authentication-basic h-100">
-                <div class="col-xxl-4 col-xl-5 col-lg-6 col-md-6 col-sm-8 col-12">
-                    <div class="card custom-card my-4 border-0">
-                        <div class="card-body p-sm-5 p-4">
-                            <div class="mb-4">
-                                <a href="/index">
-                                    <img src="../assets/images/brand-logos/toggle-logo.png" alt="logo" class="desktop-dark">
-                                </a>
-                            </div>
-                            <div>
-                                <h4 class="fw-semibold mb-1">Hi, Welcome back!</h4>
-                                <p class="text-muted fw-normal mb-4">Please enter your credentials</p>
-                            </div>
+            <div id="login-bg"></div>
+            <div class="container">
+                <div class="row justify-content-center align-items-center authentication authentication-basic h-100">
+                    <div class="col-xxl-4 col-xl-5 col-lg-6 col-md-6 col-sm-8 col-12">
+                        <div class="card custom-card my-4 border-0">
+                            <div class="card-body p-sm-5 p-4">
+                                <div class="mb-4">
+                                    <a href="/index">
+                                        <img src="../assets/images/brand-logos/toggle-logo.png" alt="logo" class="desktop-dark">
+                                    </a>
+                                </div>
+                                <div>
+                                    <h4 class="fw-semibold mb-1">Hi, Welcome back!</h4>
+                                    <p class="text-muted fw-normal mb-4">Please enter your credentials</p>
+                                </div>
 
-                            <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
-                                <DataAnnotationsValidator />
-                                <div class="row gy-3">
-                                    <div class="col-xl-12">
-                                        <label for="signin-email" class="form-label text-default">Email</label>
-                                        <InputText @bind-Value="loginModel.Username" type="text" class="form-control" id="signin-email" placeholder="Enter Email" />
-                                        <ValidationMessage For="@(() => loginModel.Username)" />
-                                    </div>
-                                    <div class="col-xl-12 mb-2">
-                                        <label for="signin-password" class="form-label text-default d-block">Password</label>
-                                        <div class="position-relative">
-                                            <PasswordToggle @bind-Password="loginModel.Password" />
-                                            <ValidationMessage For="@(() => loginModel.Password)" />
+                                <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+                                    <DataAnnotationsValidator />
+                                    <div class="row gy-3">
+                                        <div class="col-xl-12">
+                                            <label for="signin-email" class="form-label text-default">Email</label>
+                                            <InputText @bind-Value="loginModel.Username" type="text" class="form-control" id="signin-email" placeholder="Enter Email" />
+                                            <ValidationMessage For="@(() => loginModel.Username)" />
                                         </div>
-                                        <div class="mt-2">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1" checked>
-                                                <label class="form-check-label" for="defaultCheck1">
-                                                    Remember me
-                                                </label>
-                                                <a href="/resetPassword" class="link-danger fw-medium fs-12 float-end">Forget password ?</a>
+                                        <div class="col-xl-12 mb-2">
+                                            <label for="signin-password" class="form-label text-default d-block">Password</label>
+                                            <div class="position-relative">
+                                                <PasswordToggle @bind-Password="loginModel.Password" />
+                                                <ValidationMessage For="@(() => loginModel.Password)" />
+                                            </div>
+                                            <div class="mt-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="" id="defaultCheck1" checked>
+                                                    <label class="form-check-label" for="defaultCheck1">
+                                                        Remember me
+                                                    </label>
+                                                    <a href="/resetPassword" class="link-danger fw-medium fs-12 float-end">Forget password ?</a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                @if (!string.IsNullOrEmpty(errorMessage))
-                                {
-                                    <div class="alert alert-danger mt-2">@errorMessage</div>
-                                }
+                                    @if (!string.IsNullOrEmpty(errorMessage))
+                                    {
+                                        <div class="alert alert-danger mt-2">@errorMessage</div>
+                                    }
 
-                                <div class="d-grid mt-3">
-                                    <button type="submit" class="btn btn-primary" disabled="@_isLoggingIn">
-                                        @if (_isLoggingIn)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                            <span>Signing In...</span>
-                                        }
-                                        else
-                                        {
-                                            <span>Sign In</span>
-                                        }
-                                    </button>
-                                </div>
-                            </EditForm>
-                            <div class="authentication-barrier my-3 text-center">
-                                <span class="op-4 fs-13">OR</span>
-                            </div>
-                            <div class="d-grid mb-3">
-                                <button class="btn btn-white btn-w-lg d-flex align-items-center justify-content-center flex-fill mb-3 border">
-                                    <span class="avatar avatar-xs">
-                                        <img src="../assets/images/media/apps/google.png" alt="">
-                                    </span>
-                                    <span class="lh-1 fs-13 text-default fw-medium ms-2">Signup with Google</span>
-                                </button>
-                                <button class="btn btn-white btn-w-lg d-flex align-items-center justify-content-center flex-fill border">
-                                    <span class="avatar avatar-xs flex-shrink-0">
-                                        <img src="../assets/images/media/apps/facebook.png" alt="">
-                                    </span>
-                                    <span class="lh-1 fs-13 text-default fw-medium ms-2">Signup with Facebook</span>
-                                </button>
-                            </div>
-                            <div class="fw-medium mt-3 text-center">
-                                Dont have an account? <a href="/register" class="text-primary">Sign Up</a>
+                                    <div class="d-grid mt-3">
+                                        <button type="submit" class="btn btn-primary" disabled="@_isLoggingIn">
+                                            @if (_isLoggingIn)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                <span>Signing In...</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Sign In</span>
+                                            }
+                                        </button>
+                                    </div>
+                                </EditForm>
                             </div>
                         </div>
                     </div>
                 </div>
-                </div>
             </div>
         </div>
-
     }
     else
     {
-        <!-- Pantalla de carga mientras verifica autenticación -->
         <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
             <div class="text-center">
                 <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
@@ -123,22 +107,76 @@
     private string? errorMessage;
     private bool _isCheckingAuth = true;
     private bool _isLoggingIn = false;
+    private bool _particlesInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Verificar si el usuario ya está autenticado
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            // Usuario ya autenticado, redirigir al dashboard
             NavigationManager.NavigateTo("/dashboard/admin", replace: true);
             return;
         }
 
-        // Usuario no autenticado, mostrar formulario de login
         _isCheckingAuth = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_isCheckingAuth || _particlesInitialized) return;
+
+        // Reintentar hasta 10 veces (porque los módulos ES6 pueden tardar en cargar)
+        for (int attempt = 1; attempt <= 10; attempt++)
+        {
+            try
+            {
+                await Task.Delay(attempt * 150); // 150ms, 300ms, 450ms, etc.
+
+                // Verificar disponibilidad de particleFunctions
+                var functionsReady = await JS.InvokeAsync<bool>("eval",
+                    "typeof window.particleFunctions?.mountParticlesBG === 'function'");
+
+                if (!functionsReady)
+                {
+                    Console.WriteLine($"⚠️ Intento {attempt}/10: particleFunctions.mountParticlesBG no disponible");
+
+                    if (attempt == 10)
+                    {
+                        Console.WriteLine("❌ DIAGNÓSTICO:");
+                        var tsParticlesExists = await JS.InvokeAsync<bool>("eval", "typeof window.tsParticles !== 'undefined'");
+                        var pfExists = await JS.InvokeAsync<bool>("eval", "typeof window.particleFunctions !== 'undefined'");
+
+                        Console.WriteLine($"   - window.tsParticles: {tsParticlesExists}");
+                        Console.WriteLine($"   - window.particleFunctions: {pfExists}");
+                        Console.WriteLine("💡 Revisa la consola del navegador para errores del módulo ES6");
+                    }
+                    continue;
+                }
+
+                // Verificar que el elemento existe
+                var elementExists = await JS.InvokeAsync<bool>("eval",
+                    "document.getElementById('login-bg') !== null");
+
+                if (!elementExists)
+                {
+                    Console.WriteLine($"⚠️ Intento {attempt}/10: Elemento #login-bg no encontrado");
+                    continue;
+                }
+
+                Console.WriteLine($"🚀 Intento {attempt}: Montando partículas en #login-bg...");
+                await JS.InvokeVoidAsync("particleFunctions.mountParticlesBG", "login-bg");
+
+                _particlesInitialized = true;
+                Console.WriteLine($"✅ Partículas inicializadas exitosamente (intento {attempt})");
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error intento {attempt}/10: {ex.Message}");
+            }
+        }
     }
 
     private async Task HandleLogin()
@@ -152,7 +190,7 @@
 
             if (success)
             {
-                NavigationManager.NavigateTo("/dashboard/sales", forceLoad: true);
+                NavigationManager.NavigateTo("/dashboard/admin", forceLoad: true);
             }
             else
             {
@@ -160,11 +198,25 @@
                 _isLoggingIn = false;
             }
         }
-        catch (Exception ex)
+        catch
         {
             errorMessage = "Error de conexión. Inténtelo de nuevo.";
             _isLoggingIn = false;
-            Console.WriteLine($"Error en login: {ex.Message}");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (!_particlesInitialized) return;
+
+        try
+        {
+            await JS.InvokeVoidAsync("window.particleFunctions.unmountParticlesBG", "login-bg");
+            Console.WriteLine("✅ Particles desmontadas correctamente");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error unmounting particles: {ex.Message}");
         }
     }
 }

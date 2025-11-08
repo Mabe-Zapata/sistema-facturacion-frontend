@@ -106,6 +106,14 @@
     <!-- CUSTOM JS -->
     <script src="assets/js/custom.js"></script>
 
+    <!-- tsParticles Manager -->
+    <script src="assets/libs/tsparticles-engine/tsparticles.engine.min.js"></script>
+    <script src="assets/libs/tsparticles-slim/tsparticles.slim.min.js"></script>
+    <script src="assets/libs/tsparticles-slim/tsparticles.slim.bundle.min.js"></script>
+    <script type="module" src="assets/js/ui/effects/particles/index.js"></script>
+
+    <script src="assets/js/interop.js"></script>
+
     <!-- Blazor WebAssembly JS -->
     <script src="_framework/blazor.webassembly.js"></script>
 
@@ -113,14 +121,49 @@
     <script src="js/javaScriptInterop.js"></script>
     <script src="js/resizeInterop.js"></script>
 
+
     <script>
         window.isAppInDarkMode = () => {
- 
+
             const theme = document.documentElement.getAttribute('data-theme-mode');
 
             return theme === 'dark';
         }
     </script>
+
+    <script>
+        (function () {
+            try {
+                var raw = localStorage.getItem('app:state:v1');
+                if (!raw) return;
+                var s = JSON.parse(raw) || {};
+                var html = document.documentElement, st = html.style;
+                var setAttr = (k, v) => { if (v) html.setAttribute(k, v); };
+
+                setAttr('dir', s.Direction);
+                setAttr('data-nav-layout', s.NavigationStyles);
+                setAttr('data-vertical-style', s.LayoutStyles);
+                setAttr('data-nav-style', s.MenuStyles);
+                setAttr('data-theme-mode', s.ColorTheme);
+                setAttr('data-header-styles', s.HeaderColor);
+                setAttr('data-menu-styles', s.MenuColor);
+                setAttr('data-page-style', s.PageStyles);
+                setAttr('data-width', s.WidthStyles);
+                setAttr('data-menu-position', s.MenuPosition);
+                setAttr('data-header-position', s.HeaderPosition);
+                setAttr('data-bg-img', s.BackgroundImage);
+
+                if (s.ThemePrimary) st.setProperty('--primary-rgb', s.ThemePrimary);
+                if (s.ThemeBackground) st.setProperty('--body-bg-rgb', s.ThemeBackground);
+                if (s.ThemeBackground1) {
+                    st.setProperty('--body-bg-rgb2', s.ThemeBackground1);
+                    st.setProperty('--form-control-bg', 'rgb(' + s.ThemeBackground1 + ')');
+                    st.setProperty('--gray-3', 'rgb(' + s.ThemeBackground1 + ')');
+                }
+            } catch { }
+        })();
+    </script>
 </body>
 
 </html>
+

@@ -14,7 +14,7 @@
      {
         /* Usa width/height en lugar de transform para mejor calidad */
         width: auto;
-        height: 200px; /* Ajusta este valor según necesites */
+        height: 150px; /* Ajusta este valor según necesites */
         max-width: none; /* Evita restricciones */
         object-fit: contain; /* Mantiene proporciones sin distorsión */
         image-rendering: -webkit-optimize-contrast; /* Mejora nitidez en Chrome */
@@ -56,7 +56,7 @@
 
 .header-element .horizontal-logo .header-logo .desktop-logo,
 .header-element .horizontal-logo .header-logo .desktop-dark {
-    transform: scale(4.6); // Reducido de 2.6
+    transform: scale(3.6); // Reducido de 2.6
     transform-origin: left center;
     will-change: transform;
     backface-visibility: hidden; // Mejora rendimiento
