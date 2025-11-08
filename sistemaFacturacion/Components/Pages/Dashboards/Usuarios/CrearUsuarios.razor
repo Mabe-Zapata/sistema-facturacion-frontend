@@ -1,5 +1,74 @@
-﻿<h3>CrearUsuarios</h3>
+﻿@page "/dashboards/usuarios/crear"
+@using System.ComponentModel.DataAnnotations
+
+<div class="page-header mb-4">
+    <h1 class="page-title fw-semibold fs-20">Crear Usuario</h1>
+    <p class="text-muted fs-13">Formulario para registrar un nuevo usuario en el sistema</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <EditForm Model="@usuario" OnValidSubmit="@GuardarUsuario">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Nombre</label>
+                    <InputText class="form-control" @bind-Value="usuario.NomUsu" placeholder="Ingrese el nombre" />
+                    <ValidationMessage For="@(() => usuario.NomUsu)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Apellido</label>
+                    <InputText class="form-control" @bind-Value="usuario.ApeUsu" placeholder="Ingrese el apellido" />
+                    <ValidationMessage For="@(() => usuario.ApeUsu)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Correo</label>
+                    <InputText class="form-control" @bind-Value="usuario.CorUsu" placeholder="Ingrese el correo electrónico" />
+                    <ValidationMessage For="@(() => usuario.CorUsu)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Teléfono</label>
+                    <InputText class="form-control" @bind-Value="usuario.TelUsu" placeholder="Ingrese el teléfono" />
+                    <ValidationMessage For="@(() => usuario.TelUsu)" />
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary px-4">Guardar</button>
+                <a href="/dashboards/usuarios" class="btn btn-secondary px-4">Cancelar</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
 
 @code {
+    private UsuarioModel usuario = new();
 
+    private void GuardarUsuario()
+    {
+        // Aquí se conectará con el servicio o API para guardar el usuario
+        Console.WriteLine($"Usuario guardado: {usuario.NomUsu} {usuario.ApeUsu}");
+    }
+
+    public class UsuarioModel
+    {
+        [Required(ErrorMessage = "El nombre es obligatorio")]
+        public string NomUsu { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El apellido es obligatorio")]
+        public string ApeUsu { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El correo es obligatorio")]
+        [EmailAddress(ErrorMessage = "Formato de correo inválido")]
+        public string CorUsu { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El teléfono es obligatorio")]
+        [RegularExpression(@"^\d{7,15}$", ErrorMessage = "Debe tener entre 7 y 15 dígitos")]
+        public string TelUsu { get; set; } = string.Empty;
+    }
 }

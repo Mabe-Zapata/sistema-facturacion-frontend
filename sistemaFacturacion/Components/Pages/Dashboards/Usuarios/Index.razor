@@ -1,4 +1,174 @@
-﻿@page "/dashboard/usuarios"
+﻿@page "/dashboards/usuarios"
+@using Microsoft.AspNetCore.Components
 
-<h1>Gestión de Usuarios</h1>
-<p>Panel para administración de cuentas, roles y permisos.</p>
+<div class="page-header mb-4">
+    <h1 class="page-title fw-semibold fs-20">Gestión de Usuarios</h1>
+    <p class="text-muted fs-13">Panel general · creación, edición y listado de usuarios</p>
+</div>
+
+<!-- Accesos rápidos -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-4">
+        <a href="/dashboards/usuarios/crear" class="text-decoration-none">
+            <div class="card h-100 shadow-sm border-0 hover-scale">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-3 bg-primary-subtle">
+                        <i class="ri-user-add-line fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Crear usuario</h5>
+                        <small class="text-muted">Registrar un nuevo usuario</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-4">
+        <a href="/dashboards/usuarios/editar" class="text-decoration-none">
+            <div class="card h-100 shadow-sm border-0 hover-scale">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-3 bg-warning-subtle">
+                        <i class="ri-user-settings-line fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Editar usuario</h5>
+                        <small class="text-muted">Actualizar datos existentes</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-4">
+        <a href="/dashboards/usuarios/listar" class="text-decoration-none">
+            <div class="card h-100 shadow-sm border-0 hover-scale">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-3 bg-success-subtle">
+                        <i class="ri-file-list-3-line fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Listar usuarios</h5>
+                        <small class="text-muted">Búsqueda y filtros</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- KPIs rápidos -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Total usuarios</div>
+                <div class="fs-3 fw-semibold">642</div>
+                <div class="text-success fs-12">▲ +2.3% vs 30 días</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Usuarios activos</div>
+                <div class="fs-3 fw-semibold">587</div>
+                <div class="text-success fs-12">▲ +1.5%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Usuarios nuevos (30d)</div>
+                <div class="fs-3 fw-semibold">22</div>
+                <div class="text-success fs-12">▲ +3 nuevos</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla rápida de últimos registros -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent">
+        <h6 class="mb-0">Últimos usuarios registrados</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="text-muted">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Teléfono</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Mateo</td>
+                        <td>Auz</td>
+                        <td>mateo@demo.com</td>
+                        <td>Administrador</td>
+                        <td>0987654321</td>
+                        <td>Activo</td>
+                    </tr>
+                    <tr>
+                        <td>Xabier</td>
+                        <td>Pérez</td>
+                        <td>xperez@demo.com</td>
+                        <td>Agente</td>
+                        <td>0999999999</td>
+                        <td>Activo</td>
+                    </tr>
+                    <tr>
+                        <td>María</td>
+                        <td>Zapata</td>
+                        <td>mzapata@demo.com</td>
+                        <td>Cliente</td>
+                        <td>0977777777</td>
+                        <td>Inactivo</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Lista breve de acciones -->
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0">Acciones frecuentes</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0 d-grid gap-2">
+                    <li><a class="link-primary" href="/dashboards/usuarios/crear">➕ Registrar usuario</a></li>
+                    <li><a class="link-primary" href="/dashboards/usuarios/listar">🔎 Buscar usuario</a></li>
+                    <li><a class="link-primary" href="/dashboards/usuarios/editar">✏ Actualizar información</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0">Notas</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-2">
+                    Campos clave del usuario: <strong>Nombre, Apellido, Correo, Rol, Teléfono, Estado</strong>.
+                </p>
+                <p class="text-muted mb-0">Este dashboard es un prototipo inicial. Se integrarán KPIs reales y conexión con el backend próximamente.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Aquí luego inyectarás servicios para traer datos reales (usuarios, KPIs, etc.)
+}

@@ -1,5 +1,117 @@
-﻿<h3>ListarUsuarios</h3>
+﻿@page "/dashboards/usuarios/listar"
+@using System.Net.Http.Json
+
+<div class="page-header mb-4">
+    <h1 class="page-title fw-semibold fs-20">Listado de Usuarios</h1>
+    <p class="text-muted fs-13">Consulta, búsqueda y filtrado de usuarios registrados</p>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end mb-3">
+            <div class="col-12 col-md-6">
+                <label class="form-label">Buscar usuario (nombre, apellido, correo o teléfono)</label>
+                <input class="form-control" placeholder="Escriba para filtrar..." @bind="filtroTexto" />
+            </div>
+            <div class="col-12 col-md-3">
+                <button class="btn btn-primary w-100" @onclick="FiltrarUsuarios">
+                    <i class="ri-search-line me-1"></i>Buscar
+                </button>
+            </div>
+            <div class="col-12 col-md-3">
+                <a href="/dashboards/usuarios/crear" class="btn btn-success w-100">
+                    <i class="ri-user-add-line me-1"></i>Nuevo Usuario
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (usuariosFiltrados.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">No se encontraron usuarios</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var u in usuariosFiltrados)
+                        {
+                            <tr>
+                                <td>@u.NomUsu</td>
+                                <td>@u.ApeUsu</td>
+                                <td>@u.CorUsu</td>
+                                <td>@u.TelUsu</td>
+                                <td class="text-center">
+                                    <a href="/dashboards/usuarios/editar/@u.IdUsu" class="btn btn-sm btn-outline-warning me-1">
+                                        <i class="ri-edit-line"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 @code {
+    private List<UsuarioModel> usuarios = new();
+    private List<UsuarioModel> usuariosFiltrados = new();
+    private string filtroTexto = string.Empty;
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulación temporal de datos (se reemplazará por llamada a API real)
+        usuarios = new()
+        {
+            new UsuarioModel { IdUsu = 1, NomUsu = "Mateo", ApeUsu = "Auz", CorUsu = "mateo@demo.com", TelUsu = "0987654321" },
+            new UsuarioModel { IdUsu = 2, NomUsu = "Xabier", ApeUsu = "Pérez", CorUsu = "xperez@demo.com", TelUsu = "0999999999" },
+            new UsuarioModel { IdUsu = 3, NomUsu = "María", ApeUsu = "Zapata", CorUsu = "mzapata@demo.com", TelUsu = "0977777777" },
+        };
+
+        usuariosFiltrados = usuarios;
+    }
+
+    private void FiltrarUsuarios()
+    {
+        if (string.IsNullOrWhiteSpace(filtroTexto))
+        {
+            usuariosFiltrados = usuarios;
+        }
+        else
+        {
+            var texto = filtroTexto.ToLower();
+            usuariosFiltrados = usuarios
+                .Where(u =>
+                    u.NomUsu.ToLower().Contains(texto) ||
+                    u.ApeUsu.ToLower().Contains(texto) ||
+                    u.CorUsu.ToLower().Contains(texto) ||
+                    u.TelUsu.ToLower().Contains(texto))
+                .ToList();
+        }
+    }
+
+    public class UsuarioModel
+    {
+        public int IdUsu { get; set; }
+        public string NomUsu { get; set; } = string.Empty;
+        public string ApeUsu { get; set; } = string.Empty;
+        public string CorUsu { get; set; } = string.Empty;
+        public string TelUsu { get; set; } = string.Empty;
+    }
 }

@@ -1,5 +1,92 @@
-﻿<h3>EditarUsuarios</h3>
+﻿@page "/dashboards/usuarios/editar/"
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+
+<div class="page-header mb-4">
+    <h1 class="page-title fw-semibold fs-20">Editar Usuario</h1>
+    <p class="text-muted fs-13">Modifica los datos de un usuario existente</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <EditForm Model="@usuario" OnValidSubmit="@ActualizarUsuario">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Nombre</label>
+                    <InputText class="form-control" @bind-Value="usuario.NomUsu" placeholder="Ingrese el nombre" />
+                    <ValidationMessage For="@(() => usuario.NomUsu)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Apellido</label>
+                    <InputText class="form-control" @bind-Value="usuario.ApeUsu" placeholder="Ingrese el apellido" />
+                    <ValidationMessage For="@(() => usuario.ApeUsu)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Correo</label>
+                    <InputText class="form-control" @bind-Value="usuario.CorUsu" placeholder="Ingrese el correo electrónico" />
+                    <ValidationMessage For="@(() => usuario.CorUsu)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Teléfono</label>
+                    <InputText class="form-control" @bind-Value="usuario.TelUsu" placeholder="Ingrese el teléfono" />
+                    <ValidationMessage For="@(() => usuario.TelUsu)" />
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-warning px-4">Actualizar</button>
+                <a href="/dashboards/usuarios/listar" class="btn btn-secondary px-4">Cancelar</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
 
 @code {
+    [Parameter] public int id { get; set; }
+    private UsuarioModel usuario = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulación temporal: luego se reemplaza por una llamada a API
+        var usuariosDemo = new List<UsuarioModel>
+        {
+            new UsuarioModel { IdUsu = 1, NomUsu = "Mateo", ApeUsu = "Auz", CorUsu = "mateo@demo.com", TelUsu = "0987654321" },
+            new UsuarioModel { IdUsu = 2, NomUsu = "Xabier", ApeUsu = "Pérez", CorUsu = "xperez@demo.com", TelUsu = "0999999999" },
+            new UsuarioModel { IdUsu = 3, NomUsu = "María", ApeUsu = "Zapata", CorUsu = "mzapata@demo.com", TelUsu = "0977777777" },
+        };
+
+        usuario = usuariosDemo.FirstOrDefault(u => u.IdUsu == id) ?? new UsuarioModel();
+    }
+
+    private void ActualizarUsuario()
+    {
+        // Aquí se conectará con el servicio o API real para actualizar el usuario
+        Console.WriteLine($"Usuario actualizado: {usuario.NomUsu} {usuario.ApeUsu}");
+        Navigation.NavigateTo("/dashboards/usuarios/listar");
+    }
+
+    public class UsuarioModel
+    {
+        public int IdUsu { get; set; }
+
+        [Required(ErrorMessage = "El nombre es obligatorio")]
+        public string NomUsu { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El apellido es obligatorio")]
+        public string ApeUsu { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El correo es obligatorio")]
+        [EmailAddress(ErrorMessage = "Formato de correo inválido")]
+        public string CorUsu { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El teléfono es obligatorio")]
+        [RegularExpression(@"^\d{7,15}$", ErrorMessage = "Debe tener entre 7 y 15 dígitos")]
+        public string TelUsu { get; set; } = string.Empty;
+    }
 }
