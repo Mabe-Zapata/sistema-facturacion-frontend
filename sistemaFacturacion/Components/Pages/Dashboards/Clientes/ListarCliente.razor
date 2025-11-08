@@ -273,17 +273,17 @@ else
                 });
             }
 
+        }
+        catch (HttpRequestException ex)
+        {
+            error = $"Error al cargar clientes: {ex.Message}";
+            await Swal.FireAsync(new SweetAlertOptions { Title = "Error al cargar", Html = $"<small>{ex.Message}</small>", Icon = SweetAlertIcon.Error, ConfirmButtonText = "Entendido" });
+        }
+        finally { cargando = false; }
     }
-    catch (HttpRequestException ex)
-    {
-      error = $"Error al cargar clientes: {ex.Message}";
-      await Swal.FireAsync(new SweetAlertOptions { Title = "Error al cargar", Html = $"<small>{ex.Message}</small>", Icon = SweetAlertIcon.Error, ConfirmButtonText = "Entendido" });
-    }
-    finally { cargando = false; }
-  }
 
-  private async Task RecargarDatos()
-  {     
+    private async Task RecargarDatos()
+    {     
         bool isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
         if (isDark)
         {
@@ -311,71 +311,101 @@ else
                 Timer = 1000
             });
         }
-    await CargarClientes();
-  }
-
-  private List<ClienteDto> Filtered
-  {
-    get
-    {
-      var r = clientes.AsEnumerable();
-      if (!string.IsNullOrWhiteSpace(filtroTexto))
-      {
-        var q = filtroTexto.Trim().ToLower();
-        r = r.Where(c =>
-          (c.NomCli?.ToLower().Contains(q) ?? false) ||
-          (c.ApeCli?.ToLower().Contains(q) ?? false) ||
-          (c.IdeCli?.ToLower().Contains(q) ?? false) ||
-          (c.CorCli?.ToLower().Contains(q) ?? false) ||
-          (c.TelCli?.ToLower().Contains(q) ?? false));
-      }
-      if (!string.IsNullOrWhiteSpace(filtroTipo))
-        r = r.Where(c => c.TipCli?.Equals(filtroTipo, StringComparison.OrdinalIgnoreCase) ?? false);
-      if (!string.IsNullOrWhiteSpace(filtroEstado))
-      {
-        var activo = filtroEstado == "activos";
-        r = r.Where(c => c.EstCli == activo);
-      }
-      r = Ordenar(r);
-      return r.ToList();
+        await CargarClientes();
     }
-  }
 
-  private int FilteredCount => Filtered.Count;
-  private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredCount / (double)pageSize));
-  private List<ClienteDto> Paged => Filtered.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
-
-  private IEnumerable<ClienteDto> Ordenar(IEnumerable<ClienteDto> src)
-  {
-    if (!string.IsNullOrWhiteSpace(ordenFecha))
-      src = ordenFecha == "recientes" ? src.OrderByDescending(c => c.FecCli) : src.OrderBy(c => c.FecCli);
-
-    if (!string.IsNullOrWhiteSpace(sortBy))
+    private List<ClienteDto> Filtered
     {
-      Func<ClienteDto, object?> key = sortBy switch
-      {
-        nameof(ClienteDto.NomCli) => c => c.NomCli ?? "",
-        nameof(ClienteDto.ApeCli) => c => c.ApeCli ?? "",
-        nameof(ClienteDto.IdeCli) => c => c.IdeCli ?? "",
-        nameof(ClienteDto.TipCli) => c => c.TipCli ?? "",
-        nameof(ClienteDto.CorCli) => c => c.CorCli ?? "",
-        nameof(ClienteDto.FecCli) => c => c.FecCli,
-        _ => c => c.NomCli ?? ""
-      };
-      src = sortAsc ? src.OrderBy(key) : src.OrderByDescending(key);
+        get
+        {
+            var r = clientes.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(filtroTexto))
+            {
+                var q = filtroTexto.Trim().ToLower();
+                r = r.Where(c =>
+                  (c.NomCli?.ToLower().Contains(q) ?? false) ||
+                  (c.ApeCli?.ToLower().Contains(q) ?? false) ||
+                  (c.IdeCli?.ToLower().Contains(q) ?? false) ||
+                  (c.CorCli?.ToLower().Contains(q) ?? false) ||
+                  (c.TelCli?.ToLower().Contains(q) ?? false));
+            }
+            if (!string.IsNullOrWhiteSpace(filtroTipo))
+                r = r.Where(c => c.TipCli?.Equals(filtroTipo, StringComparison.OrdinalIgnoreCase) ?? false);
+            if (!string.IsNullOrWhiteSpace(filtroEstado))
+            {
+                var activo = filtroEstado == "activos";
+                r = r.Where(c => c.EstCli == activo);
+            }
+            r = Ordenar(r);
+            return r.ToList();
+        }
     }
-    return src;
-  }
 
-  private void OrdenarPor(string prop)
-  {
-    if (sortBy == prop) sortAsc = !sortAsc;
-    else { sortBy = prop; sortAsc = true; }
-    pageIndex = 1;
-  }
+    private int FilteredCount => Filtered.Count;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredCount / (double)pageSize));
+    private List<ClienteDto> Paged => Filtered.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
 
-  private string IconoOrden(string prop) => sortBy != prop ? "" : (sortAsc ? "↑" : "↓");
-  private void LimpiarFiltros() { filtroTexto = filtroTipo = filtroEstado = ordenFecha = null; sortBy = null; sortAsc = true; pageIndex = 1; Swal.FireAsync(new SweetAlertOptions { Toast = true, Position = SweetAlertPosition.TopEnd, Icon = SweetAlertIcon.Info, Title = "Filtros limpiados", ShowConfirmButton = false, Timer = 1500 }); }
+    private IEnumerable<ClienteDto> Ordenar(IEnumerable<ClienteDto> src)
+    {
+        if (!string.IsNullOrWhiteSpace(ordenFecha))
+            src = ordenFecha == "recientes" ? src.OrderByDescending(c => c.FecCli) : src.OrderBy(c => c.FecCli);
+
+        if (!string.IsNullOrWhiteSpace(sortBy))
+        {
+            Func<ClienteDto, object?> key = sortBy switch
+            {
+                nameof(ClienteDto.NomCli) => c => c.NomCli ?? "",
+                nameof(ClienteDto.ApeCli) => c => c.ApeCli ?? "",
+                nameof(ClienteDto.IdeCli) => c => c.IdeCli ?? "",
+                nameof(ClienteDto.TipCli) => c => c.TipCli ?? "",
+                nameof(ClienteDto.CorCli) => c => c.CorCli ?? "",
+                nameof(ClienteDto.FecCli) => c => c.FecCli,
+                _ => c => c.NomCli ?? ""
+            };
+            src = sortAsc ? src.OrderBy(key) : src.OrderByDescending(key);
+        }
+        return src;
+    }
+
+    private void OrdenarPor(string prop)
+    {
+        if (sortBy == prop) sortAsc = !sortAsc;
+        else { sortBy = prop; sortAsc = true; }
+        pageIndex = 1;
+    }
+
+    private string IconoOrden(string prop) => sortBy != prop ? "" : (sortAsc ? "↑" : "↓");
+    private async Task LimpiarFiltros() { 
+        bool isDark =  await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+        filtroTexto = filtroTipo = filtroEstado = ordenFecha = null; sortBy = null; sortAsc = true; pageIndex = 1; 
+        if(isDark)
+        {
+            await Swal.FireAsync(
+              new SweetAlertOptions
+                 {
+                     Toast = true,
+                     Position = SweetAlertPosition.TopEnd,
+                     Icon = SweetAlertIcon.Info,
+                     Title = "Filtros limpiados",
+                     ShowConfirmButton = false,
+                     Timer = 1500,
+                     Background = "#1e1e1e",
+                     Color = "#e6e6e6"
+                 });
+        } else
+        {
+            await Swal.FireAsync(
+              new SweetAlertOptions
+                  {
+                      Toast = true,
+                      Position = SweetAlertPosition.TopEnd,
+                      Icon = SweetAlertIcon.Info,
+                      Title = "Filtros limpiados",
+                      ShowConfirmButton = false,
+                      Timer = 1500
+                  });
+        }
+  }
   private void PrevPage() { if (pageIndex > 1) pageIndex--; }
   private void NextPage() { if (pageIndex < TotalPages) pageIndex++; }
 
