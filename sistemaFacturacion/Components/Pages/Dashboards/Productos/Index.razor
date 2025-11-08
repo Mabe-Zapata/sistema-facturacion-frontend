@@ -1,4 +1,278 @@
-﻿@page "/dashboard/productos"
+﻿@page "/dashboards/productos"
+@using System.Linq
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components 
+@using Microsoft.AspNetCore.Components.Routing
+@attribute [Authorize]
 
-<h1>Gestión de Productos</h1>
-<p>Sección para administrar seguros, planes y coberturas.</p>
+@using CurrieTechnologies.Razor.SweetAlert2
+@using sistemaFacturacion.Models
+@using sistemaFacturacion.Services
+
+@inject IProductosApiClient ProductosApi
+@inject SweetAlertService Swal
+
+<section class="productos-dashboard">
+    <div class="page-header mb-4">
+        <h1 class="page-title fw-semibold fs-20">Gestión de Productos</h1>
+        <p class="text-muted fs-13">Panel general · accesos rápidos y actividad reciente</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
+        <div class="col">
+            <NavLink class="text-decoration-none" href="/dashboards/productos/crear" Match="NavLinkMatch.Prefix">
+                <div class="card hover-scale h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-primary-subtle p-3">
+                            <i class="ri-add-box-line fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Crear producto</h5>
+                            <small class="text-muted">Registrar un nuevo producto</small>
+                        </div>
+                    </div>
+                </div>
+            </NavLink>
+        </div>
+
+        <div class="col">
+            <NavLink class="text-decoration-none" href="/dashboards/productos/editar" Match="NavLinkMatch.Prefix">
+                <div class="card hover-scale h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-warning-subtle p-3">
+                            <i class="ri-edit-box-line fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Editar producto</h5>
+                            <small class="text-muted">Actualizar datos existentes</small>
+                        </div>
+                    </div>
+                </div>
+            </NavLink>
+        </div>
+
+        <div class="col">
+            <NavLink class="text-decoration-none" href="/dashboards/productos/listar" Match="NavLinkMatch.Prefix">
+                <div class="card hover-scale h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-success-subtle p-3">
+                            <i class="ri-file-list-3-line fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Listar productos</h5>
+                            <small class="text-muted">Búsqueda y filtros</small>
+                        </div>
+                    </div>
+                </div>
+            </NavLink>
+        </div>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="alert alert-info" role="status" aria-busy="true">Cargando estadísticas…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+    else
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3 col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted fs-12">Total productos</div>
+                        <div class="fs-3 fw-semibold">@totalProductos</div>
+                        <div class="text-muted fs-12">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3 col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted fs-12">Productos activos</div>
+                        <div class="fs-3 fw-semibold">@activos</div>
+                        <div class="text-muted fs-12">@activosPctStr activos</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3 col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted fs-12">Precio promedio</div>
+                        <div class="fs-3 fw-semibold">@precioPromedioStr</div>
+                        <div class="text-muted fs-12">Basado en @totalProductos items</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3 col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted fs-12">Tipos de producto</div>
+                        <div class="fs-3 fw-semibold">@tiposDistintos</div>
+                        <div class="text-muted fs-12">Únicos por Tipo</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0">Últimos productos registrados</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="mb-0 table align-middle">
+                        <thead class="text-muted">
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Tipo</th>
+                                <th scope="col">Precio</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ultimos5.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-muted text-center">Sin registros recientes</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var p in ultimos5)
+                                {
+                                    <tr>
+                                        <td>@p.Nombre</td>
+                                        <td>@MostrarTipo(p.Tipo)</td>
+                                        <td>@FormatearPrecio(p.Precio)</td>
+                                        <td>
+                                            @(p.Estado
+                                                                            ? (MarkupString)"<span class='badge bg-success-subtle text-success'>Activo</span>"
+                                                                            : (MarkupString)"<span class='badge bg-secondary-subtle text-muted'>Inactivo</span>")
+                            </td>
+                            <td class="text-truncate" style="max-width: 280px">@p.Descripcion</td>
+                        </tr>
+                                                }
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6 col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent">
+                        <h6 class="mb-0">Acciones frecuentes</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled d-grid mb-0 gap-2">
+                            <li><NavLink class="link-primary" href="/dashboards/productos/crear">➕ Registrar producto</NavLink></li>
+                            <li><NavLink class="link-primary" href="/dashboards/productos/listar">🔎 Buscar / filtrar</NavLink></li>
+                            <li><NavLink class="link-primary" href="/dashboards/productos/editar">✏️ Actualizar precio o estado</NavLink></li>
+                            <li><a class="link-danger" href="/dashboards/productos/eliminar">🗑️ Dar de baja</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent">
+                        <h6 class="mb-0">Notas</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-2">
+                            Campos clave del producto:
+                            <strong>Id, Tipo, Nombre, Descripcion, Precio, Estado</strong>.
+                        </p>
+                        <p class="text-muted mb-0">KPIs calculados sobre el inventario actual.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    // Lista de productos y “últimos 5”
+    private List<ProductoDto> productos = new();
+    private List<ProductoDto> ultimos5 = new();
+
+    // Estado de carga/errores
+    private bool cargando = true;
+    private string? error;
+
+    // KPIs
+    private int totalProductos;
+    private int activos;
+    private int inactivos;
+    private int tiposDistintos;
+    private string activosPctStr = "0 %";
+    private string precioPromedioStr = "$0.00";
+
+    private readonly CultureInfo ec = new("es-EC"); // formato de números/moneda
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            productos = (await ProductosApi.GetAllAsync()) ?? new List<ProductoDto>();
+            CalcularKpisYRecientes();
+        }
+        catch (Exception ex)
+        {
+            error = $"No se pudieron cargar los productos. {ex.Message}";
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Error al cargar",
+                Html = $"<small>{System.Net.WebUtility.HtmlEncode(ex.Message)}</small>",
+                Icon = SweetAlertIcon.Error
+            });
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void CalcularKpisYRecientes()
+    {
+        totalProductos = productos.Count;
+        activos = productos.Count(p => p.Estado);
+        inactivos = totalProductos - activos;
+
+        activosPctStr = totalProductos > 0
+            ? (activos * 100.0 / totalProductos).ToString("0.0' %'", ec)
+            : "0 %";
+
+        // Precio promedio (manteniendo decimal para evitar pérdidas)
+        var avg = totalProductos > 0 ? productos.Average(p => p.Precio) : 0m;
+        precioPromedioStr = avg.ToString("C2", ec);
+
+        // Tipos distintos (normalizando espacios/caso)
+        tiposDistintos = productos
+            .Select(p => (p.Tipo ?? string.Empty).Trim().ToUpperInvariant())
+            .Where(s => !string.IsNullOrEmpty(s))
+            .Distinct()
+            .Count();
+
+        // “Últimos” por Id descendente (asumiendo Id incremental)
+        ultimos5 = productos
+            .OrderByDescending(p => p.Id)
+            .Take(5)
+            .ToList();
+    }
+
+    private string FormatearPrecio(decimal precio)
+        => precio.ToString("C2", ec);
+
+    private static string MostrarTipo(string? tipo)
+        => (tipo ?? string.Empty).Trim();
+}
