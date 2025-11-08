@@ -12,6 +12,5 @@ public  class ProductoCreateRequest
     [JsonPropertyName("desPro")]
     public string Descripcion { get; set; } = string.Empty;
 
-    [JsonPropertyName("prePro")]
-    public decimal Precio { get; set; }
+     
 }

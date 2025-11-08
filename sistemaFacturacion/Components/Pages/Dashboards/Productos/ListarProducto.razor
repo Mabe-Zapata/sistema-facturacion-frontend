@@ -1,238 +1,417 @@
 ﻿@page "/dashboards/productos/listar"
 
-@using System.Globalization
-@inject NavigationManager Nav
+@using sistemaFacturacion.Models
+@using sistemaFacturacion.Services
+@using Microsoft.AspNetCore.Authorization
+@using CurrieTechnologies.Razor.SweetAlert2
+@attribute [Authorize]
+@inject IJSRuntime JSRuntime 
+@inject NavigationManager Navigation
+@inject SweetAlertService Swal
+@inject IProductosApiClient ProductosApi
 
-<h2 class="titulo-lista">Listado de productos</h2>
-<p class="descripcion-lista">Consulta, búsqueda, filtros y acciones rápidas sobre los productos.</p>
-
-<div class="toolbar">
-    <div class="filtros">
-        <div class="filtro">
-            <label for="buscar">Buscar</label>
-            <input id="buscar" class="input" placeholder="Nombre, tipo, descripción o proveedor..."
-                   @bind="filtroTexto" @bind:event="oninput" />
-        </div>
-
-        <div class="filtro">
-            <label for="estado">Estado</label>
-            <select id="estado" class="input" @bind="filtroEstado">
-                <option value="Todos">Todos</option>
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
-            </select>
-        </div>
-
-        <div class="filtro">
-            <label for="tam">Tamaño página</label>
-            <select id="tam" class="input" @bind="pageSize">
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="acciones">
-        <a class="btn btn-primary" href="/productos/crear">➕ Nuevo producto</a>
-    </div>
+<div class="page-header mb-3">
+    <h2 class="page-title fs-18">Listado de Productos</h2>
+    <p class="text-muted">Consulta, búsqueda, filtros, tabla paginada y acciones rápidas.</p>
 </div>
 
-<div class="card">
-    <div class="table-responsive">
-        <table class="tabla">
-            <thead>
-                <tr>
-                    <th class="th-id">ID</th>
-                    <th class="th-click" @onclick="() => CambiarOrden(nameof(Producto.NomPro))">Nombre @OrdenIcon(nameof(Producto.NomPro))</th>
-                    <th class="th-click" @onclick="() => CambiarOrden(nameof(Producto.TipPro))">Tipo @OrdenIcon(nameof(Producto.TipPro))</th>
-                    <th>Descripción</th>
-                    <th class="th-click" @onclick="() => CambiarOrden(nameof(Producto.PrePro))">Precio @OrdenIcon(nameof(Producto.PrePro))</th>
-                    <th>Proveedor</th>
-                    <th>Estado</th>
-                    <th class="th-acciones">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (paginaActual.Count == 0)
-                {
-                    <tr>
-                        <td colspan="8" class="sin-datos">No hay productos que coincidan con los filtros.</td>
-                    </tr>
-                }
-                else
-                {
-                    @foreach (var p in paginaActual)
-                    {
-                        <tr>
-                            <td>@p.IdPro</td>
-                            <td>@p.NomPro</td>
-                            <td>@p.TipPro</td>
-                            <td class="col-descripcion">@p.DesPro</td>
-                            <td>@p.PrePro.ToString("C2", new CultureInfo("es-EC"))</td>
-                            <td>@p.Proveedor</td>
-                            <td>
-                                @if (p.EstPro)
-                                {
-                                    <span class="badge badge-success">Activo</span>
-                                }
-                                else
-                                {
-                                    <span class="badge badge-muted">Inactivo</span>
-                                }
-                            </td>
-                            <td class="acciones-row">
-                                <button class="btn btn-sm" @onclick="() => Editar(p)">✏ Editar</button>
-                                <button class="btn btn-sm btn-danger" @onclick="() => Eliminar(p)">🗑 Eliminar</button>
-                            </td>
-                        </tr>
-                    }
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="paginacion">
-        <button class="btn btn-sm" @onclick="Prev" disabled="@(!PuedePrev)">« Anterior</button>
-        <span class="page-indicator">Página @pagina de @totalPaginas</span>
-        <button class="btn btn-sm" @onclick="Next" disabled="@(!PuedeNext)">Siguiente »</button>
-    </div>
-</div>
-
-@if (!string.IsNullOrWhiteSpace(mensaje))
+@if (cargando)
 {
-    <div class="alerta">@mensaje</div>
+    <div class="alert alert-info">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Cargando productos...
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(error))
+{
+    <div class="alert alert-danger">
+        <i class="ri-error-warning-line me-2"></i>@error
+    </div>
+}
+else
+{
+    <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4 col-12">
+                    <label class="form-label">Buscar (nombre, tipo o descripción)</label>
+                    <input class="form-control" @bind="filtroTexto" @bind:event="oninput" placeholder="Escribe para filtrar..." />
+                </div>
+
+                <div class="col-md-2 col-6">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" @bind="filtroEstado">
+                        <option value="">Todos</option>
+                        <option value="activos">Activos</option>
+                        <option value="inactivos">Inactivos</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 col-6">
+                    <label class="form-label">Ordenar</label>
+                    <select class="form-select" @bind="ordenPrecio">
+                        <option value="">Sin orden</option>
+                        <option value="mayor">Precio Mayor</option>
+                        <option value="menor">Precio Menor</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 col-6">
+                    <label class="form-label">Por página</label>
+                    <select class="form-select" @bind="pageSize">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-grid col-12">
+                    <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                        <i class="ri-filter-off-line me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
+            <h6 class="mb-0">Productos (@FilteredCount resultados)</h6>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-light" title="Recargar" @onclick="RecargarDatos"><i class="ri-refresh-line"></i></button>
+                <button class="btn btn-sm btn-light" title="Anterior" @onclick="PrevPage" disabled="@(pageIndex == 1)"><i class="ri-arrow-left-s-line"></i></button>
+                <span class="small text-muted">Página @pageIndex de @TotalPages</span>
+                <button class="btn btn-sm btn-light" title="Siguiente" @onclick="NextPage" disabled="@(pageIndex == TotalPages)"><i class="ri-arrow-right-s-line"></i></button>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="text-muted">
+                        <tr>
+                            <th>ID</th>
+                            <th @onclick="@(() => OrdenarPor(nameof(ProductoDto.Nombre)))" role="button">Nombre @IconoOrden(nameof(ProductoDto.Nombre))</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                           
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Paged.Count == 0)
+                        {
+                            <tr><td colspan="7" class="text-center text-muted py-4"><i class="ri-inbox-line fs-3 mb-2 d-block"></i>No hay productos disponibles.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var p in Paged)
+                            {
+                                <tr @key="p.Id">
+                                    <td>@p.Id</td>
+                                    <td>@p.Nombre</td>
+                                    <td>@p.Tipo</td>
+                                    <td><small>@p.Descripcion</small></td> 
+                                    <td>
+                                        @if (p.Estado)
+                                        {
+                                            <span class="badge bg-success-subtle text-success">Activo</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="badge bg-danger-subtle text-danger">Inactivo</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary me-1"
+                                                title="Editar producto"
+                                                @onclick="() => Editar(p)">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+
+                                        <button class="btn btn-sm btn-outline-info me-1"
+                                                title="Ver detalles"
+                                                @onclick="() => VerDetalles(p)">
+                                            <i class="ri-eye-line"></i>
+                                        </button>
+
+                                        <button class="btn btn-sm @(p.Estado ? "btn-outline-danger" : "btn-outline-success")"
+                                                title="@(p.Estado ? "Inactivar" : "Activar")"
+                                                @onclick="() => CambiarEstado(p)">
+                                            <i class="@(p.Estado ? "ri-close-circle-line" : "ri-check-line")"></i>
+                                        </button>
+
+                                    </td>
+
+
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
-    // ---------- Modelo (mock) ----------
-    public class Producto
-    {
-        public int IdPro { get; set; }
-        public string TipPro { get; set; } = "";
-        public string NomPro { get; set; } = "";
-        public string DesPro { get; set; } = "";
-        public decimal PrePro { get; set; }
-        public bool EstPro { get; set; }
-        public string Proveedor { get; set; } = "";
-    }
+    private List<ProductoDto> productos = new();
+    private bool cargando = true;
+    private string? error;
 
-    // ---------- Estado UI ----------
-    private List<Producto> productos = new();
-    private string filtroTexto = "";
-    private string filtroEstado = "Todos";
+    private string? filtroTexto;
+    private string? filtroEstado;
+    private string? ordenPrecio;
+
+    private int pageIndex = 1;
     private int pageSize = 10;
-    private int pagina = 1;
-    private string? sortCol = nameof(Producto.NomPro);
+    private string? sortBy;
     private bool sortAsc = true;
 
-    private string? mensaje;
+    protected override async Task OnInitializedAsync() => await CargarProductos();
 
-    // Colecciones calculadas
-    private List<Producto> filtrados => FiltrarOrdenar(productos);
-    private int totalPaginas => Math.Max(1, (int)Math.Ceiling(filtrados.Count / (double)pageSize));
-    private List<Producto> paginaActual => filtrados.Skip((pagina - 1) * pageSize).Take(pageSize).ToList();
-
-    // Flags de paginación
-    private bool PuedePrev => pagina > 1;
-    private bool PuedeNext => pagina < totalPaginas;
-
-    protected override void OnInitialized()
+    private async Task CargarProductos()
     {
-        // ---------- Datos quemados ----------
-        productos = new()
+        try
         {
-            new () { IdPro = 1, TipPro = "Electrónica", NomPro = "Audífonos A12", DesPro = "Inalámbricos, cancelación de ruido", PrePro = 4.50m, EstPro = true,  Proveedor = "TechSound" },
-            new () { IdPro = 2, TipPro = "Hogar",        NomPro = "Taza Crazy Cup", DesPro = "Cerámica 350ml, edición Crazy Cups", PrePro = 2.75m, EstPro = true,  Proveedor = "Crazy Cups" },
-            new () { IdPro = 3, TipPro = "Oficina",      NomPro = "Mouse MX",      DesPro = "Mouse inalámbrico, 1600 DPI",       PrePro = 8.99m, EstPro = true,  Proveedor = "LogiPro" },
-            new () { IdPro = 4, TipPro = "Electrónica",  NomPro = "Teclado K60",   DesPro = "Mecánico, retroiluminado",          PrePro = 12.40m,EstPro = false, Proveedor = "KeyFactory" },
-            new () { IdPro = 5, TipPro = "Gamer",        NomPro = "Pad XL",        DesPro = "Alfombrilla extendida 90x30cm",     PrePro = 3.20m, EstPro = true,  Proveedor = "GxGear" },
-            new () { IdPro = 6, TipPro = "Salud",        NomPro = "Botella H2O",   DesPro = "1L libre de BPA",                    PrePro = 1.80m, EstPro = false, Proveedor = "BlueLife" },
-            new () { IdPro = 7, TipPro = "ElectroHogar", NomPro = "Licuadora X1",  DesPro = "600W vaso vidrio",                   PrePro = 22.00m,EstPro = true,  Proveedor = "HomeMax" },
-            new () { IdPro = 8, TipPro = "Oficina",      NomPro = "Silla Ergo",    DesPro = "Ergonómica malla",                   PrePro = 45.90m,EstPro = true,  Proveedor = "OfficePro" },
-            new () { IdPro = 9, TipPro = "Gamer",        NomPro = "Headset RGB",   DesPro = "7.1 virtual mic retráctil",          PrePro = 19.99m,EstPro = true,  Proveedor = "GxGear" },
-            new () { IdPro = 10,TipPro = "Electrónica",  NomPro = "Cargador 20W",  DesPro = "USB-C PD, compacto",                 PrePro = 5.10m, EstPro = false, Proveedor = "PowerNow" },
-        };
-    }
-
-    // ---------- Acciones ----------
-    private void Editar(Producto p)
-    {
-        // Si luego manejas ID por querystring: Nav.NavigateTo($"/productos/editar/{p.IdPro}");
-        Nav.NavigateTo("dashboards/productos/editar");
-    }
-
-    private void Eliminar(Producto p)
-    {
-        productos.Remove(p);
-        mensaje = $"🗑 Producto '{p.NomPro}' eliminado del listado (simulado).";
-        // Reset de página si se vacía la actual
-        if ((pagina - 1) * pageSize >= filtrados.Count && pagina > 1)
-            pagina--;
-    }
-
-    private void Prev()
-    {
-        if (PuedePrev) pagina--;
-    }
-
-    private void Next()
-    {
-        if (PuedeNext) pagina++;
-    }
-
-    // ---------- Filtrado / Orden ----------
-    private void CambiarOrden(string columna)
-    {
-        if (sortCol == columna) sortAsc = !sortAsc;
-        else { sortCol = columna; sortAsc = true; }
-    }
-
-    private MarkupString OrdenIcon(string columna)
-    {
-        if (sortCol != columna) return (MarkupString)@"<span class=""orden"">↕</span>";
-        return sortAsc
-            ? (MarkupString)@"<span class=""orden"">↑</span>"
-            : (MarkupString)@"<span class=""orden"">↓</span>";
-    }
-
-    private List<Producto> FiltrarOrdenar(List<Producto> origen)
-    {
-        IEnumerable<Producto> q = origen;
-
-        // Filtro texto
-        if (!string.IsNullOrWhiteSpace(filtroTexto))
-        {
-            var txt = filtroTexto.Trim().ToLowerInvariant();
-            q = q.Where(p =>
-                p.NomPro.ToLowerInvariant().Contains(txt) ||
-                p.TipPro.ToLowerInvariant().Contains(txt) ||
-                p.DesPro.ToLowerInvariant().Contains(txt) ||
-                p.Proveedor.ToLowerInvariant().Contains(txt));
+            cargando = true; error = null;
+            productos = await ProductosApi.GetAllAsync();
+            bool isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Toast = true,
+                Position = SweetAlertPosition.TopEnd,
+                Icon = SweetAlertIcon.Success,
+                Title = $"✓ {productos.Count} productos cargados",
+                ShowConfirmButton = false,
+                Timer = 1800,
+                TimerProgressBar = true,
+                Background = isDark ? "#1e1e1e" : null,
+                Color = isDark ? "#e6e6e6" : null
+            });
         }
-
-        // Filtro estado
-        q = filtroEstado switch
+        catch (HttpRequestException ex)
         {
-            "Activo" => q.Where(p => p.EstPro),
-            "Inactivo" => q.Where(p => !p.EstPro),
-            _ => q
-        };
-
-        // Orden
-        Func<Producto, object> key = sortCol switch
-        {
-            nameof(Producto.NomPro) => p => p.NomPro,
-            nameof(Producto.TipPro) => p => p.TipPro,
-            nameof(Producto.PrePro) => p => p.PrePro,
-            _ => p => p.IdPro
-        };
-        q = sortAsc ? q.OrderBy(key) : q.OrderByDescending(key);
-
-        // Reinicia página si se sale de rango al cambiar filtros
-        if ((pagina - 1) * pageSize >= q.Count() && pagina > 1)
-            pagina = 1;
-
-        return q.ToList();
+            error = $"Error al cargar productos: {ex.Message}";
+            await Swal.FireAsync(new SweetAlertOptions { Title = "Error al cargar", Html = $"<small>{ex.Message}</small>", Icon = SweetAlertIcon.Error });
+        }
+        finally { cargando = false; }
     }
+
+    private async Task RecargarDatos()
+    {
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Toast = true,
+            Position = SweetAlertPosition.TopEnd,
+            Icon = SweetAlertIcon.Info,
+            Title = "Recargando datos...",
+            ShowConfirmButton = false,
+            Timer = 1000
+        });
+        await CargarProductos();
+    }
+
+    private async Task VerDetalles(ProductoDto p)
+    {
+        bool isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+
+        var colorTitle = isDark ? "var(--default-text-color)" : "#1e293b";
+        var colorMuted = isDark ? "var(--text-muted)" : "#64748b";
+        var boxBg = isDark ? "var(--form-control-bg)" : "#f8fafc";
+        var boxBrd = isDark ? "var(--default-border)" : "#e5e7eb";
+
+        // ← evita comillas dentro del $@"..."
+        string estadoHtml = p.Estado
+            ? "<span style='color:#22c55e;font-weight:600'>Activo</span>"
+            : "<span style='color:#ef4444;font-weight:600'>Inactivo</span>";
+
+        string html = $@"
+        <div style='text-align:left;font-size:14px;line-height:1.45'>
+            <div style='margin-bottom:.6rem'>
+                <div style='font-weight:700;font-size:1.05rem;color:{colorTitle}'>{Escape(p.Nombre)}</div>
+                <div style='font-size:.85rem;color:{colorMuted}'>{Escape(p.Tipo)}</div>
+            </div>
+            <div style='background:{boxBg};border:1px solid {boxBrd};border-radius:.5rem;padding:.75rem'>
+                <div style='font-size:.82rem;color:{colorMuted};margin-bottom:.25rem'>Descripción</div>
+                <div style='font-size:.9rem;color:{colorTitle}'>{Escape(p.Descripcion)}</div>
+            </div>
+            <div style='margin-top:.75rem;font-size:.85rem;color:{colorMuted}'>
+                <strong>Estado:</strong> {estadoHtml}
+            </div>
+        </div>";
+
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "Detalles del producto",
+            Html = html,
+            Icon = SweetAlertIcon.Info,
+            ShowConfirmButton = false,
+            ShowCloseButton = true,
+            Width = "28rem",
+            Background = isDark ? "var(--form-control-bg)" : "#fff",
+            Color = isDark ? "var(--default-text-color)" : "#1e293b"
+        });
+    }
+
+    // === FILTROS Y PAGINACIÓN ===
+    private static string Escape(string? s)
+    => string.IsNullOrEmpty(s) ? "" : s.Replace("<", "&lt;").Replace(">", "&gt;");
+
+    private List<ProductoDto> Filtered
+    {
+        get
+        {
+            var q = productos.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(filtroTexto))
+            {
+                var txt = filtroTexto.Trim().ToLower();
+                q = q.Where(p =>
+                    p.Nombre.ToLower().Contains(txt) ||
+                    p.Tipo.ToLower().Contains(txt) ||
+                    p.Descripcion.ToLower().Contains(txt));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroEstado))
+            {
+                var activo = filtroEstado == "activos";
+                q = q.Where(p => p.Estado == activo);
+            }
+
+            
+
+            return Ordenar(q).ToList();
+        }
+    }
+
+    private int FilteredCount => Filtered.Count;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredCount / (double)pageSize));
+    private List<ProductoDto> Paged => Filtered.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
+
+    private IEnumerable<ProductoDto> Ordenar(IEnumerable<ProductoDto> src)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy)) return src;
+        Func<ProductoDto, object?> key = sortBy switch
+        {
+            nameof(ProductoDto.Nombre) => p => p.Nombre, 
+            _ => p => p.Id
+        };
+        return sortAsc ? src.OrderBy(key) : src.OrderByDescending(key);
+    }
+
+    private void OrdenarPor(string prop)
+    {
+        if (sortBy == prop) sortAsc = !sortAsc;
+        else { sortBy = prop; sortAsc = true; }
+        pageIndex = 1;
+    }
+
+    private string IconoOrden(string prop) => sortBy != prop ? "" : (sortAsc ? "↑" : "↓");
+    private void PrevPage() { if (pageIndex > 1) pageIndex--; }
+    private void NextPage() { if (pageIndex < TotalPages) pageIndex++; }
+
+    private async Task LimpiarFiltros()
+    {
+        filtroTexto = filtroEstado = ordenPrecio = null;
+        sortBy = null; sortAsc = true; pageIndex = 1;
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Toast = true,
+            Position = SweetAlertPosition.TopEnd,
+            Icon = SweetAlertIcon.Info,
+            Title = "Filtros limpiados",
+            ShowConfirmButton = false,
+            Timer = 1500
+        });
+    }
+
+    private void Editar(ProductoDto p)
+    {
+        Navigation.NavigateTo($"/dashboards/productos/editar/{p.Id}");
+    }
+
+    private async Task ConfirmarEliminar(ProductoDto p)
+    {
+        var r = await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "¿Eliminar producto?",
+            Html = $"<strong>{p.Nombre}</strong><br/><small>({p.Tipo})</small>",
+            Icon = SweetAlertIcon.Warning,
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sí, eliminar",
+            CancelButtonText = "Cancelar",
+            ConfirmButtonColor = "#dc3545"
+        });
+
+        if (r.IsConfirmed)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Success,
+                Title = "Producto eliminado",
+                Toast = true,
+                Position = SweetAlertPosition.TopEnd,
+                Timer = 1500,
+                ShowConfirmButton = false
+            });
+
+            await CargarProductos();
+        }
+    }
+
+
+    private async Task CambiarEstado(ProductoDto p)
+    {
+        var accion = p.Estado ? "inactivar" : "activar";
+        var confirm = await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = $"¿Deseas {accion} este producto?",
+            Html = $"<strong>{Escape(p.Nombre)}</strong><br/><small>({Escape(p.Tipo)})</small>",
+            Icon = SweetAlertIcon.Warning,
+            ShowCancelButton = true,
+            ConfirmButtonText = $"Sí, {accion}",
+            CancelButtonText = "Cancelar",
+            ConfirmButtonColor = p.Estado ? "#dc3545" : "#16a34a"
+        });
+        if (!confirm.IsConfirmed) return;
+
+        // Optimistic UI
+        var previo = p.Estado;
+        p.Estado = !p.Estado;
+        StateHasChanged();
+
+        try
+        {
+            var actualizado = await ProductosApi.UpdateEstadoAsync(p.Id, p.Estado);
+            // Sync con respuesta por si backend normaliza algo
+            p.Estado = actualizado.Estado;
+
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Success,
+                Title = p.Estado ? "Producto activado" : "Producto inactivado",
+                Toast = true,
+                Position = SweetAlertPosition.TopEnd,
+                Timer = 1500,
+                ShowConfirmButton = false
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            // Rollback
+            p.Estado = previo;
+            StateHasChanged();
+
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "No se pudo cambiar el estado",
+                Html = $"<small>{Escape(ex.Message)}</small>",
+                Icon = SweetAlertIcon.Error
+            });
+        }
+    }
+
+
 }

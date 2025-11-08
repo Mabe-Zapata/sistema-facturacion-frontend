@@ -62,6 +62,17 @@
                     svg: "<svg xmlns='http://www.w3.org/2000/svg' class='side-menu-doublemenu__icon' viewBox='0 0 256 256'><circle cx='128' cy='88' r='28' fill='none' stroke='currentColor' stroke-width='16'/><path d='M64 208a64 64 0 0 1 128 0' fill='none' stroke='currentColor' stroke-width='16'/></svg>",
                     selected: false, active: false, dirChange: false
                 ),
+
+                //Gestion de Lotes
+                // Gestión de Lotes
+            new MainMenuItems(
+                 path: "/dashboards/lotes",
+                 type: "link",
+                 title: "Gestión de Lotes",
+                 svg: "<svg xmlns='http://www.w3.org/2000/svg' class='side-menu-doublemenu__icon' viewBox='0 0 256 256'><rect x='36' y='56' width='184' height='144' rx='8' fill='none' stroke='currentColor' stroke-width='16'/><path d='M36 100h184M84 56v144M172 56v144' fill='none' stroke='currentColor' stroke-width='16' stroke-linecap='round'/></svg>",
+             selected: false, active: false, dirChange: false
+            ),
+
             }
         ),
 

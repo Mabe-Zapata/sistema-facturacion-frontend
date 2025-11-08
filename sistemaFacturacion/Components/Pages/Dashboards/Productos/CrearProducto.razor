@@ -1,16 +1,24 @@
 ﻿@page "/dashboards/productos/crear"
 
 @using System.ComponentModel.DataAnnotations
+@using CurrieTechnologies.Razor.SweetAlert2
+@using Microsoft.AspNetCore.Components.Forms
+@using sistemaFacturacion.Services
+@using sistemaFacturacion.Models
+@inject IProductosApiClient ProductosApi
+@inject SweetAlertService Swal
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Nav
 
 <h2 class="titulo-form">Registrar nuevo producto</h2>
 <p class="descripcion-form">Completa los campos requeridos para añadir un nuevo producto al sistema.</p>
 
-<EditForm Model="@producto" OnValidSubmit="@GuardarProducto">
+<EditForm Model="@producto" OnValidSubmit="@HandleValidSubmitAsync" OnInvalidSubmit="@HandleInvalidAsync">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
     <div class="form-grid">
-        <div class="campo">
+        <div class="campo"> 
             <label for="tipo">Tipo de producto</label>
             <InputText id="tipo" @bind-Value="producto.TipPro" class="form-control" />
             <ValidationMessage For="@(() => producto.TipPro)" />
@@ -22,47 +30,37 @@
             <ValidationMessage For="@(() => producto.NomPro)" />
         </div>
 
-        <div class="campo descripcion">
+      
+
+        <div class="campo descripcion" style="grid-column: 1 / -1;">
             <label for="descripcion">Descripción</label>
             <InputTextArea id="descripcion" @bind-Value="producto.DesPro" class="form-control" rows="3" />
             <ValidationMessage For="@(() => producto.DesPro)" />
         </div>
-
-        <div class="campo">
-            <label for="precio">Precio ($)</label>
-            <InputNumber id="precio" @bind-Value="producto.PrePro" class="form-control" />
-            <ValidationMessage For="@(() => producto.PrePro)" />
-        </div>
     </div>
 
-    <div class="acciones">
-        <button type="submit" class="btn-guardar">💾 Guardar producto</button>
-        <button type="button" class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+    <div class="d-flex mt-4 gap-2 form-actions">
+        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+            @(isSubmitting ? "Guardando..." : "Guardar")
+        </button>
+
+        <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar" disabled="@isSubmitting">
+            Limpiar
+        </button>
+
+        <a class="btn btn-light" href="/dashboards/productos/listar">
+            Volver
+        </a>
     </div>
 </EditForm>
 
-@if (mensajeExito is not null)
-{
-    <div class="alerta-exito">@mensajeExito</div>
-}
-
 @code {
+    private bool isSubmitting = false;
     private ProductoModel producto = new();
 
-    private string? mensajeExito;
-
-    private void GuardarProducto()
-    {
-        mensajeExito = $"✅ Producto '{producto.NomPro}' registrado exitosamente.";
-        producto = new(); // limpia el formulario
-    }
-
-    private void Cancelar()
-    {
-        producto = new();
-        mensajeExito = null;
-    }
-
+    // ======================
+    // ViewModel de producto
+    // ======================
     public class ProductoModel
     {
         [Required(ErrorMessage = "El tipo es obligatorio.")]
@@ -76,8 +74,121 @@
         [Required(ErrorMessage = "La descripción es obligatoria.")]
         [StringLength(200, ErrorMessage = "Máximo 200 caracteres.")]
         public string? DesPro { get; set; }
-
-        [Range(0.1, 9999.99, ErrorMessage = "Debe ingresar un precio válido (mayor que 0).")]
-        public decimal PrePro { get; set; }
+ 
     }
+
+    private void Cancelar() => producto = new();
+
+    // ======================
+    // Envío de formulario
+    // ======================
+    private async Task HandleValidSubmitAsync()
+    {
+        isSubmitting = true;
+        try
+        {
+            var req = new ProductoCreateRequest
+            {
+                Tipo = producto.TipPro!.Trim(),
+                Nombre = producto.NomPro!.Trim(),
+                Descripcion = producto.DesPro!.Trim()
+            };
+
+            var creado = await ProductosApi.CrearAsync(req);
+
+            bool isDark = false;
+            try { isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode"); } catch { }
+
+            var titleColor = isDark ? "var(--default-text-color)" : "#0f172a";
+            var subColor = isDark ? "var(--text-muted)" : "#64748b";
+            var boxBg = isDark ? "var(--form-control-bg)" : "#f8fafc";
+            var boxBrd = isDark ? "var(--default-border)" : "#e5e7eb";
+            var valColor = isDark ? "var(--default-text-color)" : "#0f172a";
+
+            var html =
+$@"<div style='text-align:left;font-size:14px;line-height:1.45'>
+    <div style='margin:0 0 .5rem'>
+        <div style='font-weight:700;font-size:1rem;color:{titleColor}'>{Escape(creado?.Nombre)}</div>
+        <div style='font-size:.85rem;color:{subColor}'>{Escape(creado?.Tipo)} · </div>
+    </div>
+    <div style='background:{boxBg};border:1px solid {boxBrd};border-radius:.5rem;padding:.6rem .75rem'>
+        <div style='font-size:.72rem;color:{subColor};letter-spacing:.04em;margin-bottom:.15rem'>ID PRODUCTO</div>
+        <code style='font-size:1rem;color:{valColor};font-weight:600'>{creado?.Id}</code>
+    </div>
+</div>";
+
+            var result = await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Success,
+                Title = "Producto creado",
+                Html = html,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Ver listado",
+                CancelButtonText = "Crear otro",
+                FocusConfirm = false
+            });
+
+            if (result.IsConfirmed)
+            {
+                Nav.NavigateTo("/dashboards/productos/listar");
+            }
+            else
+            {
+                producto = new();
+                await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Toast = true,
+                    Position = SweetAlertPosition.TopEnd,
+                    Icon = SweetAlertIcon.Success,
+                    Title = "Listo, puedes crear otro",
+                    ShowConfirmButton = false,
+                    Timer = 1800,
+                    TimerProgressBar = true,
+                    Background = isDark ? "var(--form-control-bg)" : null,
+                    Color = isDark ? "var(--default-text-color)" : null
+                });
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Error,
+                Title = "No se pudo crear el producto",
+                Text = Trunca(ex.Message, 300),
+                Footer = "<small>Revisa los datos o inténtalo más tarde.</small>"
+            });
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Error,
+                Title = "Error inesperado",
+                Text = Trunca(ex.Message, 300)
+            });
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleInvalidAsync(EditContext ctx)
+    {
+        var errores = ctx.GetValidationMessages().Take(4).Select(Escape);
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Icon = SweetAlertIcon.Warning,
+            Title = "Completa los campos",
+            Html = string.Join("<br/>", errores)
+        });
+    }
+
+    private static string Trunca(string? s, int max) =>
+        string.IsNullOrWhiteSpace(s) ? "" : (s.Length <= max ? s : s[..max] + "…");
+
+    private static string Escape(string? s) =>
+        string.IsNullOrEmpty(s) ? "" : s.Replace("<", "&lt;").Replace(">", "&gt;");
 }

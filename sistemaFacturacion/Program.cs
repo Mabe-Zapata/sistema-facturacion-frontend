@@ -1,13 +1,14 @@
 ﻿using BlazorColorPicker;
 using Blazored.LocalStorage;
-using Soenneker.Blazor.TomSelect.Registrars;
-using Soenneker.Blazor.FilePond.Registrars;
 using CurrieTechnologies.Razor.SweetAlert2;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.AspNetCore.Components.Authorization;
 using sistemaFacturacion;
 using sistemaFacturacion.Components;
+using sistemaFacturacion.Services;
+using Soenneker.Blazor.FilePond.Registrars;
+using Soenneker.Blazor.TomSelect.Registrars;
 
 namespace sistemaFacturacion
 {
@@ -50,6 +51,9 @@ namespace sistemaFacturacion
             builder.Services.AddWMBSC();
 
             builder.Services.AddScoped<IClientesApiClient, ClientesApiClient>();
+
+            builder.Services.AddScoped<IProductosApiClient, ProductosApiClient>();
+
 
             await builder.Build().RunAsync();
         }

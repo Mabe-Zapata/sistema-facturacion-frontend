@@ -14,9 +14,7 @@ public sealed class ProductoDto
 
     [JsonPropertyName("desPro")]
     public string Descripcion { get; set; } = string.Empty;
-
-    [JsonPropertyName("prePro")]
-    public decimal Precio { get; set; } 
+ 
 
     [JsonPropertyName("estPro")]
     public bool Estado { get; set; }
