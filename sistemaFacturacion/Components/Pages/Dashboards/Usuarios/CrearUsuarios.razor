@@ -61,11 +61,14 @@
 
                 <div class="col-md-6 col-12">
                     <label class="form-label">Sueldo</label>
-                    <InputNumber class="form-control"
-                                 @bind-Value="vm.SueEmp"
-                                 placeholder="0.00"
-                                 ParsingErrorMessage="El valor debe ser un número." />
-                    <ValidationMessage For="@(() => vm.SueEmp)" />
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <InputNumber class="form-control"
+                                     @bind-Value="vm.SueEmp"
+                                     placeholder="0.00"
+                                     ParsingErrorMessage="El valor debe ser un número." />
+                        <ValidationMessage For="@(() => vm.SueEmp)" />
+                    </div>
                 </div>
             </div>
 
