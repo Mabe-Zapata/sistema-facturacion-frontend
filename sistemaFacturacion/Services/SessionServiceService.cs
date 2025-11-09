@@ -63,7 +63,6 @@ public class SessionService
         var raw = await _localStorage.GetItemAsync<string>("auth_token");
         return string.IsNullOrWhiteSpace(raw) ? null : raw.Trim().Trim('"');
     }
-    
 
     public async Task RemoveTokenAsync()
     {

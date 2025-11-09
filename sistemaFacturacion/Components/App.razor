@@ -20,11 +20,7 @@
                 <NotAuthorized>
                     @if (context.User.Identity?.IsAuthenticated == true)
                     {
-                        <div class="alert alert-danger m-4">
-                            <h4>⛔ Acceso Denegado</h4>
-                            <p>No tienes permiso para ver esta página.</p>
-                            <a href="/" class="btn btn-primary">Volver al inicio</a>
-                        </div>
+                        <sistemaFacturacion.Components.Pages.pages.Error.Error401></sistemaFacturacion.Components.Pages.pages.Error.Error401>
                     }
                     else
                     {

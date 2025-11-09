@@ -127,49 +127,37 @@
     {
         if (_isCheckingAuth || _particlesInitialized) return;
 
-        // Reintentar hasta 10 veces (porque los módulos ES6 pueden tardar en cargar)
         for (int attempt = 1; attempt <= 10; attempt++)
         {
             try
             {
-                await Task.Delay(attempt * 150); // 150ms, 300ms, 450ms, etc.
+                await Task.Delay(attempt * 150); 
 
-                // Verificar disponibilidad de particleFunctions
                 var functionsReady = await JS.InvokeAsync<bool>("eval",
                     "typeof window.particleFunctions?.mountParticlesBG === 'function'");
 
                 if (!functionsReady)
                 {
-                    Console.WriteLine($"⚠️ Intento {attempt}/10: particleFunctions.mountParticlesBG no disponible");
 
                     if (attempt == 10)
                     {
-                        Console.WriteLine("❌ DIAGNÓSTICO:");
                         var tsParticlesExists = await JS.InvokeAsync<bool>("eval", "typeof window.tsParticles !== 'undefined'");
                         var pfExists = await JS.InvokeAsync<bool>("eval", "typeof window.particleFunctions !== 'undefined'");
 
-                        Console.WriteLine($"   - window.tsParticles: {tsParticlesExists}");
-                        Console.WriteLine($"   - window.particleFunctions: {pfExists}");
-                        Console.WriteLine("💡 Revisa la consola del navegador para errores del módulo ES6");
                     }
                     continue;
                 }
 
-                // Verificar que el elemento existe
                 var elementExists = await JS.InvokeAsync<bool>("eval",
                     "document.getElementById('login-bg') !== null");
 
                 if (!elementExists)
                 {
-                    Console.WriteLine($"⚠️ Intento {attempt}/10: Elemento #login-bg no encontrado");
                     continue;
                 }
-
-                Console.WriteLine($"🚀 Intento {attempt}: Montando partículas en #login-bg...");
                 await JS.InvokeVoidAsync("particleFunctions.mountParticlesBG", "login-bg");
 
                 _particlesInitialized = true;
-                Console.WriteLine($"✅ Partículas inicializadas exitosamente (intento {attempt})");
                 break;
             }
             catch (Exception ex)
@@ -212,7 +200,6 @@
         try
         {
             await JS.InvokeVoidAsync("window.particleFunctions.unmountParticlesBG", "login-bg");
-            Console.WriteLine("✅ Particles desmontadas correctamente");
         }
         catch (Exception ex)
         {

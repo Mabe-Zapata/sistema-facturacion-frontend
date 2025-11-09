@@ -25,16 +25,11 @@ public class AuthService
     {
         try
         {
-            // DEBUG: Ver qué se envía
             var json = System.Text.Json.JsonSerializer.Serialize(loginRequest);
-            Console.WriteLine($"JSON enviado: {json}");
 
             var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginRequest);
 
-            // DEBUG: Ver respuesta
             var responseBody = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Respuesta API: {responseBody}");
-            Console.WriteLine($"Status Code: {response.StatusCode}");
 
             if (!response.IsSuccessStatusCode) return false;
 
@@ -48,7 +43,6 @@ public class AuthService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error completo: {ex}");
             throw;
         }
     }

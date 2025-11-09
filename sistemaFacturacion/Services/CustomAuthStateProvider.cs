@@ -68,58 +68,33 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
 
         if (keyValuePairs != null)
         {
-        
-            if (keyValuePairs.TryGetValue(ClaimTypes.NameIdentifier, out object? id) && id != null)
+            if (keyValuePairs.TryGetValue("role_name", out object? roleName) && roleName != null)
             {
-                var idValue = id.ToString();
-                if (idValue != null) 
+                var roleNameValue = roleName.ToString();
+                if (!string.IsNullOrEmpty(roleNameValue))
                 {
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, idValue));
+                    claims.Add(new Claim(ClaimTypes.Role, roleNameValue));
                 }
             }
 
-            // Corrección para Name
-            if (keyValuePairs.TryGetValue(ClaimTypes.Name, out object? name) && name != null)
+            if (keyValuePairs.TryGetValue("sub", out object? sub) && sub != null)
             {
-                var nameValue = name.ToString();
-                if (nameValue != null) // <-- Comprobación de nulidad
-                {
-                    claims.Add(new Claim(ClaimTypes.Name, nameValue));
-                }
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, sub.ToString() ?? ""));
             }
 
-            // Corrección para Email
-            if (keyValuePairs.TryGetValue(ClaimTypes.Email, out object? email) && email != null)
+            if (keyValuePairs.TryGetValue("name", out object? name) && name != null)
             {
-                var emailValue = email.ToString();
-                if (emailValue != null) // <-- Comprobación de nulidad
-                {
-                    claims.Add(new Claim(ClaimTypes.Email, emailValue));
-                }
+                claims.Add(new Claim(ClaimTypes.Name, name.ToString() ?? ""));
             }
 
-            // Corrección para Roles
-            if (keyValuePairs.TryGetValue(ClaimTypes.Role, out object? roles) && roles != null)
+            if (keyValuePairs.TryGetValue("email", out object? email) && email != null)
             {
-                if (roles is JsonElement rolesElement && rolesElement.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var role in rolesElement.EnumerateArray())
-                    {
-                        var roleValue = role.ToString();
-                        if (roleValue != null) // <-- Comprobación de nulidad
-                        {
-                            claims.Add(new Claim(ClaimTypes.Role, roleValue));
-                        }
-                    }
-                }
-                else
-                {
-                    var roleValue = roles.ToString();
-                    if (roleValue != null) // <-- Comprobación de nulidad
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, roleValue));
-                    }
-                }
+                claims.Add(new Claim(ClaimTypes.Email, email.ToString() ?? ""));
+            }
+
+            if (keyValuePairs.TryGetValue("idUsu", out object? idUsu) && idUsu != null)
+            {
+                claims.Add(new Claim("idUsu", idUsu.ToString() ?? ""));
             }
         }
 

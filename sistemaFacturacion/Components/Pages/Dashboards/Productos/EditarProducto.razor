@@ -2,12 +2,14 @@
 @page "/dashboards/productos/editar/{IdFromRoute:int}"
 
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
 @using sistemaFacturacion.Models
 @using CurrieTechnologies.Razor.SweetAlert2
 @inject IProductosApiClient ProductosApi
 @inject SweetAlertService Swal
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Nav
+@attribute [Authorize]
 
 
 <div class="page-header mb-3">
@@ -36,7 +38,7 @@
         </div>
         @if (!string.IsNullOrWhiteSpace(searchError))
         {
-            <div class="alert alert-danger mb-0 mt-3">@searchError</div>
+            <div class="alert alert-danger mt-3 mb-0">@searchError</div>
         }
     </div>
 </div>

@@ -15,38 +15,36 @@
 @inject AuthService AuthService
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager 
 
-    <div id="responsive-overlay" @onclick="() => responsivecloseFn()"></div>
-    <aside class="app-sidebar sticky @sidebarClass" id="sidebar" @onmouseenter="() => HoverToggleInnerMenuFn(true)" @onmouseleave="() => HoverToggleInnerMenuFn(false)" @onclick="() => icontextOpenFn()">
+<div id="responsive-overlay" @onclick="() => responsivecloseFn()"></div>
+<aside class="app-sidebar sticky @sidebarClass" id="sidebar" @onmouseenter="() => HoverToggleInnerMenuFn(true)" @onmouseleave="() => HoverToggleInnerMenuFn(false)" @onclick="() => icontextOpenFn()">
 
-        <!-- Start::main-sidebar-header -->
-        <div class="main-sidebar-header">
-            <a href="/index" class="header-logo">
-                <img src="@($"{NavigationManager.BaseUri}assets/images/brand-logos/desktop-logo.png")" alt="logo" class="desktop-logo">
-                <img src="@($"{NavigationManager.BaseUri}assets/images/brand-logos/toggle-logo.png")" alt="logo" class="toggle-logo">
-                <img src="@($"{NavigationManager.BaseUri}assets/images/brand-logos/desktop-dark.png")" alt="logo" class="desktop-dark">
-                <img src="@($"{NavigationManager.BaseUri}assets/images/brand-logos/toggle-dark.png")" alt="logo" class="toggle-dark">
-            </a>
-        </div>
-        <!-- End::main-sidebar-header -->   
+    <div class="main-sidebar-header">
+        <a href="/index" class="header-logo">
+            <img src="@($"{NavigationManager.BaseUri}assets/images/brand-logos/desktop-logo.png")" alt="logo" class="desktop-logo">
+            <img src="@($"{NavigationManager.BaseUri}assets/images/brand-logos/toggle-logo.png")" alt="logo" class="toggle-logo">
+            <img src="@($"{NavigationManager.BaseUri}assets/images/brand-logos/desktop-dark.png")" alt="logo" class="desktop-dark">
+            <img src="@($"{NavigationManager.BaseUri}assets/images/brand-logos/toggle-dark.png")" alt="logo" class="toggle-dark">
+        </a>
+    </div>
 
-        <!-- Start::main-sidebar -->  
-        <div class="main-sidebar" id="sidebar-scroll">
-            <BlazorOverlayScrollbars  @ref="scrollbarsRef" Configurations="configurations">
-                <BlazorOverlayScrollbarsContent>
-                    <!-- Start::nav -->
-                    <nav class="main-menu-container nav nav-pills flex-column sub-open">
-                        <div class="slide-left" id="slide-left" @onclick="leftArrowFn">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24"
-                                viewBox="0 0 24 24">
-                                <path d="M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z"></path>
-                            </svg>
-                        </div>
-                        <ul class="main-menu">
-                            @foreach (var MainMenuItems in MenuDataService.GetMenuData())
+
+
+    <div class="main-sidebar" id="sidebar-scroll">
+        <BlazorOverlayScrollbars  @ref="scrollbarsRef" Configurations="configurations">
+            <BlazorOverlayScrollbarsContent>
+                <nav class="main-menu-container nav nav-pills flex-column sub-open">
+                    <div class="slide-left" id="slide-left" @onclick="leftArrowFn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24"
+                             viewBox="0 0 24 24">
+                            <path d="M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z"></path>
+                        </svg>
+                    </div>
+                    <ul class="main-menu">
+                        @if (menuVal != null)
+                        {
+                            @foreach (var MainMenuItems in menuVal)
                             {
-                                <!-- Start::slide__category -->
-                                <li
-                                    class="@(!string.IsNullOrEmpty(MainMenuItems.MenuTitle) ? "slide__category" : "") @(MainMenuItems.Type == "link"? "slide" : "") @(MainMenuItems.Type == "sub" ? "slide has-sub": "") @(MainMenuItems.Active ? "open" : "") @(MainMenuItems.Selected ? "active" : "")">
+                                <li class="@(!string.IsNullOrEmpty(MainMenuItems.MenuTitle) ? "slide__category" : "") @(MainMenuItems.Type == "link" ? "slide" : "") @(MainMenuItems.Type == "sub" ? "slide has-sub" : "") @(MainMenuItems.Active ? "open" : "") @(MainMenuItems.Selected ? "active" : "")">
                                     @if (!string.IsNullOrEmpty(MainMenuItems.MenuTitle))
                                     {
                                         <span class="category-name">@MainMenuItems.MenuTitle</span>
@@ -54,13 +52,16 @@
                                     @if (MainMenuItems.Type == "link")
                                     {
                                         <a href="@MainMenuItems.Path" @onclick="async (e) => { await SetSubmenu((MainMenuItems, null)); Navigation.NavigateTo(MainMenuItems.Path); }" class="side-menu__item @(MainMenuItems.Selected ? "active" : "")">
-                                            @if(!string.IsNullOrEmpty(MainMenuItems.Svg)){
-                                                @((MarkupString)(MainMenuItems.Svg?? string.Empty))
+                                            @if (!string.IsNullOrEmpty(MainMenuItems.Svg))
+                                            {
+                                                @((MarkupString)(MainMenuItems.Svg ?? string.Empty))
                                             }
-                                            @if (!string.IsNullOrEmpty(MainMenuItems.Icon)) {
+                                            @if (!string.IsNullOrEmpty(MainMenuItems.Icon))
+                                            {
                                                 <i class="@(MainMenuItems.Icon) side-menu__icon"></i>
                                             }
-                                            <span class="side-menu__label">@MainMenuItems.Title
+                                            <span class="side-menu__label">
+                                                @MainMenuItems.Title
                                                 @if (!string.IsNullOrEmpty(MainMenuItems.BadgeValue))
                                                 {
                                                     <span class="badge @(MainMenuItems.BadgeClass) ms-2">@MainMenuItems.BadgeValue</span>
@@ -71,17 +72,19 @@
                                     @if (MainMenuItems.Type == "external")
                                     {
                                         <a href="@MainMenuItems.Path" target="_blank" class="side-menu__item">
-                                            @if(!string.IsNullOrEmpty(MainMenuItems.Svg)){
-                                                @((MarkupString)(MainMenuItems.Svg?? string.Empty))
+                                            @if (!string.IsNullOrEmpty(MainMenuItems.Svg))
+                                            {
+                                                @((MarkupString)(MainMenuItems.Svg ?? string.Empty))
                                             }
-                                            @if (!string.IsNullOrEmpty(MainMenuItems.Icon)) {
+                                            @if (!string.IsNullOrEmpty(MainMenuItems.Icon))
+                                            {
                                                 <i class="@(MainMenuItems.Icon) side-menu__icon"></i>
                                             }
-                                            <span class="side-menu__label">@MainMenuItems.Title
+                                            <span class="side-menu__label">
+                                                @MainMenuItems.Title
                                                 @if (!string.IsNullOrEmpty(MainMenuItems.BadgeValue))
                                                 {
-                                                    <span
-                                                        class="badge @(MainMenuItems.BadgeClass) ms-2">@MainMenuItems.BadgeValue</span>
+                                                    <span class="badge @(MainMenuItems.BadgeClass) ms-2">@MainMenuItems.BadgeValue</span>
                                                 }
                                             </span>
                                         </a>
@@ -89,17 +92,19 @@
                                     @if (MainMenuItems.Type == "empty")
                                     {
                                         <a href="javascript:void(0)" class="side-menu__item">
-                                            @if(!string.IsNullOrEmpty(MainMenuItems.Svg)){
-                                                @((MarkupString)(MainMenuItems.Svg?? string.Empty))
+                                            @if (!string.IsNullOrEmpty(MainMenuItems.Svg))
+                                            {
+                                                @((MarkupString)(MainMenuItems.Svg ?? string.Empty))
                                             }
-                                            @if (!string.IsNullOrEmpty(MainMenuItems.Icon)) {
+                                            @if (!string.IsNullOrEmpty(MainMenuItems.Icon))
+                                            {
                                                 <i class="@(MainMenuItems.Icon) side-menu__icon"></i>
                                             }
-                                            <span class="side-menu__label">@MainMenuItems.Title
+                                            <span class="side-menu__label">
+                                                @MainMenuItems.Title
                                                 @if (!string.IsNullOrEmpty(MainMenuItems.BadgeValue))
                                                 {
-                                                    <span
-                                                        class="badge @(MainMenuItems.BadgeClass) ms-2">@MainMenuItems.BadgeValue</span>
+                                                    <span class="badge @(MainMenuItems.BadgeClass) ms-2">@MainMenuItems.BadgeValue</span>
                                                 }
                                             </span>
                                         </a>
@@ -109,29 +114,21 @@
                                         <SubNavMenu menuData="@MainMenuItems" OnToggleSubmenu="ToggleSubMenu" OnSetSubmenu="SetSubmenu" Level="@(level + 1)" />
                                     }
                                 </li>
-                                <!-- End::slide__category -->
-                                
                             }
-                        </ul>
-                        <ul class="doublemenu_bottom-menu main-menu border-top mb-0">
-                            <!-- Start::slide -->
-                            <li class="slide" @onclick='() => colorthemeFn()'>
-                                <a href="javascript:void(0);" class="side-menu__item layout-setting-doublemenu">
-                                    <span class="light-layout">
-                                        <!-- Start::header-link-icon -->
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"/><path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" opacity="0.2"/><path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
-                                        <!-- End::header-link-icon -->
-                                    </span>
-                                    <span class="dark-layout">
-                                        <!-- Start::header-link-icon -->
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"/><circle cx="128" cy="128" r="56" opacity="0.2"/><line x1="128" y1="40" x2="128" y2="32" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="128" r="56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="64" y1="64" x2="56" y2="56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="64" y1="192" x2="56" y2="200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="192" y1="64" x2="200" y2="56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="192" y1="192" x2="200" y2="200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="40" y1="128" x2="32" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="128" y1="216" x2="128" y2="224" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="216" y1="128" x2="224" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
-                                        <!-- End::header-link-icon -->
-                                    </span>
-                                    <span class="side-menu__label">Theme Settings</span>
-                                </a>
-                            </li>
-                            <!-- End::slide -->
-                            <!-- Start::slide -->
+                        }
+                    </ul>
+                    <ul class="doublemenu_bottom-menu main-menu border-top mb-0">
+                        <li class="slide" @onclick='() => colorthemeFn()'>
+                            <a href="javascript:void(0);" class="side-menu__item layout-setting-doublemenu">
+                                <span class="light-layout">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none" /><path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" opacity="0.2" /><path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /></svg>
+                                </span>
+                                <span class="dark-layout">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none" /><circle cx="128" cy="128" r="56" opacity="0.2" /><line x1="128" y1="40" x2="128" y2="32" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><circle cx="128" cy="128" r="56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="64" y1="64" x2="56" y2="56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="64" y1="192" x2="56" y2="200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="192" y1="64" x2="200" y2="56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="192" y1="192" x2="200" y2="200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="40" y1="128" x2="32" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="128" y1="216" x2="128" y2="224" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="216" y1="128" x2="224" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /></svg>
+                                </span>
+                                <span class="side-menu__label">Theme Settings</span>
+                            </a>
+                        </li>
                         <li class="slide">
                             <a href="/" class="side-menu__item"
                                @onclick="LogoutAsync"
@@ -141,39 +138,31 @@
                                 <span class="side-menu__label">Logout</span>
                             </a>
                         </li>
-                            <!-- End::slide -->
-                            <!-- Start::slide -->
-                            <li class="slide">
+                        <li class="slide">
                             <a href="/profilesettings" class="side-menu__item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none"/><path d="M205.31,71.08a16,16,0,0,1-20.39-20.39A96,96,0,0,0,63.8,199.38h0A72,72,0,0,1,128,160a40,40,0,1,1,40-40,40,40,0,0,1-40,40,72,72,0,0,1,64.2,39.37A96,96,0,0,0,205.31,71.08Z" opacity="0.2"/><line x1="200" y1="40" x2="200" y2="28" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="200" cy="56" r="16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="186.14" y1="48" x2="175.75" y2="42" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="186.14" y1="64" x2="175.75" y2="70" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="72" x2="200" y2="84" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="213.86" y1="64" x2="224.25" y2="70" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="213.86" y1="48" x2="224.25" y2="42" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><circle cx="128" cy="120" r="40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M63.8,199.37a72,72,0,0,1,128.4,0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M222.67,112A95.92,95.92,0,1,1,144,33.33" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
-                                    <span class="side-menu__label">Profile Settings</span>
-                                </a>
-                            </li>
-                            <!-- End::slide -->
-                            <!-- Start::slide -->
-                            <li class="slide">
-                                <a href="/profile" class="side-menu__item rounded-circle mb-0 p-1">
-                                    <span class="avatar avatar-md avatar-rounded">
-                                        <img src="../assets/images/faces/10.jpg" alt="">
-                                    </span>
-                                </a>
-                            </li>
-                            <!-- End::slide -->
-                        </ul>
-                        <div class="slide-right" id="slide-right" @onclick="rightArrowFn">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24"
-                                viewBox="0 0 24 24">
-                                <path d="M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z"></path>
-                            </svg>
-                        </div>
-                    </nav>
-                    <!-- End::nav -->
-                </BlazorOverlayScrollbarsContent>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 256 256"><rect width="256" height="256" fill="none" /><path d="M205.31,71.08a16,16,0,0,1-20.39-20.39A96,96,0,0,0,63.8,199.38h0A72,72,0,0,1,128,160a40,40,0,1,1,40-40,40,40,0,0,1-40,40,72,72,0,0,1,64.2,39.37A96,96,0,0,0,205.31,71.08Z" opacity="0.2" /><line x1="200" y1="40" x2="200" y2="28" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><circle cx="200" cy="56" r="16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="186.14" y1="48" x2="175.75" y2="42" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="186.14" y1="64" x2="175.75" y2="70" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="200" y1="72" x2="200" y2="84" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="213.86" y1="64" x2="224.25" y2="70" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><line x1="213.86" y1="48" x2="224.25" y2="42" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><circle cx="128" cy="120" r="40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><path d="M63.8,199.37a72,72,0,0,1,128.4,0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /><path d="M222.67,112A95.92,95.92,0,1,1,144,33.33" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" /></svg>
+                                <span class="side-menu__label">Profile Settings</span>
+                            </a>
+                        </li>
+                        <li class="slide">
+                            <a href="/profile" class="side-menu__item rounded-circle mb-0 p-1">
+                                <span class="avatar avatar-md avatar-rounded">
+                                    <img src="../assets/images/faces/10.jpg" alt="">
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="slide-right" id="slide-right" @onclick="rightArrowFn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24"
+                             viewBox="0 0 24 24">
+                            <path d="M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z"></path>
+                        </svg>
+                    </div>
+                </nav>
+            </BlazorOverlayScrollbarsContent>
             </BlazorOverlayScrollbars>
-        </div>
-        <!-- End::main-sidebar -->
-
-    </aside>
+    </div>
+</aside>
 
 @code {
     DotNetObjectReference<NavMenu>? dotNetObjectReference;
@@ -181,7 +170,7 @@
     private string sidebarClass = "";
     private MainMenuItems? topParent;
     private MainMenuItems? currentItem;
-    public  WMBOSConfigurations? configurations;
+    public WMBOSConfigurations? configurations;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -189,16 +178,18 @@
         {
             ActionService.OnActionTriggered += HandleActionTriggered;
 
-            if(scrollService != null){
+            if (scrollService != null)
+            {
                 scrollService.ScrollModeChanged += HandleScrollModeChanged;
                 scrollService.VerticalModeChanged += HandleVerticalModeChanged;
             }
-             Navigation.LocationChanged += HandleLocationChanged;
-             CheckLayout();
+            Navigation.LocationChanged += HandleLocationChanged;
+            CheckLayout();
             var currentUri = new Uri(Navigation.Uri);
             var currentPath = currentUri.AbsolutePath;
             currentItem = FindMenuItemByPath(menuVal, currentPath != "/" ? currentPath : "/index");
-            if (currentItem != null){
+            if (currentItem != null)
+            {
                 // To Activate on initial load
                 await stateService.setCurrentItem(currentItem);
                 await SetSubmenu((currentItem, null));
@@ -207,7 +198,8 @@
             WindowPreSize.Add(screenSize);
             dotNetObjectReference = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("resizeFunctions.addresizeListener", dotNetObjectReference);
-            if(screenSize < 992) {
+            if (screenSize < 992)
+            {
                 await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
             }
 
@@ -216,87 +208,103 @@
         }
     }
 
-  private async void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    private async void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var currentUri = new Uri(Navigation.Uri);
+        var currentPath = currentUri.AbsolutePath;
+        currentItem = FindMenuItemByPath(menuVal, currentPath != "/" ? currentPath : "/index");
+        if (currentItem != null)
         {
-           var currentUri = new Uri(Navigation.Uri);
-            var currentPath = currentUri.AbsolutePath;
-            currentItem = FindMenuItemByPath(menuVal, currentPath != "/" ? currentPath : "/index");
-            if (currentItem != null){
-                // To Activate on initial load
-                await stateService.setCurrentItem(currentItem);
-                await SetSubmenu((currentItem, null));
-            }
+            // To Activate on initial load
+            await stateService.setCurrentItem(currentItem);
+            await SetSubmenu((currentItem, null));
         }
+    }
     async void HandleActionTriggered(string actionValue)
     {
         int inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
-        if(actionValue == "vertical"){
+        if (actionValue == "vertical")
+        {
             if (currentItem != null)
             {
-               await SetSubmenu((currentItem, null));
+                await SetSubmenu((currentItem, null));
             }
         }
-        else if(actionValue == "horizontal" && inner > 992){
+        else if (actionValue == "horizontal" && inner > 992)
+        {
             closeMenuFn();
         }
         StateHasChanged();
     }
     int screenSize = 1268;
     private List<int> WindowPreSize = new List<int>();
-    
+
     [JSInvokable]
     public async void OnWindowResize(int position)
     {
         var layout = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-nav-layout");
         screenSize = position;
         WindowPreSize.Add(position);
-        if (WindowPreSize.Count > 2){
+        if (WindowPreSize.Count > 2)
+        {
             WindowPreSize.RemoveAt(0);
         }
-        if (WindowPreSize.Count > 1) {
+        if (WindowPreSize.Count > 1)
+        {
             int recentSize = WindowPreSize[WindowPreSize.Count - 1];
             int prevSize = WindowPreSize[WindowPreSize.Count - 2];
-            if (recentSize < 992 && prevSize >= 992){
+            if (recentSize < 992 && prevSize >= 992)
+            {
                 // Execute logic for window size less than 992
-                if (currentItem != null){
+                if (currentItem != null)
+                {
                     await SetSubmenu((currentItem, null));
                 }
-                 CheckLayout();
+                CheckLayout();
                 await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
             }
             else if (recentSize >= 992 && prevSize < 992)
             {
                 await stateService.navigationStylesFn(currentState.NavigationStyles, false);
-                string rixzomenuStyles =  currentState.MenuStyles;
-                string rixzoverticalstyles =  currentState.LayoutStyles;
-                if (string.IsNullOrEmpty(rixzoverticalstyles)) {
+                string rixzomenuStyles = currentState.MenuStyles;
+                string rixzoverticalstyles = currentState.LayoutStyles;
+                if (string.IsNullOrEmpty(rixzoverticalstyles))
+                {
                     await stateService.menuStylesFn(rixzomenuStyles);
-                }else{
-                await stateService.layoutStylesFn(rixzoverticalstyles);
                 }
-                if (layout == "horizontal" ){
+                else
+                {
+                    await stateService.layoutStylesFn(rixzoverticalstyles);
+                }
+                if (layout == "horizontal")
+                {
                     this.closeMenuFn();
-                }else{
-                     if (currentItem != null){
+                }
+                else
+                {
+                    if (currentItem != null)
+                    {
                         await SetSubmenu((currentItem, null));
                     }
                 }
                 // Execute logic for window size greater than or equal to 992
-                 CheckLayout();
+                CheckLayout();
             }
         }
-        
+
         checkHoriMenu();
         StateHasChanged();
     }
     BlazorOverlayScrollbars? scrollbarsRef;
     string? isMenuType = "";
 
-    [Inject] private NavScrollService? scrollService { get; set; }
+    [Inject]
+    private NavScrollService? scrollService{ get; set; }
+
 
     protected override void OnInitialized()
     {
-        Navigation.LocationChanged += (sender, args) => HandleLocationChange(sender, args);;
+        Navigation.LocationChanged += (sender, args) => HandleLocationChange(sender, args); ;
     }
     // Method to handle location changes
     private async void HandleLocationChange(object? sender, LocationChangedEventArgs args)
@@ -313,7 +321,7 @@
     private void HandleScrollModeChanged(string isMenuType)
     {
         this.isMenuType = isMenuType;
-         CheckLayout();
+        CheckLayout();
     }
     private void HandleVerticalModeChanged(bool isVertical)
     {
@@ -323,10 +331,11 @@
     public void CheckLayout()
     {
         var layout = currentState?.NavigationStyles;
-        if(this.isMenuType != "") {
+        if (this.isMenuType != "")
+        {
             checkHoriMenu();
             StateHasChanged();
-       }
+        }
     }
 
     //sticky-pin //
@@ -346,7 +355,7 @@
         {
             sidebarClass = "";
         }
-        
+
         StateHasChanged();
     }
     //sticky-pin //
@@ -387,70 +396,90 @@
         var marginRightValue = menuNav.marginInlineStart;
         var check = menuNav.scrollWidth - mainContainer1;
         var mainContainer1Width = mainContainer1;
-         if (menuNav.scrollWidth > mainContainer1) {
-                if (marginRightValue < 0 && !(Math.Abs(marginRightValue) < mainContainer1Width)) {
-                    await JSRuntime.InvokeAsync<MenuNavElement>("interop.MenuNavmarginInlineStart", ".main-menu", $"{menuNav.marginInlineStart + Math.Abs(mainContainer1Width)}px");
-                    await JSRuntime.InvokeAsync<string>("interop.removeClass", ".slide-right", "d-none");
-                } else {
-                    await JSRuntime.InvokeAsync<MenuNavElement>("interop.MenuNavmarginInlineStart", ".main-menu", "0px");
-                    await JSRuntime.InvokeAsync<string>("interop.addClass", ".slide-left", "d-none");
-                    await JSRuntime.InvokeAsync<string>("interop.removeClass", ".slide-right", "d-none");
-                }
+        if (menuNav.scrollWidth > mainContainer1)
+        {
+            if (marginRightValue < 0 && !(Math.Abs(marginRightValue) < mainContainer1Width))
+            {
+                await JSRuntime.InvokeAsync<MenuNavElement>("interop.MenuNavmarginInlineStart", ".main-menu", $"{menuNav.marginInlineStart + Math.Abs(mainContainer1Width)}px");
+                await JSRuntime.InvokeAsync<string>("interop.removeClass", ".slide-right", "d-none");
             }
-            else {
+            else
+            {
                 await JSRuntime.InvokeAsync<MenuNavElement>("interop.MenuNavmarginInlineStart", ".main-menu", "0px");
                 await JSRuntime.InvokeAsync<string>("interop.addClass", ".slide-left", "d-none");
+                await JSRuntime.InvokeAsync<string>("interop.removeClass", ".slide-right", "d-none");
             }
+        }
+        else
+        {
+            await JSRuntime.InvokeAsync<MenuNavElement>("interop.MenuNavmarginInlineStart", ".main-menu", "0px");
+            await JSRuntime.InvokeAsync<string>("interop.addClass", ".slide-left", "d-none");
+        }
         closeMenuFn();
     }
-    private async void checkHoriMenu(){
-         try
+    private async void checkHoriMenu()
+    {
+        try
         {
-            await Task.Delay(500); 
+            await Task.Delay(500);
             var menuNav = await JSRuntime.InvokeAsync<MenuNavElement>("interop.MenuNavElement", ".main-menu");
             var mainContainer1 = await JSRuntime.InvokeAsync<int>("interop.mainSidebarOffset", ".main-sidebar");
             var marginRightValue = menuNav.marginInlineStart;
             var check = menuNav.scrollWidth - mainContainer1;
-            if (menuNav.scrollWidth > mainContainer1) {
+            if (menuNav.scrollWidth > mainContainer1)
+            {
                 await JSRuntime.InvokeAsync<string>("interop.addClass", ".slide-left", "d-none");
                 await JSRuntime.InvokeAsync<string>("interop.removeClass", ".slide-right", "d-none");
-            }else{
+            }
+            else
+            {
                 await JSRuntime.InvokeAsync<string>("interop.addClass", ".slide-left", "d-none");
                 await JSRuntime.InvokeAsync<string>("interop.addClass", ".slide-right", "d-none");
                 await JSRuntime.InvokeAsync<MenuNavElement>("interop.MenuNavmarginInlineStart", ".main-menu", "0px");
             }
-            if (menuNav.scrollWidth > mainContainer1) {
-                if (Math.Abs(check) < Math.Abs(marginRightValue)) {
+            if (menuNav.scrollWidth > mainContainer1)
+            {
+                if (Math.Abs(check) < Math.Abs(marginRightValue))
+                {
                     await JSRuntime.InvokeAsync<MenuNavElement>("interop.MenuNavmarginInlineStart", ".main-menu", -check + "px");
                     await JSRuntime.InvokeAsync<string>("interop.removeClass", ".slide-left", "d-none");
                     await JSRuntime.InvokeAsync<string>("interop.addClass", ".slide-right", "d-none");
                 }
             }
-            if (marginRightValue == 0) {
+            if (marginRightValue == 0)
+            {
                 await JSRuntime.InvokeAsync<string>("interop.addClass", ".slide-left", "d-none");
-            } else {
+            }
+            else
+            {
                 await JSRuntime.InvokeAsync<string>("interop.removeClass", ".slide-right", "d-none");
             }
 
-            if(marginRightValue != 0){
+            if (marginRightValue != 0)
+            {
                 await JSRuntime.InvokeAsync<string>("interop.removeClass", ".slide-left", "d-none");
             }
 
-            if (menuVal != null){
+            if (menuVal != null)
+            {
                 foreach (var item in menuVal.ToArray())
                 {
-                    if(item.Children != null){
+                    if (item.Children != null)
+                    {
                         foreach (var item1 in item.Children)
                         {
                             var directionChange1 = await JSRuntime.InvokeAsync<bool>("interop.directionChange", item1?.RandomNumber);
-                            if(item1 != null){
+                            if (item1 != null)
+                            {
                                 item1.DirChange = directionChange1;
                             }
-                            if(item1 != null && item1.Children != null){
+                            if (item1 != null && item1.Children != null)
+                            {
                                 foreach (var item2 in item1.Children)
                                 {
                                     var directionChange2 = await JSRuntime.InvokeAsync<bool>("interop.directionChange", item2?.RandomNumber);
-                                    if(item2 != null){
+                                    if (item2 != null)
+                                    {
                                         item2.DirChange = directionChange2;
                                     }
                                 }
@@ -470,20 +499,21 @@
         }
 
     }
-    
+
     private List<MainMenuItems>? menuVal;
     private int level = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        
-        menuVal = MenuDataService.GetMenuData();
+
+        // ¡CAMBIO 2! Llama al método asíncrono y filtrado.
+        menuVal = await MenuDataService.GetFilteredMenuAsync();
         await Random(menuVal);
-           
-		configurations = new  WMBOSConfigurations {};
-		configurations.overflowBehavior.x = "scroll";
-		configurations.scrollbars.dragScrolling = false;
-        
+
+        configurations = new WMBOSConfigurations { };
+        configurations.overflowBehavior.x = "scroll";
+        configurations.scrollbars.dragScrolling = false;
+
     }
     // Method to recursively search for a menu item with matching path
     private MainMenuItems? FindMenuItemByPath(IEnumerable<MainMenuItems>? items, string path)
@@ -518,7 +548,8 @@
         foreach (var item in menuData!)
         {
             item.RandomNumber = rand.Next(1000); // Adjust range as needed
-            if(item.Children != null){
+            if (item.Children != null)
+            {
                 await Random(item.Children.ToList());
             }
         }
@@ -535,19 +566,21 @@
         MainMenuItems[] menuData = data.menuData;
         MainMenuItems? parent = null; // Initialize parent variable
 
-            foreach (var item in menuVal ?? [])
+        foreach (var item in menuVal ?? [])
+        {
+            if (item == targetObject)
             {
-                if (item == targetObject )
-                {
-                    parent = item;
-                    break; // Assuming you want to find the first parent and stop further iterations
-                }
+                parent = item;
+                break; // Assuming you want to find the first parent and stop further iterations
             }
+        }
 
-        if((parent != null && targetObject.Active && verticalStyle == "doublemenu") &&  inner > 992){
+        if ((parent != null && targetObject.Active && verticalStyle == "doublemenu") && inner > 992)
+        {
             return;
         }
-        if (((navStyle != "icon-hover" && navStyle != "menu-hover") || toggled == null && navLayout != "horizontal") ||  inner  < 992) {
+        if (((navStyle != "icon-hover" && navStyle != "menu-hover") || toggled == null && navLayout != "horizontal") || inner < 992)
+        {
             if ((menuData == null || menuData.Length == 0) && menuVal != null)
             {
                 menuData = menuVal.ToArray();
@@ -562,10 +595,8 @@
                     {
                         CloseOtherMenus(menuData, item);
                     }
-                    else{
-                        <!-- if (verticalStyle == "doublemenu") {
-                            await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "double-menu-close");
-                        }  -->
+                    else
+                    {
                     }
                     await SetAncestorsActive(menuData, item);
                 }
@@ -580,14 +611,18 @@
                 }
             }
             var screenSize = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
-            if (targetObject?.Children != null && targetObject.Active) {
-                if (verticalStyle == "doublemenu" && toggled != "double-menu-open" && screenSize > 992) {
+            if (targetObject?.Children != null && targetObject.Active)
+            {
+                if (verticalStyle == "doublemenu" && toggled != "double-menu-open" && screenSize > 992)
+                {
                     await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "double-menu-open");
                 }
             }
-            if(navLayout == "horizontal" && (navStyle == "menu-click" || navStyle == "icon-click")){
+            if (navLayout == "horizontal" && (navStyle == "menu-click" || navStyle == "icon-click"))
+            {
                 var directionChange = await JSRuntime.InvokeAsync<bool>("interop.directionChange", targetObject?.RandomNumber);
-                if(targetObject != null){
+                if (targetObject != null)
+                {
                     targetObject.DirChange = directionChange;
                 }
             }
@@ -602,7 +637,7 @@
         {
             // parent.Active = true;
             await SetAncestorsActive(items, parent);
-        @* }else{ *@
+            @* }else{ *@
             @* if (verticalStyle == "doublemenu") {
                 await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "double-menu-close");
             } *@
@@ -654,7 +689,9 @@
         if ((menuData == null || menuData.Length == 0) && menuVal != null)
         {
             menuData = menuVal.ToArray();
-        }else{
+        }
+        else
+        {
             innerLevel = true;
         }
         foreach (var item in menuData!)
@@ -662,10 +699,12 @@
             if (item == targetObject)
             {
                 var screenSize = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
-                if(item.Type == "link" && !innerLevel && screenSize > 992){
-                    await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "double-menu-close");                    
+                if (item.Type == "link" && !innerLevel && screenSize > 992)
+                {
+                    await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "double-menu-close");
                 }
-                if( currentState?.NavigationStyles !="horizontal" || screenSize  < 992) {
+                if (currentState?.NavigationStyles != "horizontal" || screenSize < 992)
+                {
                     item.Active = true;
                 }
                 item.Selected = true;
@@ -678,7 +717,7 @@
             }
             //else
             //{
-            //    RemoveActiveOtherMenus(item,targetObject);
+            //    RemoveActiveOtherMenus(item,targetObject);
             //}
 
             if (item.Children != null && item.Children.Any())
@@ -697,7 +736,7 @@
         if (parent != null)
         {
             var inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
-            var navLayout =currentState?.NavigationStyles;
+            var navLayout = currentState?.NavigationStyles;
             // Loop through parent's children to reset Active and Selected
             if (parent?.Children != null && topParent != null && targetObject != null)
             {
@@ -705,32 +744,38 @@
                 {
                     if (item != topParent && item != targetObject) // Exclude topParent from being affected
                     {
-                        RemoveActiveOtherMenus(item,targetObject);
+                        RemoveActiveOtherMenus(item, targetObject);
                     }
                 }
             }
-            if( navLayout !="horizontal" || inner  < 992) {
-                if (parent != null){parent.Active = true;}  
-            } 
-            if (parent != null){parent.Selected = true;}
+            if (navLayout != "horizontal" || inner < 992)
+            {
+                if (parent != null) { parent.Active = true; }
+            }
+            if (parent != null) { parent.Selected = true; }
 
-            topParent= parent;
+            topParent = parent;
             if (parent != null)
             {
                 SetMenuAncestorsActive(parent);
             }
         }
-        else{
-            if(targetObject?.Title != topParent?.Title){
+        else
+        {
+            if (targetObject?.Title != topParent?.Title)
+            {
                 topParent = null;
-            }else if(targetObject?.Type == "link"){
+            }
+            else if (targetObject?.Type == "link")
+            {
                 topParent = null;
             }
             var dummyMenuItems = menuVal?.Where(item => item != topParent).ToList();
-            foreach (var item in dummyMenuItems!){ 
+            foreach (var item in dummyMenuItems!)
+            {
                 if (targetObject != null)
                 {
-                    RemoveActiveOtherMenus(item,targetObject);
+                    RemoveActiveOtherMenus(item, targetObject);
                 }
             }
         }
@@ -761,7 +806,8 @@
 
         if (item != null)
         {
-            if(item.Title !=  targetObject.Title) {
+            if (item.Title != targetObject.Title)
+            {
                 item.Active = false;
                 item.Selected = false;
             }
@@ -771,7 +817,7 @@
                 {
                     child.Active = false;
                     child.Selected = false;
-                    RemoveActiveOtherMenus(child,targetObject);
+                    RemoveActiveOtherMenus(child, targetObject);
                 }
             }
 
@@ -811,8 +857,10 @@
             {
                 item.Active = false;
                 closeMenuRecursively(item.Children);
-            };
-        };
+            }
+            ;
+        }
+        ;
         closeMenuRecursively(menuVal);
         StateHasChanged();
     }
@@ -822,7 +870,8 @@
     private async void HoverToggleInnerMenuFn(bool isMouseOver)
     {
         var dataToggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
-        if (dataToggled == "icon-overlay-close" || dataToggled == "detached-close") {
+        if (dataToggled == "icon-overlay-close" || dataToggled == "detached-close")
+        {
             if (isMouseOver)
             {
                 await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-icon-overlay", "open");
@@ -838,7 +887,8 @@
     private async void icontextOpenFn()
     {
         var dataToggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
-        if (dataToggled == "icon-text-close") {
+        if (dataToggled == "icon-text-close")
+        {
             await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-icon-text", "open");
         }
     }
@@ -850,17 +900,20 @@
         var toggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
         var inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
 
-        if (toggled == "close") {
+        if (toggled == "close")
+        {
             await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "open");
         }
-        else {
+        else
+        {
             await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
         }
     }
     // Responsive Close End
 
 
-    public void Dispose(){
+    public void Dispose()
+    {
         JSRuntime.InvokeVoidAsync("resizeFunctions.detachScrollListener");
     }
 
@@ -893,4 +946,3 @@
         Navigation.NavigateTo("/", forceLoad: true);
     }
 }
-
