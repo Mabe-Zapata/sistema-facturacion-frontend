@@ -55,18 +55,21 @@ public class SessionService
 
     public async Task SaveTokenAsync(string token)
     {
-        await _localStorage.SetItemAsync(TokenKey, token);
+        await _localStorage.SetItemAsync("auth_token", token?.Trim().Trim('"'));
     }
 
     public async Task<string> GetTokenAsync()
     {
-        return await _localStorage.GetItemAsStringAsync(TokenKey); // Usar GetItemAsStringAsync para strings
+        var raw = await _localStorage.GetItemAsync<string>("auth_token");
+        return string.IsNullOrWhiteSpace(raw) ? null : raw.Trim().Trim('"');
     }
+    
 
     public async Task RemoveTokenAsync()
     {
         await _localStorage.RemoveItemAsync(TokenKey);
     }
+
 
     public async Task ClearAllSession()
     {

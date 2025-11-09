@@ -1,5 +1,281 @@
-﻿<h3>EditarLote</h3>
+﻿@page "/dashboards/lotes/editar/{id:int}"
+@using System.ComponentModel.DataAnnotations
+@using sistemaFacturacion.Models
+@using sistemaFacturacion.Services
+@inject ILotesApiClient LotesApi
+@inject IProductosApiClient ProductosApi
+@inject NavigationManager Nav
+@inject CurrieTechnologies.Razor.SweetAlert2.SweetAlertService Swal
+
+<h2 class="page-title fw-semibold fs-20 mb-2">Editar lote</h2>
+<p class="text-muted mb-3">Actualiza los datos del lote y guarda los cambios.</p>
+
+@if (isLoading)
+{
+    <div class="card border-0 shadow-sm"><div class="card-body">Cargando…</div></div>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <div class="card border-0 shadow-sm"><div class="card-body text-danger">@error</div></div>
+}
+else
+{
+    <EditForm Model="@vm" OnValidSubmit="@Guardar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <!-- Identificación -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><strong>Identificación</strong></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">ID Lote</label>
+                        <input class="form-control" value="@vm.Id" disabled />
+                    </div>
+
+                    <div class="col-12 col-md-9">
+                        <label class="form-label">Producto</label>
+                        <!-- Importante: usamos value + @onchange para evitar errores de doble bind -->
+                        <InputSelect class="form-select"
+                                     value="@vm.IdPro"
+                                     @onchange="OnProductoChanged">
+                            <option value="0">— Selecciona un producto —</option>
+                            @foreach (var p in productos)
+                            {
+                                <option value="@p.Id">@p.Nombre</option>
+                            }
+                        </InputSelect>
+                        <small class="text-muted d-block mt-1">
+                            Selecciona el producto; el valor guardado será su ID.
+                        </small>
+                        <ValidationMessage For="@(() => vm.IdPro)" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Nombre (referencia)</label>
+                        <input class="form-control" value="@vm.NombreProducto" disabled />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Tipo (referencia)</label>
+                        <input class="form-control" value="@vm.TipoProducto" disabled />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fechas -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><strong>Fechas</strong></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Fecha de compra</label>
+                        <InputDate class="form-control" @bind-Value="vm.FecCom" />
+                        <ValidationMessage For="@(() => vm.FecCom)" />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Fecha de expiración</label>
+                        <InputDate class="form-control" @bind-Value="vm.FecExp" />
+                        <ValidationMessage For="@(() => vm.FecExp)" />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Estado actual</label>
+                        <input class="form-control" value="@(vm.EstLot ? "Activo" : "Inactivo")" disabled />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cantidades y precios -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><strong>Cantidades y precios</strong></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Cantidad del lote</label>
+                        <InputNumber class="form-control" @bind-Value="vm.CanLot" />
+                        <ValidationMessage For="@(() => vm.CanLot)" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Disponible</label>
+                        <InputNumber class="form-control" @bind-Value="vm.CanDis" />
+                        <ValidationMessage For="@(() => vm.CanDis)" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Precio compra ($)</label>
+                        <InputNumber class="form-control" @bind-Value="vm.PreCom" />
+                        <ValidationMessage For="@(() => vm.PreCom)" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Precio venta ($)</label>
+                        <InputNumber class="form-control" @bind-Value="vm.PreVen" />
+                        <ValidationMessage For="@(() => vm.PreVen)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-light" @onclick="Volver">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="ri-save-3-line me-1"></i> Guardar cambios
+                </button>
+            </div>
+        </div>
+    </EditForm>
+}
 
 @code {
+    [Parameter] public int id { get; set; }
 
+    private bool isLoading = true;
+    private string? error;
+    private LoteVM vm = new();
+    private List<ProductoDto> productos = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            isLoading = true;
+            error = null;
+
+            // 1) Traigo el lote
+            var dto = await LotesApi.GetByIdAsync(id);
+            if (dto is null) { error = $"No se encontró el lote {id}."; return; }
+
+            vm = new LoteVM
+            {
+                Id = dto.Id,
+                IdPro = dto.IdPro,
+                NombreProducto = dto.NombreProducto ?? "",
+                TipoProducto = dto.TipoProducto ?? "",
+                FecCom = dto.FecCom,
+                FecExp = dto.FecExp,
+                CanLot = dto.CanLot,
+                CanDis = dto.CanDis,
+                PreCom = dto.PreCom,
+                PreVen = dto.PreVen,
+                EstLot = dto.EstLot
+            };
+
+            // 2) Cargo productos para el combo
+            productos = await ProductosApi.GetAllAsync();
+
+            // 3) Si el IdPro actual existe en la lista, sincronizo nombre/tipo desde allí
+            var pSel = productos.FirstOrDefault(p => p.Id == vm.IdPro);
+            if (pSel is not null)
+            {
+                vm.NombreProducto = pSel.Nombre;
+                vm.TipoProducto = pSel.Tipo;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // Cambio desde el combo de productos
+    private async Task OnProductoChanged(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e?.Value?.ToString(), out var nuevoId)) nuevoId = 0;
+
+        vm.IdPro = nuevoId;
+
+        if (nuevoId <= 0)
+        {
+            vm.NombreProducto = "";
+            vm.TipoProducto = "";
+            return;
+        }
+
+        // Busco en la lista; si no está, hago GET por id
+        var p = productos.FirstOrDefault(x => x.Id == nuevoId) ?? await ProductosApi.GetByIdAsync(nuevoId);
+        vm.NombreProducto = p?.Nombre ?? "";
+        vm.TipoProducto = p?.Tipo ?? "";
+    }
+
+    private async Task Guardar()
+    {
+        // Validaciones básicas
+        if (vm.IdPro <= 0) { await Alert("Producto requerido", "Selecciona un producto válido."); return; }
+        if (vm.FecCom > vm.FecExp) { await Alert("Fechas inconsistentes", "Compra no puede ser > expiración."); return; }
+        if (vm.CanDis > vm.CanLot) { await Alert("Cantidad inválida", "Disponible no puede superar Cant. Lote."); return; }
+        if (vm.PreVen < vm.PreCom) { await Alert("Precios inconsistentes", "Venta no puede ser menor que Compra."); return; }
+
+        try
+        {
+            var req = new LoteUpdateRequest
+            {
+                IdPro = vm.IdPro,
+                FecCom = vm.FecCom,
+                FecExp = vm.FecExp,
+                CanLot = vm.CanLot,
+                CanDis = vm.CanDis,
+                PreCom = vm.PreCom,
+                PreVen = vm.PreVen
+            };
+
+            await LotesApi.UpdateAsync(vm.Id, req);
+
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Success,
+                Title = "Lote actualizado",
+                Toast = true,
+                Position = SweetAlertPosition.TopEnd,
+                Timer = 1600,
+                ShowConfirmButton = false
+            });
+
+            Nav.NavigateTo("/dashboards/lotes/listar");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Error,
+                Title = "Error al actualizar",
+                Html = $"<small>{ex.Message}</small>"
+            });
+        }
+    }
+
+    private Task Alert(string title, string html) =>
+        Swal.FireAsync(new() { Icon = SweetAlertIcon.Warning, Title = title, Html = $"<small>{html}</small>", ConfirmButtonColor = "#0ea5e9" });
+
+    private void Volver() => Nav.NavigateTo("/dashboards/lotes/listar");
+
+    private sealed class LoteVM
+    {
+        public int Id { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Selecciona un producto")]
+        public int IdPro { get; set; }
+
+        public string NombreProducto { get; set; } = "";
+        public string TipoProducto { get; set; } = "";
+
+        [Required] public DateTime FecCom { get; set; }
+        [Required] public DateTime FecExp { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Debe ser ≥ 1")]
+        public int CanLot { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "Debe ser ≥ 0")]
+        public int CanDis { get; set; }
+
+        [Range(0, 999999, ErrorMessage = "Debe ser ≥ 0")]
+        public decimal PreCom { get; set; }
+
+        [Range(0, 999999, ErrorMessage = "Debe ser ≥ 0")]
+        public decimal PreVen { get; set; }
+
+        public bool EstLot { get; set; }
+    }
 }
