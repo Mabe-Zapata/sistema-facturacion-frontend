@@ -9,7 +9,6 @@
 @attribute [Authorize]
 
 
-<!-- Header / Filtros -->
 <div class="d-flex align-items-center justify-content-between page-header-breadcrumb mb-3 flex-wrap gap-2">
     <div>
         <h1 class="page-title fw-medium fs-20 mb-0">Dashboard de Facturación</h1>
@@ -17,15 +16,13 @@
     </div>
 
     <div class="d-flex align-items-center flex-wrap gap-2">
-        <!-- Rango de fechas -->
         <div class="form-group custom-main-page">
             <Flatpickr class="form-control breadcrumb-input"
                        @ref="_datepicker"
                        Options="@calendarOpts"
-                       @onchange="OnDateRangeChanged" />
+                       OnChange="OnDateRangeChanged" />
         </div>
 
-        <!-- Estado SRI -->
         <div class="form-group">
             <select class="form-select" @bind="Filters.SriStatus" @bind:after="OnFiltersChanged">
                 <option value="">Todos los estados SRI</option>
@@ -36,7 +33,6 @@
             </select>
         </div>
 
-        <!-- Vendedor / Empleado -->
         <div class="form-group">
             <select class="form-select" @bind="Filters.SalesUserId" @bind:after="OnFiltersChanged">
                 <option value="">Todos los vendedores</option>
@@ -47,7 +43,6 @@
             </select>
         </div>
 
-        <!-- Sucursal -->
         <div class="form-group">
             <select class="form-select" @bind="Filters.BranchId" @bind:after="OnFiltersChanged">
                 <option value="">Todas las sucursales</option>
@@ -58,14 +53,12 @@
             </select>
         </div>
 
-        <!-- Comparar -->
         <div class="form-check form-switch ms-2">
             <input class="form-check-input" type="checkbox" role="switch" id="switchCompare"
                    @bind="Filters.CompareWithPrevious" @bind:after="OnFiltersChanged" />
             <label class="form-check-label" for="switchCompare">Comparar</label>
         </div>
 
-        <!-- Botones -->
         <div class="btn-list ms-2">
             <button class="btn btn-icon btn-primary btn-wave" @onclick="ApplyFilters" title="Aplicar filtros">
                 <i class="ri-refresh-line"></i>
@@ -109,7 +102,17 @@
       DateTime.UtcNow.ToString("yyyy-MM-dd")
     }
     };
-    private void OnDateRangeChanged(ChangeEventArgs _) { /* bind manual si deseas */ }
+
+    private void OnDateRangeChanged(List<DateTimeOffset> selectedDatesOffsets)
+    {
+        if (selectedDatesOffsets.Count == 2)
+        {
+            Filters.From = selectedDatesOffsets[0].DateTime;
+            Filters.To = selectedDatesOffsets[1].DateTime;
+            OnFiltersChanged();
+        }
+    }
+
     private void OnFiltersChanged() => PushFiltersToUrl();
     private void PushFiltersToUrl()
     {
@@ -211,8 +214,8 @@
         // MOCK: Últimas facturas
         UltimasFacturas = new() {
       new() { Numero="001-001-0000123", Cliente="María Zapata", Fecha=DateTime.Today.AddDays(-1), EstadoSRI="AUTORIZADA", Total=128.50m },
-      new() { Numero="001-001-0000124", Cliente="Xabier Pérez", Fecha=DateTime.Today.AddDays(-1), EstadoSRI="DEVUELTA",   Total=75.10m  },
-      new() { Numero="001-001-0000125", Cliente="Erick Guerrón", Fecha=DateTime.Today,           EstadoSRI="AUTORIZADA", Total=420.00m },
+      new() { Numero="001-001-0000124", Cliente="Xabier Pérez", Fecha=DateTime.Today.AddDays(-1), EstadoSRI="DEVUELTA",    Total=75.10m  },
+      new() { Numero="001-001-0000125", Cliente="Erick Guerrón", Fecha=DateTime.Today,        EstadoSRI="AUTORIZADA", Total=420.00m },
     };
 
         StateHasChanged();
@@ -298,7 +301,6 @@
     private async Task SetBucket(TimeBucket b) { _bucket = b; await LoadAllAsync(); }
 }
 
-<!-- ======== ROW 1: KPIs + Serie de ventas ======== -->
 <div class="row">
     <div class="col-xxl-9">
         <div class="row">
@@ -339,7 +341,7 @@
                         </div>
                     </div>
 
-                    <div class="card-body pb-0 pt-4">
+                    <div class="card-body pt-4 pb-0">
                         <ApexChart TItem="SalesPoint" Height="350" Options="SalesOptions">
                             <ApexPointSeries TItem="SalesPoint" Items="Sales" SeriesType="@SeriesType.Bar" Name="Subtotal" XValue="@(e => e.BucketLabel)" YAggregate="@(e => e.Sum(x => x.Subtotal))" />
                             <ApexPointSeries TItem="SalesPoint" Items="Sales" SeriesType="@SeriesType.Bar" Name="IVA" XValue="@(e => e.BucketLabel)" YAggregate="@(e => e.Sum(x => x.IVA))" />
@@ -352,7 +354,6 @@
         </div>
     </div>
 
-    <!-- Panel derecho: Top productos y alertas -->
     <div class="col-xxl-3">
         <div class="row">
             <div class="col-xl-12">
@@ -400,7 +401,6 @@
     </div>
 </div>
 
-<!-- ======== ROW 2: Últimas facturas ======== -->
 <div class="row mt-3">
     <div class="col-12">
         <div class="card custom-card">

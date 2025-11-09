@@ -2,7 +2,7 @@ window.resizeFunctions = {
     addresizeListener: function (dotNetReference) {
         window.resizeFunctions.resizeHandler = () => {
             // Pass the scroll position back to the Blazor component
-            dotNetReference.invokeMethodAsync('OnWindowResize', window.innerWidth);
+            dotNetReference.invokeMethodAsync('OnWindowResize', Math.floor(window.innerWidth || 0));
         };
         
         // Add the scroll event listener

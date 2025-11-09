@@ -59,6 +59,7 @@
     "quill": "^2.0.2",
     "rater-js": "^1.0.1",
     "shepherd.js": "^11.2.0",
+    "simplebar": "^6.3.2",
     "sortablejs": "^1.15.2",
     "swiper": "^11.2.6",
     "toastify-js": "^1.12.0",
