@@ -1,4 +1,5 @@
 ﻿@page "/dashboards/empleados"
+@using Microsoft.AspNetCore.Authorization
 @using sistemaFacturacion.Models
 @using sistemaFacturacion.Services
 @using CurrieTechnologies.Razor.SweetAlert2
@@ -8,6 +9,7 @@
 @inject SweetAlertService Swal
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@attribute [Authorize(Roles ="Admin")]
 
 <div class="empleados-dashboard">
 

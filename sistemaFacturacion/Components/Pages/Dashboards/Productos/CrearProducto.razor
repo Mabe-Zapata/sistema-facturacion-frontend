@@ -2,6 +2,7 @@
 
 @using System.ComponentModel.DataAnnotations
 @using CurrieTechnologies.Razor.SweetAlert2
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 @using sistemaFacturacion.Services
 @using sistemaFacturacion.Models
@@ -9,6 +10,7 @@
 @inject SweetAlertService Swal
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Nav
+@attribute [Authorize]
 
 <h2 class="titulo-form">Registrar nuevo producto</h2>
 <p class="descripcion-form">Completa los campos requeridos para añadir un nuevo producto al sistema.</p>
@@ -39,7 +41,7 @@
         </div>
     </div>
 
-    <div class="d-flex mt-4 gap-2 form-actions">
+    <div class="d-flex form-actions mt-4 gap-2">
         <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
             @(isSubmitting ? "Guardando..." : "Guardar")
         </button>

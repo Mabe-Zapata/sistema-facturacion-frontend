@@ -10,7 +10,7 @@
 @inject IUsuariosApiClient UsuariosApi
 @inject SweetAlertService Swal
 @inject NavigationManager Nav
-@attribute [Authorize]
+@attribute [Authorize(Roles ="Admin")]
 
 <div class="page-header mb-4">
     <h1 class="page-title fw-semibold fs-20">Crear Usuario</h1>

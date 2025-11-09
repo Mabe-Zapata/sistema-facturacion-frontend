@@ -13,9 +13,10 @@ public class MainMenuItems
     public bool Selected { get; set; }
     public bool DirChange { get; set; }
     public MainMenuItems[]? Children { get; set; }
+    public string[]? Roles { get; set; }
 
     // Constructor to initialize an instance of MainMenuItems
-    public MainMenuItems(string title = "", string path = "", int randomNumber = 0,string svg = "", string icon = "", string type = "", string menuTitle = "", string badgeClass = "", string badgeValue = "", bool active = false, bool selected = false, bool dirChange = false, MainMenuItems[]? children = null)
+    public MainMenuItems(string title = "", string path = "", int randomNumber = 0,string svg = "", string icon = "", string type = "", string menuTitle = "", string badgeClass = "", string badgeValue = "", bool active = false, bool selected = false, bool dirChange = false, MainMenuItems[]? children = null, string[]? roles = null)
     {
         MenuTitle = menuTitle;
         Title = title;
@@ -30,5 +31,6 @@ public class MainMenuItems
         Selected = selected;
         DirChange = dirChange;
         Children = children;
+        Roles = roles;
     }
 }

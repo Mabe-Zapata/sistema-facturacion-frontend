@@ -3,7 +3,7 @@
 @using CurrieTechnologies.Razor.SweetAlert2
 @using sistemaFacturacion.Services
 @using sistemaFacturacion.Models
-@attribute [Authorize]
+@attribute [Authorize(Roles ="Admin")]
 
 @inject IJSRuntime JSRuntime
 @inject IEmpleadosApiClient EmpleadosApi

@@ -1,4 +1,5 @@
 ﻿@page "/dashboards/productos"
+@using Microsoft.AspNetCore.Authorization
 @using sistemaFacturacion.Models
 @using sistemaFacturacion.Services
 @using CurrieTechnologies.Razor.SweetAlert2
@@ -7,6 +8,7 @@
 @inject SweetAlertService Swal
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@attribute [Authorize]
 
 <div class="productos-dashboard">
 
@@ -28,8 +30,8 @@
 
     <!-- KPIs -->
     <div class="row g-3 mb-3">
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-sm-6 col-xl-3 col-12">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body">
                     <div class="text-muted fs-12">Total productos</div>
                     <div class="fs-3 fw-semibold">@KpiTotal</div>
@@ -39,8 +41,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-sm-6 col-xl-3 col-12">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body">
                     <div class="text-muted fs-12">Activos</div>
                     <div class="fs-3 fw-semibold">@KpiActivos</div>
@@ -48,8 +50,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-sm-6 col-xl-3 col-12">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body">
                     <div class="text-muted fs-12">Inactivos</div>
                     <div class="fs-3 fw-semibold">@KpiInactivos</div>
@@ -57,8 +59,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-sm-6 col-xl-3 col-12">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body">
                     <div class="text-muted fs-12">Tipos distintos</div>
                     <div class="fs-3 fw-semibold">@TiposDistintos</div>
@@ -71,8 +73,8 @@
     <!-- Charts -->
     <div class="row g-3 mb-3">
         <!-- Donut: Activos vs Inactivos -->
-        <div class="col-12 col-lg-5">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-lg-5 col-12">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-transparent"><h6 class="mb-0">Estado de productos</h6></div>
                 <div class="card-body">
                     <ApexChart TItem="DataPoint<decimal>"
@@ -85,8 +87,8 @@
         </div>
 
         <!-- Barras por tipo -->
-        <div class="col-12 col-lg-7">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-lg-7 col-12">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-transparent"><h6 class="mb-0">Productos por Tipo (Top 8)</h6></div>
                 <div class="card-body">
                     <ApexChart TItem="DataPoint<int>"
@@ -101,8 +103,8 @@
 
     <!-- Alertas + Actividad -->
     <div class="row g-3 mb-3">
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-lg-6 col-12">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-transparent">
                     <h6 class="mb-0">Alertas de catálogo</h6>
                 </div>
@@ -132,8 +134,8 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
+        <div class="col-lg-6 col-12">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-transparent">
                     <h6 class="mb-0">Actividad reciente</h6>
                 </div>
@@ -147,7 +149,7 @@
                         <ul class="list-unstyled mb-0">
                             @foreach (var p in Ultimos)
                             {
-                                <li class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                <li class="d-flex align-items-center justify-content-between border-bottom py-2">
                                     <div class="d-flex align-items-center gap-2">
                                         <i class="ri-price-tag-3-line text-primary"></i>
                                         <div>
@@ -171,7 +173,7 @@
 
     <!-- Tabla de últimos -->
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+        <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
             <h6 class="mb-0">Últimos productos añadidos</h6>
             <button class="btn btn-sm btn-outline-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/productos/listar"))">
                 Ver listado completo
@@ -179,7 +181,7 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table mb-0 align-middle">
+                <table class="mb-0 table align-middle">
                     <thead class="text-muted">
                         <tr>
                             <th scope="col">Nombre</th>
@@ -192,7 +194,7 @@
                         @if (cargando)
                         {
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
+                                <td colspan="4" class="text-muted py-4 text-center">
                                     <span class="spinner-border spinner-border-sm me-2"></span>Cargando...
                                 </td>
                             </tr>
@@ -200,8 +202,8 @@
                         else if (Ultimos.Count == 0)
                         {
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
-                                    <i class="ri-inbox-line fs-3 mb-2 d-block"></i>Sin registros
+                                <td colspan="4" class="text-muted py-4 text-center">
+                                    <i class="ri-inbox-line fs-3 d-block mb-2"></i>Sin registros
                                 </td>
                             </tr>
                         }
