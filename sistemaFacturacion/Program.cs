@@ -51,10 +51,10 @@ namespace sistemaFacturacion
             builder.Services.AddWMBSC();
 
             builder.Services.AddScoped<IClientesApiClient, ClientesApiClient>();
-
             builder.Services.AddScoped<IProductosApiClient, ProductosApiClient>();
-
             builder.Services.AddScoped<ILotesApiClient, LotesApiClient>();
+            builder.Services.AddScoped<IUsuariosApiClient, UsuariosApiClient>();
+            builder.Services.AddScoped<IEmpleadosApiClient, EmpleadosApiClient>();
 
             await builder.Build().RunAsync();
         }

@@ -1,174 +1,580 @@
-﻿@page "/dashboards/usuarios"
-@using Microsoft.AspNetCore.Components
+﻿@page "/dashboards/empleados"
+@using sistemaFacturacion.Models
+@using sistemaFacturacion.Services
+@using CurrieTechnologies.Razor.SweetAlert2
+@using ApexCharts
+@inject IUsuariosApiClient UsuariosApi
+@inject IEmpleadosApiClient EmpleadosApi
+@inject SweetAlertService Swal
+@inject IJSRuntime JS
+@inject NavigationManager Nav
 
-<div class="page-header mb-4">
-    <h1 class="page-title fw-semibold fs-20">Gestión de Usuarios</h1>
-    <p class="text-muted fs-13">Panel general · creación, edición y listado de usuarios</p>
-</div>
+<div class="empleados-dashboard">
 
-<!-- Accesos rápidos -->
-<div class="row g-3 mb-4">
-    <div class="col-12 col-md-6 col-xl-4">
-        <a href="/dashboards/usuarios/crear" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-primary-subtle">
-                        <i class="ri-user-add-line fs-3"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Crear usuario</h5>
-                        <small class="text-muted">Registrar un nuevo usuario</small>
-                    </div>
-                </div>
-            </div>
-        </a>
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title fw-semibold fs-20 mb-0">Gestión de Empleados</h1>
+            <div class="text-muted fs-13">Panel general · accesos rápidos y actividad reciente</div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/empleados/crear"))">
+                <i class="ri-user-add-line me-1"></i> Crear empleado
+            </button>
+            <button class="btn btn-light" @onclick="Recargar">
+                <i class="ri-refresh-line me-1"></i> Recargar
+            </button>
+            <button class="btn btn-outline-secondary" @onclick="@(() => Nav.NavigateTo("/dashboards/empleados/listar"))">
+                <i class="ri-file-list-3-line me-1"></i> Ver listado
+            </button>
+        </div>
     </div>
 
-    <div class="col-12 col-md-6 col-xl-4">
-        <a href="/dashboards/usuarios/editar" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-warning-subtle">
-                        <i class="ri-user-settings-line fs-3"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Editar usuario</h5>
-                        <small class="text-muted">Actualizar datos existentes</small>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-12 col-md-6 col-xl-4">
-        <a href="/dashboards/usuarios/listar" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-success-subtle">
-                        <i class="ri-file-list-3-line fs-3"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Listar usuarios</h5>
-                        <small class="text-muted">Búsqueda y filtros</small>
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-xl-3 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Total empleados</div>
+                    <div class="fs-3 fw-semibold kpi-number">@KpiTotal</div>
+                    <div class="fs-12 @(KpiDeltaTotal >= 0 ? "text-success" : "text-danger")">
+                        @(KpiDeltaTotal >= 0 ? "▲" : "▼") @KpiDeltaTotal.ToString("+#0.0;-#0.0")% vs 30 días prev.
                     </div>
                 </div>
             </div>
-        </a>
-    </div>
-</div>
-
-<!-- KPIs rápidos -->
-<div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-xl-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="text-muted fs-12">Total usuarios</div>
-                <div class="fs-3 fw-semibold">642</div>
-                <div class="text-success fs-12">▲ +2.3% vs 30 días</div>
+        </div>
+        <div class="col-sm-6 col-xl-3 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Activos</div>
+                    <div class="fs-3 fw-semibold kpi-number">@KpiActivos</div>
+                    <div class="text-success fs-12">+@KpiNuevos últimos 30 días</div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-12 col-sm-6 col-xl-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="text-muted fs-12">Usuarios activos</div>
-                <div class="fs-3 fw-semibold">587</div>
-                <div class="text-success fs-12">▲ +1.5%</div>
+        <div class="col-sm-6 col-xl-3 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Inactivos</div>
+                    <div class="fs-3 fw-semibold kpi-number">@KpiInactivos</div>
+                    <div class="text-secondary fs-12">Sin variación</div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-12 col-sm-6 col-xl-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="text-muted fs-12">Usuarios nuevos (30d)</div>
-                <div class="fs-3 fw-semibold">22</div>
-                <div class="text-success fs-12">▲ +3 nuevos</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Tabla rápida de últimos registros -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-transparent">
-        <h6 class="mb-0">Últimos usuarios registrados</h6>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table mb-0 align-middle">
-                <thead class="text-muted">
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>Correo</th>
-                        <th>Rol</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Mateo</td>
-                        <td>Auz</td>
-                        <td>mateo@demo.com</td>
-                        <td>Administrador</td>
-                        <td>0987654321</td>
-                        <td>Activo</td>
-                    </tr>
-                    <tr>
-                        <td>Xabier</td>
-                        <td>Pérez</td>
-                        <td>xperez@demo.com</td>
-                        <td>Agente</td>
-                        <td>0999999999</td>
-                        <td>Activo</td>
-                    </tr>
-                    <tr>
-                        <td>María</td>
-                        <td>Zapata</td>
-                        <td>mzapata@demo.com</td>
-                        <td>Cliente</td>
-                        <td>0977777777</td>
-                        <td>Inactivo</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Lista breve de acciones -->
-<div class="row g-3">
-    <div class="col-12 col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent">
-                <h6 class="mb-0">Acciones frecuentes</h6>
-            </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0 d-grid gap-2">
-                    <li><a class="link-primary" href="/dashboards/usuarios/crear">➕ Registrar usuario</a></li>
-                    <li><a class="link-primary" href="/dashboards/usuarios/listar">🔎 Buscar usuario</a></li>
-                    <li><a class="link-primary" href="/dashboards/usuarios/editar">✏ Actualizar información</a></li>
-                </ul>
+        <div class="col-sm-6 col-xl-3 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Con cargo</div>
+                    <div class="fs-3 fw-semibold kpi-number">@KpiConCargo</div>
+                    <div class="text-muted fs-12">Datos completos</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent">
-                <h6 class="mb-0">Notas</h6>
+    <div class="row g-3 mb-3">
+        <div class="col-lg-5 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-transparent"><h6 class="mb-0">Estado de empleados</h6></div>
+                <div class="card-body">
+                    @if (DonutSeries.Any())
+                    {
+                        <ApexChart TItem="Order"
+                                   Title="Activos vs Inactivos"
+                                   Options="DonutOptions"
+                                   @ref="DonutChart">
+                            <ApexPointSeries TItem="Order"
+                                             Items="DonutSeries"
+                                             SeriesType="SeriesType.Donut"
+                                             Name="Empleados"
+                                             XValue="@(e => e.Name)"
+                                             YAggregate="@(e => e.Sum(e => e.Total))"
+                                             OrderByDescending="e => e.Y" />
+                        </ApexChart>
+                    }
+                </div>
             </div>
-            <div class="card-body">
-                <p class="text-muted mb-2">
-                    Campos clave del usuario: <strong>Nombre, Apellido, Correo, Rol, Teléfono, Estado</strong>.
-                </p>
-                <p class="text-muted mb-0">Este dashboard es un prototipo inicial. Se integrarán KPIs reales y conexión con el backend próximamente.</p>
+        </div>
+
+        <div class="col-lg-7 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-transparent"><h6 class="mb-0">Distribución salarial</h6></div>
+                <div class="card-body">
+                    @if (BarSeries.Any())
+                    {
+                        <ApexChart TItem="Order"
+                                   Title="Rangos de sueldo"
+                                   Options="BarOptions"
+                                   @ref="BarChart">
+                            <ApexPointSeries TItem="Order"
+                                             Items="BarSeries"
+                                             SeriesType="SeriesType.Bar"
+                                             Name="Empleados"
+                                             XValue="@(e => e.Name)"
+                                             YAggregate="@(e => e.Sum(e => e.Total))"
+                                             OrderByDescending="e => e.Y" />
+                        </ApexChart>
+                    }
+                </div>
             </div>
         </div>
     </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-lg-6 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">Alertas de directorio</h6>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    @if (empleados.Count == 0)
+                    {
+                        <div class="text-muted">No hay datos para evaluar alertas.</div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning d-flex align-items-start gap-2">
+                            <i class="ri-error-warning-line fs-5"></i>
+                            <div>
+                                <strong>@SinTelefono.Count()</strong> empleados sin teléfono o inválido.
+                                <div class="small text-muted">Completa el contacto para todos los empleados.</div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info d-flex align-items-start gap-2">
+                            <i class="ri-information-line fs-5"></i>
+                            <div>
+                                <strong>@EmpleadosSinCargo.Count()</strong> empleados sin cargo o sueldo registrado.
+                                <div class="small text-muted">Revisa los datos laborales.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">Actividad reciente</h6>
+                </div>
+                <div class="card-body">
+                    @if (Ultimos.Count == 0)
+                    {
+                        <div class="text-muted">Sin registros recientes.</div>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var e in Ultimos)
+                            {
+                                <li class="d-flex align-items-center justify-content-between border-bottom py-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="ri-user-3-line text-primary"></i>
+                                        <div>
+                                            <div class="fw-medium">@e.Nombre</div>
+                                            <small class="text-muted">ID: @e.IdUsu</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (!string.IsNullOrWhiteSpace(e.Cargo))
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary">@e.Cargo</span>
+                                        }
+                                        <span class="badge @(e.Estado ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                            @(e.Estado ? "Activo" : "Inactivo")
+                                        </span>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
+            <h6 class="mb-0">Últimos empleados registrados</h6>
+            <button class="btn btn-sm btn-outline-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/empleados/listar"))">
+                Ver listado completo
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="mb-0 table align-middle">
+                    <thead class="text-muted">
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Correo</th>
+                            <th scope="col">Teléfono</th>
+                            <th scope="col">Cargo</th>
+                            <th scope="col">Sueldo</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (cargando)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-muted py-4 text-center">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>Cargando...
+                                </td>
+                            </tr>
+                        }
+                        else if (Ultimos.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-muted py-4 text-center">
+                                    <i class="ri-inbox-line fs-3 d-block mb-2"></i>Sin registros
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var e in Ultimos)
+                            {
+                                <tr>
+                                    <td>@e.Nombre</td>
+                                    <td>@e.Correo</td>
+                                    <td>@e.Telefono</td>
+                                    <td>@(string.IsNullOrWhiteSpace(e.Cargo) ? "-" : e.Cargo)</td>
+                                    <td>@(e.Sueldo.HasValue ? "$ " + e.Sueldo.Value.ToString("N2") : "-")</td>
+                                    <td>
+                                        <span class="badge @(e.Estado ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                            @(e.Estado ? "Activo" : "Inactivo")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                @onclick="@(() => Nav.NavigateTo($"/dashboards/empleados/editar/{e.IdUsu}"))"
+                                                title="Editar">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @code {
-    // Aquí luego inyectarás servicios para traer datos reales (usuarios, KPIs, etc.)
+    private sealed class EmpleadoView
+    {
+        public int IdUsu { get; init; }
+        public string Nombre { get; init; } = "";
+        public string Correo { get; init; } = "";
+        public string Telefono { get; init; } = "";
+        public bool Estado { get; init; }
+        public string? Cargo { get; init; }
+        public decimal? Sueldo { get; init; }
+        public DateTimeOffset? FecCre { get; init; }
+    }
+
+    private sealed class Order
+    {
+        public string Name { get; set; } = "";
+        public decimal Total { get; set; }
+    }
+
+    private List<UsuarioDto> usuarios = new();
+    private List<EmpleadoDto> empleados = new();
+    private List<EmpleadoView> Ultimos = new();
+
+    private bool cargando = true;
+    private bool isDarkMode = false;
+
+    private int KpiTotal, KpiActivos, KpiInactivos, KpiConCargo, KpiNuevos;
+    private double KpiDeltaTotal;
+
+    private ApexChart<Order>? DonutChart;
+    private List<Order> DonutSeries = new();
+    private ApexChartOptions<Order> DonutOptions = new();
+
+    private ApexChart<Order>? BarChart;
+    private List<Order> BarSeries = new();
+    private ApexChartOptions<Order> BarOptions = new();
+
+    private IEnumerable<UsuarioDto> SinTelefono =>
+        usuarios.Where(u => string.IsNullOrWhiteSpace(u.TelUsu) || u.TelUsu.Trim().Length < 7);
+
+    private IEnumerable<UsuarioDto> EmpleadosSinCargo =>
+        usuarios.Where(u =>
+        {
+            var emp = empleados.FirstOrDefault(e => e.IdUsu == u.IdUsu);
+            var cargo = emp?.CarEmp ?? u.CarEmp ?? "";
+            var sue = (emp?.SueEmp) ?? u.SueEmp ?? 0m;
+            return string.IsNullOrWhiteSpace(cargo) || sue <= 0;
+        });
+
+    protected override async Task OnInitializedAsync()
+    {
+        isDarkMode = await JS.InvokeAsync<bool>("isAppInDarkMode");
+        ConfigurarGraficos();
+        await Cargar();
+    }
+
+    private void ConfigurarGraficos()
+    {
+        var textColor = isDarkMode ? "#ffffff" : "#373d3f";
+        var labelColor = isDarkMode ? "#b0b0b0" : "#666666";
+
+        DonutOptions = new ApexChartOptions<Order>
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Donut,
+                Background = "transparent"
+            },
+            Legend = new Legend
+            {
+                Position = LegendPosition.Bottom,
+                Labels = new LegendLabels
+                {
+                    Colors = textColor
+                }
+            },
+            Theme = new Theme
+            {
+                Mode = isDarkMode ? Mode.Dark : Mode.Light
+            },
+            DataLabels = new DataLabels
+            {
+                Style = new DataLabelsStyle
+                {
+                    Colors = new List<string> { "#ffffff" }
+                }
+            }
+        };
+
+        BarOptions = new ApexChartOptions<Order>
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Bar,
+                Background = "transparent"
+            },
+            PlotOptions = new PlotOptions
+            {
+                Bar = new PlotOptionsBar
+                {
+                    Horizontal = false,
+                    ColumnWidth = "55%"
+                }
+            },
+            DataLabels = new DataLabels { Enabled = false },
+            Legend = new Legend
+            {
+                Position = LegendPosition.Top,
+                Labels = new LegendLabels
+                {
+                    Colors = textColor
+                }
+            },
+            Xaxis = new XAxis
+            {
+                Labels = new XAxisLabels
+                {
+                    Style = new AxisLabelStyle
+                    {
+                        Colors = labelColor
+                    }
+                }
+            },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Labels = new YAxisLabels
+                    {
+                        Style = new AxisLabelStyle
+                        {
+                            Colors = labelColor
+                        }
+                    }
+                }
+            },
+            Theme = new Theme
+            {
+                Mode = isDarkMode ? Mode.Dark : Mode.Light
+            }
+        };
+    }
+
+    private async Task Recargar() => await Cargar(true);
+
+    private async Task Cargar(bool toast = false)
+    {
+        try
+        {
+            cargando = true;
+            StateHasChanged();
+
+            isDarkMode = await JS.InvokeAsync<bool>("isAppInDarkMode");
+            ConfigurarGraficos();
+
+            var (usuariosResult, empleadosResult) = await CargarDatosAsync();
+            usuarios = usuariosResult;
+            empleados = empleadosResult;
+
+            CalcularKpis();
+            ActualizarGraficos();
+            GenerarVistaEmpleados();
+
+            if (toast)
+            {
+                await MostrarToastExito();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            await MostrarErrorCarga(ex.Message);
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<(List<UsuarioDto>, List<EmpleadoDto>)> CargarDatosAsync()
+    {
+        var uTask = UsuariosApi.GetAllAsync();
+        var eTask = EmpleadosApi.GetAllAsync();
+        await Task.WhenAll(uTask, eTask);
+
+        var usuariosLista = uTask.Result?.ToList() ?? new List<UsuarioDto>();
+        var empleadosLista = eTask.Result?.ToList() ?? new List<EmpleadoDto>();
+
+        return (usuariosLista.Where(u => u.IdRol == 2).ToList(), empleadosLista);
+    }
+
+    private void CalcularKpis()
+    {
+        var empIndex = empleados.ToDictionary(e => e.IdUsu, e => e);
+
+        KpiTotal = usuarios.Count;
+        KpiActivos = usuarios.Count(u =>
+        {
+            empIndex.TryGetValue(u.IdUsu, out var emp);
+            var estado = emp?.EstEmp ?? u.EstUsu;
+            return estado;
+        });
+        KpiInactivos = KpiTotal - KpiActivos;
+
+        KpiConCargo = usuarios.Count(u =>
+        {
+            empIndex.TryGetValue(u.IdUsu, out var em);
+            var cargo = em?.CarEmp ?? u.CarEmp ?? "";
+            var sue = (em?.SueEmp) ?? u.SueEmp ?? 0m;
+            return !string.IsNullOrWhiteSpace(cargo) && sue > 0;
+        });
+
+        var now = DateTimeOffset.Now;
+        var hace30 = now.AddDays(-30);
+        var ult30 = usuarios.Count(u => u.FecCre.HasValue && u.FecCre.Value >= hace30);
+        var prev30 = usuarios.Count(u => u.FecCre.HasValue && u.FecCre.Value < hace30 && u.FecCre.Value >= hace30.AddDays(-30));
+
+        KpiNuevos = ult30;
+        KpiDeltaTotal = prev30 > 0 ? (double)(ult30 - prev30) / prev30 * 100.0 : (ult30 > 0 ? 100.0 : 0.0);
+    }
+
+    private void ActualizarGraficos()
+    {
+        ActualizarGraficoDonut();
+        ActualizarGraficoBarras();
+    }
+
+    private void ActualizarGraficoDonut()
+    {
+        DonutSeries = new List<Order>
+        {
+            new Order { Name = "Activos", Total = KpiActivos },
+            new Order { Name = "Inactivos", Total = KpiInactivos }
+        };
+    }
+
+    private void ActualizarGraficoBarras()
+    {
+        var empIndex = empleados.ToDictionary(e => e.IdUsu, e => e);
+        var rangos = new[]
+        {
+            new { Label = "< $500", Min = 0m, Max = 500m },
+            new { Label = "$500 - $1000", Min = 500m, Max = 1000m },
+            new { Label = "$1000 - $2000", Min = 1000m, Max = 2000m },
+            new { Label = "> $2000", Min = 2000m, Max = decimal.MaxValue }
+        };
+
+        BarSeries = rangos.Select(r => new Order
+        {
+            Name = r.Label,
+            Total = usuarios.Count(u =>
+            {
+                empIndex.TryGetValue(u.IdUsu, out var em);
+                var sueldo = (em?.SueEmp) ?? u.SueEmp ?? 0m;
+                return sueldo > r.Min && sueldo <= r.Max;
+            })
+        }).ToList();
+    }
+
+    private void GenerarVistaEmpleados()
+    {
+        var empIndex = empleados.ToDictionary(e => e.IdUsu, e => e);
+
+        Ultimos = usuarios
+            .OrderByDescending(u => u.FecCre ?? DateTimeOffset.MinValue)
+            .ThenByDescending(u => u.IdUsu)
+            .Take(8)
+            .Select(u => CrearEmpleadoView(u, empIndex))
+            .ToList();
+    }
+
+    private EmpleadoView CrearEmpleadoView(UsuarioDto u, Dictionary<int, EmpleadoDto> empIndex)
+    {
+        empIndex.TryGetValue(u.IdUsu, out var em);
+        var cargo = em?.CarEmp ?? u.CarEmp ?? "";
+        var sueldo = (em?.SueEmp) ?? u.SueEmp;
+        var estado = em?.EstEmp ?? u.EstUsu;
+
+        return new EmpleadoView
+        {
+            IdUsu = u.IdUsu,
+            Nombre = $"{u.NomUsu} {u.ApeUsu}".Trim(),
+            Correo = u.CorUsu,
+            Telefono = u.TelUsu,
+            Estado = estado,
+            Cargo = string.IsNullOrWhiteSpace(cargo) ? null : cargo,
+            Sueldo = sueldo,
+            FecCre = u.FecCre
+        };
+    }
+
+    private async Task MostrarToastExito()
+    {
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Toast = true,
+            Position = SweetAlertPosition.TopEnd,
+            Icon = SweetAlertIcon.Success,
+            Title = $"Datos actualizados ({KpiTotal})",
+            ShowConfirmButton = false,
+            Timer = 1200,
+            Background = isDarkMode ? "#1e1e1e" : null,
+            Color = isDarkMode ? "#e6e6e6" : null
+        });
+    }
+
+    private async Task MostrarErrorCarga(string mensaje)
+    {
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "Error al cargar",
+            Html = $"<small>{mensaje}</small>",
+            Icon = SweetAlertIcon.Error
+        });
+    }
 }

@@ -56,9 +56,9 @@
 
                 // Gestión de Usuarios
                 new MainMenuItems(
-                    path: "/dashboards/usuarios",
+                    path: "/dashboards/empleados",
                     type: "link",
-                    title: "Gestión de Usuarios",
+                    title: "Gestión de Empleados",
                     svg: "<svg xmlns='http://www.w3.org/2000/svg' class='side-menu-doublemenu__icon' viewBox='0 0 256 256'><circle cx='128' cy='88' r='28' fill='none' stroke='currentColor' stroke-width='16'/><path d='M64 208a64 64 0 0 1 128 0' fill='none' stroke='currentColor' stroke-width='16'/></svg>",
                     selected: false, active: false, dirChange: false
                 ),

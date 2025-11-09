@@ -1,74 +1,293 @@
-﻿@page "/dashboards/usuarios/crear"
+﻿@page "/dashboards/empleados/crear"
 @using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using CurrieTechnologies.Razor.SweetAlert2
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using sistemaFacturacion.Services
+@using sistemaFacturacion.Models
+@inject IJSRuntime JSRuntime
+@inject IUsuariosApiClient UsuariosApi
+@inject SweetAlertService Swal
+@inject NavigationManager Nav
+@attribute [Authorize]
 
 <div class="page-header mb-4">
     <h1 class="page-title fw-semibold fs-20">Crear Usuario</h1>
-    <p class="text-muted fs-13">Formulario para registrar un nuevo usuario en el sistema</p>
+    <p class="text-muted fs-13">Registrar un nuevo usuario como empleado</p>
 </div>
 
 <div class="card border-0 shadow-sm">
     <div class="card-body">
-        <EditForm Model="@usuario" OnValidSubmit="@GuardarUsuario">
+        <EditForm EditContext="_ctx" OnValidSubmit="CrearAsync" OnInvalidSubmit="OnInvalidAsync">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
             <div class="row g-3">
-                <div class="col-12 col-md-6">
+                <div class="col-md-6 col-12">
                     <label class="form-label">Nombre</label>
-                    <InputText class="form-control" @bind-Value="usuario.NomUsu" placeholder="Ingrese el nombre" />
-                    <ValidationMessage For="@(() => usuario.NomUsu)" />
+                    <InputText class="form-control" @bind-Value="vm.NomUsu" placeholder="Nombres" />
+                    <ValidationMessage For="@(() => vm.NomUsu)" />
                 </div>
 
-                <div class="col-12 col-md-6">
+                <div class="col-md-6 col-12">
                     <label class="form-label">Apellido</label>
-                    <InputText class="form-control" @bind-Value="usuario.ApeUsu" placeholder="Ingrese el apellido" />
-                    <ValidationMessage For="@(() => usuario.ApeUsu)" />
+                    <InputText class="form-control" @bind-Value="vm.ApeUsu" placeholder="Apellidos" />
+                    <ValidationMessage For="@(() => vm.ApeUsu)" />
                 </div>
 
-                <div class="col-12 col-md-6">
+                <div class="col-md-6 col-12">
                     <label class="form-label">Correo</label>
-                    <InputText class="form-control" @bind-Value="usuario.CorUsu" placeholder="Ingrese el correo electrónico" />
-                    <ValidationMessage For="@(() => usuario.CorUsu)" />
+                    <InputText class="form-control" @bind-Value="vm.CorUsu" placeholder="usuario@dominio.com" />
+                    <ValidationMessage For="@(() => vm.CorUsu)" />
                 </div>
 
-                <div class="col-12 col-md-6">
+                <div class="col-md-6 col-12">
                     <label class="form-label">Teléfono</label>
-                    <InputText class="form-control" @bind-Value="usuario.TelUsu" placeholder="Ingrese el teléfono" />
-                    <ValidationMessage For="@(() => usuario.TelUsu)" />
+                    <input class="form-control"
+                           value="@vm.TelUsu"
+                           @oninput="OnTelefonoInput"
+                           inputmode="numeric"
+                           maxlength="10"
+                           placeholder="0999999999" />
+                    <ValidationMessage For="@(() => vm.TelUsu)" />
+                </div>
+
+                <div class="col-md-6 col-12">
+                    <label class="form-label">Cargo</label>
+                    <InputText class="form-control" @bind-Value="vm.CarEmp" placeholder="Cargo del empleado" />
+                    <ValidationMessage For="@(() => vm.CarEmp)" />
+                </div>
+
+                <div class="col-md-6 col-12">
+                    <label class="form-label">Sueldo</label>
+                    <input class="form-control"
+                           value="@_sueldoText"
+                           @oninput="OnSueldoInput"
+                           inputmode="decimal"
+                           placeholder="0.00" />
+                    <ValidationMessage For="@(() => vm.SueEmp)" />
                 </div>
             </div>
 
-            <div class="mt-4 d-flex justify-content-end gap-2">
-                <button type="submit" class="btn btn-primary px-4">Guardar</button>
-                <a href="/dashboards/usuarios" class="btn btn-secondary px-4">Cancelar</a>
+            <div class="d-flex justify-content-end mt-4 gap-2">
+                <button type="submit" class="btn btn-primary px-4" disabled="@_submitting">
+                    @(_submitting ? "Guardando..." : "Guardar")
+                </button>
+                <a href="/dashboards/usuarios" class="btn btn-secondary px-4" onclick="return @_submitting ? false : true">Cancelar</a>
             </div>
         </EditForm>
     </div>
 </div>
 
 @code {
-    private UsuarioModel usuario = new();
+    private bool _submitting;
+    private UsuarioEmpleadoVM vm = new();
+    private string _sueldoText = ""; // no se resetea al escribir
+    private EditContext _ctx = default!;
+    private ValidationMessageStore _store = default!;
 
-    private void GuardarUsuario()
+    protected override void OnInitialized()
     {
-        // Aquí se conectará con el servicio o API para guardar el usuario
-        Console.WriteLine($"Usuario guardado: {usuario.NomUsu} {usuario.ApeUsu}");
+        _ctx = new EditContext(vm);
+        _store = new ValidationMessageStore(_ctx);
+        _ctx.OnFieldChanged += (sender, args) =>
+        {
+            _store.Clear(args.FieldIdentifier);
+            _ctx.NotifyValidationStateChanged();
+        };
     }
 
-    public class UsuarioModel
+    public sealed class UsuarioEmpleadoVM
     {
         [Required(ErrorMessage = "El nombre es obligatorio")]
+        [StringLength(100)]
         public string NomUsu { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El apellido es obligatorio")]
+        [StringLength(100)]
         public string ApeUsu { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El correo es obligatorio")]
         [EmailAddress(ErrorMessage = "Formato de correo inválido")]
+        [StringLength(150)]
         public string CorUsu { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El teléfono es obligatorio")]
-        [RegularExpression(@"^\d{7,15}$", ErrorMessage = "Debe tener entre 7 y 15 dígitos")]
+        [RegularExpression(@"^\d{10}$", ErrorMessage = "El teléfono debe tener 10 dígitos")]
         public string TelUsu { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El cargo es obligatorio")]
+        [StringLength(120)]
+        public string CarEmp { get; set; } = string.Empty;
+
+        [Range(0.01, 1000000, ErrorMessage = "Ingrese un sueldo válido (> 0).")]
+        public decimal SueEmp { get; set; } = 0m; // se asigna al enviar
     }
+
+    // --- Sanitizadores seguros (sin excepciones) ---
+    private void OnTelefonoInput(ChangeEventArgs e)
+    {
+        try
+        {
+            var src = e?.Value?.ToString() ?? "";
+            var digits = new string(src.Where(char.IsDigit).ToArray());
+            if (digits.Length > 10) digits = digits[..10];
+            if (!string.Equals(digits, vm.TelUsu, StringComparison.Ordinal))
+            {
+                vm.TelUsu = digits;
+                _ctx.NotifyFieldChanged(new FieldIdentifier(vm, nameof(vm.TelUsu)));
+                StateHasChanged();
+            }
+        }
+        catch { /* evita propagación al runtime */ }
+    }
+
+    private void OnSueldoInput(ChangeEventArgs e)
+    {
+        try
+        {
+            var s = e?.Value?.ToString() ?? "";
+            // permite dígitos y separador decimal
+            s = new string(s.Where(ch => char.IsDigit(ch) || ch == '.' || ch == ',').ToArray());
+            s = s.Replace(',', '.');
+
+            // solo un punto
+            var first = s.IndexOf('.');
+            if (first >= 0)
+            {
+                var head = s[..(first + 1)];
+                var tail = s[(first + 1)..].Replace(".", "");
+                if (tail.Length > 2) tail = tail[..2]; // máx 2 decimales
+                s = head + tail;
+            }
+            if (s.StartsWith(".")) s = "0" + s;
+
+            _sueldoText = s; // nunca limpiar automáticamente
+            StateHasChanged();
+        }
+        catch { /* evita propagación al runtime */ }
+    }
+
+    private async Task CrearAsync()
+    {
+        if (_submitting) return;
+        _submitting = true;
+        var isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+
+        try
+        {
+            // parse robusto del sueldo
+            var normalized = (_sueldoText ?? "").Trim().Replace(',', '.');
+            if (normalized.EndsWith(".")) normalized = normalized.TrimEnd('.');
+
+            if (!decimal.TryParse(normalized, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var sueldo) || sueldo <= 0)
+            {
+                _store.Clear(new FieldIdentifier(vm, nameof(vm.SueEmp)));
+                _store.Add(new FieldIdentifier(vm, nameof(vm.SueEmp)), "Ingrese un sueldo válido (> 0).");
+                _ctx.NotifyValidationStateChanged();
+                return;
+            }
+
+            vm.SueEmp = Math.Round(sueldo, 2, MidpointRounding.AwayFromZero);
+
+            var req = new CreateEmpleadoRequest
+            {
+                NomUsu = vm.NomUsu.Trim(),
+                ApeUsu = vm.ApeUsu.Trim(),
+                CorUsu = vm.CorUsu.Trim(),
+                TelUsu = vm.TelUsu.Trim(),
+                CarEmp = vm.CarEmp.Trim(),
+                SueEmp = vm.SueEmp
+            };
+
+            var creado = await UsuariosApi.CreateEmpleadoAsync(req);
+
+            var html =
+              "<div style='text-align:left'>" +
+              "<div style='font-weight:700;font-size:1rem;margin-bottom:.25rem'>" + Escape(creado.NomUsu) + " " + Escape(creado.ApeUsu) + "</div>" +
+              "<div style='color:var(--text-muted);font-size:.9rem;margin-bottom:.6rem'>" + Escape(creado.CorUsu) + " · " + Escape(creado.TelUsu) + "</div>" +
+              "<div style='background:var(--form-control-bg);border:1px solid var(--default-border);border-radius:.5rem;padding:.55rem .7rem'>" +
+              "<div style='font-size:.72rem;color:var(--text-muted);letter-spacing:.04em;margin-bottom:.1rem'>ID USUARIO</div>" +
+              "<code style='font-size:1rem;font-weight:600'>" + creado.IdUsu + "</code>" +
+              "</div></div>";
+
+            var result = await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Success,
+                Title = "Usuario-Empleado creado",
+                Html = html,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Ir al listado",
+                CancelButtonText = "Crear otro"
+            });
+
+            if (result.IsConfirmed)
+            {
+                Nav.NavigateTo("/dashboards/empleados/listar?created=1&name=" + Uri.EscapeDataString(creado.NomUsu + " " + creado.ApeUsu));
+            }
+            else
+            {
+                vm = new UsuarioEmpleadoVM();
+                _sueldoText = "";
+                _ctx = new EditContext(vm);
+                _store = new ValidationMessageStore(_ctx);
+                _ctx.OnFieldChanged += (s, a) => { _store.Clear(a.FieldIdentifier); _ctx.NotifyValidationStateChanged(); };
+
+                await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Toast = true,
+                    Position = SweetAlertPosition.TopEnd,
+                    Icon = SweetAlertIcon.Success,
+                    Title = "Formulario reiniciado",
+                    ShowConfirmButton = false,
+                    Timer = 1600,
+                    TimerProgressBar = true,
+                    Background = isDark ? "var(--form-control-bg)" : null,
+                    Color = isDark ? "var(--default-text-color)" : null
+                });
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Error,
+                Title = "No se pudo crear el usuario",
+                Text = Trunca(ex.Message, 300),
+                Footer = "<small>Verifique los datos o intente nuevamente.</small>"
+            });
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Error,
+                Title = "Error inesperado",
+                Text = Trunca(ex.Message, 300)
+            });
+        }
+        finally
+        {
+            _submitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnInvalidAsync(EditContext ctx)
+    {
+        var mensajes = ctx.GetValidationMessages().Take(3).Select(Escape);
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Icon = SweetAlertIcon.Warning,
+            Title = "Complete los campos requeridos",
+            Html = string.Join("<br/>", mensajes)
+        });
+    }
+
+    private static string Trunca(string? s, int max) =>
+        string.IsNullOrWhiteSpace(s) ? "" : (s.Length <= max ? s : s[..max] + "…");
+
+    private static string Escape(string? s) =>
+        string.IsNullOrEmpty(s) ? "" : s.Replace("<", "&lt;").Replace(">", "&gt;");
 }
