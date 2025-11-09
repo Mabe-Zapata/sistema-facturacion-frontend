@@ -30,4 +30,7 @@
     <PackageReference Include="BlazorCalendar" Version="2.7.1" />
     <PackageReference Include="FlatpickrBlazor" Version="5.0.8" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Components\Pages\Dashboards\NewFolder\" />
+  </ItemGroup>
 </Project>

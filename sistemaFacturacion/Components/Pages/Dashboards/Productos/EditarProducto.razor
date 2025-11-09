@@ -1,132 +1,275 @@
 ﻿@page "/dashboards/productos/editar"
-@page "/dashboards/productos/editar/{id:int}"
+@page "/dashboards/productos/editar/{IdFromRoute:int}"
+
 @using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Components.Forms
+@using sistemaFacturacion.Models
+@using CurrieTechnologies.Razor.SweetAlert2
+@inject IProductosApiClient ProductosApi
+@inject SweetAlertService Swal
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Nav
 
-<h2 class="titulo-form">Editar producto</h2>
-<p class="descripcion-form">Modifica los datos del producto seleccionado. Solo campos editables: tipo, nombre, descripción y precio.</p>
 
-<EditForm Model="@producto" OnValidSubmit="ActualizarProducto">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<div class="page-header mb-3">
+    <h2 class="page-title fs-18">Editar producto</h2>
+    <p class="text-muted">Busca por ID o navega desde el listado. Editables: tipo, nombre y descripción.</p>
+</div>
 
-    <div class="form-grid">
-        <div class="campo">
-            <label for="id">ID del producto</label>
-            <InputText id="id" class="form-control" @bind-Value="producto.IdPro" readonly />
+<!-- Buscador por ID (similar a Editar Cliente) -->
+<div class="card mb-3 border-0 shadow-sm">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-6 col-12">
+                <label class="form-label">ID del producto</label>
+                <InputNumber class="form-control" @bind-Value="SearchId" placeholder="Ej: 1" />
+            </div>
+            <div class="col-md-2 d-grid col-12">
+                <button class="btn btn-primary" @onclick="BuscarProducto" disabled="@cargando">
+                    @(cargando ? "Buscando..." : "Buscar")
+                </button>
+            </div>
+            <div class="col-md-4 col-12 text-end">
+                <a class="btn btn-light" href="/dashboards/productos/listar">
+                    ← Volver al listado
+                </a>
+            </div>
         </div>
-
-        <div class="campo">
-            <label for="tipo">Tipo de producto</label>
-            <InputText id="tipo" @bind-Value="producto.TipPro" class="form-control" />
-            <ValidationMessage For="@(() => producto.TipPro)" />
-        </div>
-
-        <div class="campo">
-            <label for="nombre">Nombre</label>
-            <InputText id="nombre" @bind-Value="producto.NomPro" class="form-control" />
-            <ValidationMessage For="@(() => producto.NomPro)" />
-        </div>
-
-        <div class="campo descripcion">
-            <label for="descripcion">Descripción</label>
-            <InputTextArea id="descripcion" @bind-Value="producto.DesPro" class="form-control" rows="3" />
-            <ValidationMessage For="@(() => producto.DesPro)" />
-        </div>
-
-        <div class="campo">
-            <label for="precio">Precio ($)</label>
-            <InputNumber id="precio" @bind-Value="producto.PrePro" class="form-control" />
-            <ValidationMessage For="@(() => producto.PrePro)" />
-        </div>
-
-        <div class="campo">
-            <label for="estado">Estado</label>
-            <select id="estado" @bind="producto.EstPro" class="form-control">
-                <option value="true">Activo</option>
-                <option value="false">Inactivo</option>
-            </select>
-        </div>
+        @if (!string.IsNullOrWhiteSpace(searchError))
+        {
+            <div class="alert alert-danger mb-0 mt-3">@searchError</div>
+        }
     </div>
+</div>
 
-    <div class="acciones">
-        <button type="submit" class="btn-guardar">💾 Actualizar producto</button>
-        <button type="button" class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
-    </div>
-</EditForm>
-
-@if (!string.IsNullOrWhiteSpace(mensajeExito))
+@if (cargando)
 {
-    <div class="alerta-exito">@mensajeExito</div>
+    <div class="alert alert-info"><span class="spinner-border spinner-border-sm me-2"></span>Cargando producto...</div>
+}
+else if (form is not null)
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <EditForm Model="@form" OnValidSubmit="@GuardarCambios">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row g-3">
+                    <div class="col-md-3 col-12">
+                        <label class="form-label">ID</label>
+                        <InputNumber class="form-control" @bind-Value="form.Id" readonly disabled />
+                        <small class="text-muted">No editable.</small>
+                    </div>
+
+                    <div class="col-md-4 col-12">
+                        <label class="form-label">Tipo</label>
+                        <InputText class="form-control" @bind-Value="form.Tipo" />
+                        <ValidationMessage For="@(() => form.Tipo)" />
+                    </div>
+
+                    <div class="col-md-5 col-12">
+                        <label class="form-label">Nombre</label>
+                        <InputText class="form-control" @bind-Value="form.Nombre" />
+                        <ValidationMessage For="@(() => form.Nombre)" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Descripción</label>
+                        <InputTextArea class="form-control" @bind-Value="form.Descripcion" rows="3" />
+                        <ValidationMessage For="@(() => form.Descripcion)" />
+                    </div>
+
+                    <div class="col-md-4 col-12">
+                        <label class="form-label">Estado (solo lectura)</label>
+                        <input class="form-control" value="@(form.Estado ? "Activo" : "Inactivo")" readonly />
+                    </div>
+
+                    @* Si quieres mostrar Precio y tu GET lo trae en el futuro:
+                    <div class="col-md-4 col-12">
+                        <label class="form-label">Precio ($) (solo lectura)</label>
+                        <input class="form-control" value="@form.Precio.ToString("0.00")" readonly />
+                    </div>
+                    *@
+                </div>
+
+                <div class="d-flex mt-4 gap-2">
+                    <button type="submit" class="btn btn-primary" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar cambios")
+                    </button>
+                    <a class="btn btn-light" href="/dashboards/productos/listar">Volver</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+else if (yaBusco)
+{
+    <div class="alert alert-warning">No se encontró un producto con ese ID.</div>
 }
 
 @code {
-    [Parameter] public int? id { get; set; }
+    // ===== Parámetros / estado ====
+    [Parameter] public int? IdFromRoute { get; set; }
+    private int? _loadedFromId;
 
-    private ProductoModel producto = new();
-    private string? mensajeExito;
+    private int? SearchId { get; set; }
+    private ProductoEditVM? form;
+    private bool cargando = false;
+    private bool guardando = false;
+    private bool yaBusco = false;
+    private string? searchError;
+    private int? productoIdActual;
 
-    protected override void OnInitialized()
+    // ===== VM de edición (con validaciones) ====
+    private sealed class ProductoEditVM
     {
-        // Mock: si llegó un id por la ruta, simula carga; si no, usa demo por defecto
-        if (id is not null)
+        public int Id { get; set; }
+
+        [Required, StringLength(50)]
+        public string? Tipo { get; set; }
+
+        [Required, StringLength(100)]
+        public string? Nombre { get; set; }
+
+        [Required, StringLength(200)]
+        public string? Descripcion { get; set; }
+
+        public bool Estado { get; set; }
+
+        // public decimal Precio { get; set; } // si el GET lo incluye, puedes habilitarlo solo lectura.
+    }
+
+    // ===== Ciclo de vida: cargar si viene {id} en la ruta ====
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IdFromRoute is int rid && rid > 0 && _loadedFromId != rid)
         {
-            producto = new ProductoModel
-            {
-                IdPro = id.ToString(),
-                TipPro = "Electrónico",
-                NomPro = "Audífonos A12",
-                DesPro = "Airpods Pro con mejor calidad de sonido",
-                PrePro = 4.50m,
-                EstPro = true
-            };
+            _loadedFromId = rid;
+            SearchId = rid;
+            await CargarPorId(rid);
         }
-        else
+    }
+
+    // ===== Buscar por ID (similar a Editar Cliente) ====
+    private async Task BuscarProducto()
+    {
+        searchError = null;
+        if (SearchId is null || SearchId <= 0)
         {
-            producto = new ProductoModel
-            {
-                IdPro = "1",
-                TipPro = "Electrónico",
-                NomPro = "Audífonos A12",
-                DesPro = "Airpods Pro con mejor calidad de sonido",
-                PrePro = 4.50m,
-                EstPro = true
-            };
+            searchError = "Ingresa un ID válido (entero > 0).";
+            return;
         }
+        await CargarPorId(SearchId.Value);
     }
 
-    private async Task ActualizarProducto(EditContext _)
+    // ===== Cargar por ID con SweetAlert y toasts ====
+    private async Task CargarPorId(int id)
     {
-        mensajeExito = $"✅ Producto '{producto.NomPro}' actualizado correctamente.";
-        await Task.CompletedTask;
+        cargando = true; yaBusco = true; form = null; productoIdActual = null; StateHasChanged();
+
+        try
+        {
+            var dto = await ProductosApi.GetByIdAsync(id);
+            if (dto is null)
+            {
+                await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Title = "No encontrado",
+                    Text = $"No existe un producto con ID {id}.",
+                    Icon = SweetAlertIcon.Warning
+                });
+                return;
+            }
+
+            MapearForm(dto);
+
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Position = SweetAlertPosition.TopEnd,
+                Icon = SweetAlertIcon.Success,
+                Title = "Producto cargado",
+                ShowConfirmButton = false,
+                Timer = 1200,
+                Toast = true
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Error al cargar",
+                Html = $"<small>{ex.Message}</small>",
+                Icon = SweetAlertIcon.Error
+            });
+        }
+        finally { cargando = false; StateHasChanged(); }
     }
 
-    private void Cancelar()
+    private void MapearForm(ProductoDto dto)
     {
-        mensajeExito = null;
-        OnInitialized();
+        productoIdActual = dto.Id;
+        form = new ProductoEditVM
+        {
+            Id = dto.Id,
+            Tipo = dto.Tipo,
+            Nombre = dto.Nombre,
+            Descripcion = dto.Descripcion,
+            Estado = dto.Estado
+            // Precio = dto.Precio; // si el GET lo entrega
+        };
     }
 
-    public class ProductoModel
+    // ===== Guardado con confirmación SweetAlert2 (PUT) ====
+    private async Task GuardarCambios()
     {
-        public string? IdPro { get; set; }
+        if (productoIdActual is null || form is null) return;
 
-        [Required(ErrorMessage = "El tipo es obligatorio.")]
-        [StringLength(50, ErrorMessage = "Máximo 50 caracteres.")]
-        public string? TipPro { get; set; }
+        var confirmar = await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "¿Guardar cambios?",
+            Text = "Se actualizarán el tipo, nombre y descripción.",
+            Icon = SweetAlertIcon.Question,
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sí, guardar",
+            CancelButtonText = "Cancelar"
+        });
+        if (!confirmar.IsConfirmed) return;
 
-        [Required(ErrorMessage = "El nombre es obligatorio.")]
-        [StringLength(100, ErrorMessage = "Máximo 100 caracteres.")]
-        public string? NomPro { get; set; }
+        guardando = true;
+        try
+        {
+            var payload = new ProductoUpdateRequest
+            {
+                // Se serializa como tipPro, nomPro, desPro por tus JsonPropertyName
+                Tipo = form.Tipo,
+                Nombre = form.Nombre,
+                Descripcion = form.Descripcion
+            };
 
-        [Required(ErrorMessage = "La descripción es obligatoria.")]
-        [StringLength(200, ErrorMessage = "Máximo 200 caracteres.")]
-        public string? DesPro { get; set; }
+            var actualizado = await ProductosApi.UpdateAsync(productoIdActual.Value, payload);
 
-        [Range(0.1, 9999.99, ErrorMessage = "Debe ingresar un precio válido.")]
-        public decimal PrePro { get; set; }
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Position = SweetAlertPosition.TopEnd,
+                Icon = SweetAlertIcon.Success,
+                Title = "Cambios guardados",
+                Text = $"“{actualizado.Nombre}” actualizado correctamente.",
+                ShowConfirmButton = false,
+                Timer = 1500,
+                Toast = true
+            });
 
-        public bool EstPro { get; set; }
+            // Opcional: volver automáticamente al listado
+            // Nav.NavigateTo("/dashboards/productos/listar");
+        }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "No se pudo guardar",
+                Html = $"<small>{ex.Message}</small>",
+                Icon = SweetAlertIcon.Error
+            });
+        }
+        finally { guardando = false; }
     }
 }

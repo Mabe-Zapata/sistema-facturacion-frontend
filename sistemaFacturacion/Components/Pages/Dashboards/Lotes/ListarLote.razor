@@ -1,0 +1,176 @@
+﻿@page "/dashboards/lotes/listar"
+@using sistemaFacturacion.Models
+@using sistemaFacturacion.Services
+@inject NavigationManager Nav
+@inject ILotesApiClient LotesApi
+
+<h2 class="page-title fw-semibold fs-20 mb-2">Listado de Lotes</h2>
+<p class="text-muted mb-3">Búsqueda, filtros y acciones rápidas.</p>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Buscar</label>
+                <input class="form-control"
+                       placeholder="ID lote, ID producto, producto, tipo…"
+                       @bind="filtroTexto" @bind:event="oninput" />
+            </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label">Estado</label>
+                <select class="form-select" @bind="filtroEstado">
+                    <option value="Todos">Todos</option>
+                    <option value="Activo">Activo</option>
+                    <option value="Inactivo">Inactivo</option>
+                </select>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label">Rango (desde)</label>
+                <InputDate class="form-control" @bind-Value="filtroDesde" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label">Rango (hasta)</label>
+                <InputDate class="form-control" @bind-Value="filtroHasta" />
+            </div>
+
+            <div class="col-12 col-md-2 d-grid">
+                <button class="btn btn-light" @onclick="LimpiarFiltros">
+                    <i class="ri-eraser-line me-1"></i> Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+        <h6 class="mb-0">Lotes</h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/lotes"))">
+                Crear lote (desde producto)
+            </button>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        @if (isLoading)
+        {
+            <div class="p-4 text-muted">Cargando lotes...</div>
+        }
+        else if (errorMessage != null)
+        {
+            <div class="p-4 text-danger">Error: @errorMessage</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="text-muted">
+                        <tr>
+                            <th>ID Lote</th>
+                            <th>ID Prod</th>
+                            <th>Producto</th>
+                            <th>Tipo</th>
+                            <th>F. Compra</th>
+                            <th>F. Expira</th>
+                            <th>Cant. Lote</th>
+                            <th>Disponible</th>
+                            <th>Precio Venta</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var l in LotesFiltrados())
+                        {
+                            <tr>
+                                <td>@l.Id</td>
+                                <td>@l.IdPro</td>
+                                <td>@l.NombreProducto</td>
+                                <td>@l.TipoProducto</td>
+                                <td>@l.FecCom.ToString("yyyy-MM-dd")</td>
+                                <td>@l.FecExp.ToString("yyyy-MM-dd")</td>
+                                <td>@l.CanLot</td>
+                                <td>@l.CanDis</td>
+                                <td>$ @l.PreVen.ToString("0.00")</td>
+                                <td>
+                                    <span class="badge @(ClaseEstado(l.EstLot))">
+                                        @(l.EstLot ? "Activo" : "Inactivo")
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            @onclick="@(() => Nav.NavigateTo($"/dashboards/lotes/editar/{l.Id}"))"
+                                            title="Editar lote">
+                                        <i class="ri-edit-line"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+    private List<LoteDto> lotes = new();
+
+    private string filtroTexto = "";
+    private string filtroEstado = "Todos";
+    private DateTime? filtroDesde;
+    private DateTime? filtroHasta;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            lotes = await LotesApi.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private IEnumerable<LoteDto> LotesFiltrados()
+    {
+        IEnumerable<LoteDto> q = lotes;
+
+        if (!string.IsNullOrWhiteSpace(filtroTexto))
+            q = q.Where(x => ($"{x.Id} {x.IdPro} {x.NombreProducto} {x.TipoProducto}")
+                 .Contains(filtroTexto, StringComparison.OrdinalIgnoreCase));
+
+        if (filtroEstado != "Todos")
+            q = q.Where(x => filtroEstado == "Activo" ? x.EstLot : !x.EstLot);
+
+        if (filtroDesde is not null)
+            q = q.Where(x => x.FecCom.Date >= filtroDesde.Value.Date);
+
+        if (filtroHasta is not null)
+            q = q.Where(x => x.FecCom.Date <= filtroHasta.Value.Date);
+
+        return q.OrderByDescending(x => x.Id);
+    }
+
+    private void LimpiarFiltros()
+    {
+        filtroTexto = "";
+        filtroEstado = "Todos";
+        filtroDesde = filtroHasta = null;
+    }
+
+    private static string ClaseEstado(bool estLot) =>
+        estLot ? "bg-success-subtle text-success"
+               : "bg-danger-subtle text-danger";
+}

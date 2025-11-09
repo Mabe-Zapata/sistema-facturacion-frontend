@@ -1,203 +1,354 @@
 ﻿@page "/dashboards/productos"
-@using Microsoft.AspNetCore.Components
+@using sistemaFacturacion.Models
+@using sistemaFacturacion.Services
+@using CurrieTechnologies.Razor.SweetAlert2
+@using ApexCharts
+@inject IProductosApiClient ProductosApi
+@inject SweetAlertService Swal
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
 <div class="productos-dashboard">
 
-<div class="page-header mb-4">
-    <h1 class="page-title fw-semibold fs-20">Gestión de Productos</h1>
-    <p class="text-muted fs-13">Panel general · accesos rápidos y actividad reciente</p>
-</div>
+    <!-- Header + acciones -->
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div>
+            <h1 class="page-title fw-semibold fs-20 mb-0">Gestión de Productos</h1>
+            <div class="text-muted fs-13">Panel general · accesos rápidos y actividad reciente</div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/productos/crear"))">
+                <i class="ri-add-line me-1"></i> Crear producto
+            </button>
+            <button class="btn btn-light" @onclick="Recargar">
+                <i class="ri-refresh-line me-1"></i> Recargar
+            </button>
+        </div>
+    </div>
 
-<!-- Accesos rápidos -->
-<div class="row g-3 mb-4">
-    <div class="col-12 col-md-6 col-xl-3">
-        <a href="/dashboards/productos/crear" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-primary-subtle">
-                        <i class="ri-add-box-line fs-3"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Crear producto</h5>
-                        <small class="text-muted">Registrar un nuevo producto</small>
+    <!-- KPIs -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Total productos</div>
+                    <div class="fs-3 fw-semibold">@KpiTotal</div>
+                    <div class="fs-12 @(KpiDeltaTotal >= 0 ? "text-success" : "text-danger")">
+                        @(KpiDeltaTotal >= 0 ? "▲" : "▼") @KpiDeltaTotal.ToString("+#0.0;-#0.0")% vs mes anterior
                     </div>
                 </div>
             </div>
-        </a>
-    </div>
-
-    <div class="col-12 col-md-6 col-xl-3">
-        <a href="/dashboards/productos/editar" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-warning-subtle">
-                        <i class="ri-edit-2-line fs-3"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Editar producto</h5>
-                        <small class="text-muted">Actualizar información del producto</small>
-                    </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Activos</div>
+                    <div class="fs-3 fw-semibold">@KpiActivos</div>
+                    <div class="text-success fs-12">+@KpiNuevos este mes</div>
                 </div>
             </div>
-        </a>
-    </div>
-
-    <div class="col-12 col-md-6 col-xl-3">
-        <a href="/dashboards/productos/eliminar" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-danger-subtle">
-                        <i class="ri-delete-bin-6-line fs-3"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Eliminar producto</h5>
-                        <small class="text-muted">Dar de baja productos obsoletos</small>
-                    </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Inactivos</div>
+                    <div class="fs-3 fw-semibold">@KpiInactivos</div>
+                    <div class="text-secondary fs-12">Sin variación</div>
                 </div>
             </div>
-        </a>
-    </div>
-
-    <div class="col-12 col-md-6 col-xl-3">
-        <a href="/dashboards/productos/listar" class="text-decoration-none">
-            <div class="card h-100 shadow-sm border-0 hover-scale">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-3 p-3 bg-success-subtle">
-                        <i class="ri-database-2-line fs-3"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Listar productos</h5>
-                        <small class="text-muted">Consulta, filtros y exportación</small>
-                    </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Tipos distintos</div>
+                    <div class="fs-3 fw-semibold">@TiposDistintos</div>
+                    <div class="text-muted fs-12">Agrupado por "Tipo"</div>
                 </div>
             </div>
-        </a>
+        </div>
     </div>
-</div>
 
-<!-- KPIs rápidos -->
-<div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="text-muted fs-12">Total productos</div>
-                <div class="fs-3 fw-semibold">328</div>
-                <div class="text-success fs-12">▲ +4.8% vs mes anterior</div>
+    <!-- Charts -->
+    <div class="row g-3 mb-3">
+        <!-- Donut: Activos vs Inactivos -->
+        <div class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent"><h6 class="mb-0">Estado de productos</h6></div>
+                <div class="card-body">
+                    <ApexChart TItem="DataPoint<decimal>"
+                               Title="Activos vs Inactivos"
+                               Options="DonutOptions"
+                               Series="DonutSeries"
+                               @ref="DonutChart" />
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="text-muted fs-12">Productos activos</div>
-                <div class="fs-3 fw-semibold">310</div>
-                <div class="text-success fs-12">▲ +3 nuevos</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="text-muted fs-12">Productos con bajo stock</div>
-                <div class="fs-3 fw-semibold text-warning">12</div>
-                <div class="text-danger fs-12">▼ -2 vs mes anterior</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="text-muted fs-12">Productos descontinuados</div>
-                <div class="fs-3 fw-semibold text-muted">6</div>
-                <div class="text-secondary fs-12">Sin variaciones</div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Tabla rápida de últimos productos -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-transparent">
-        <h6 class="mb-0">Últimos productos añadidos</h6>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table mb-0 align-middle">
-                <thead class="text-muted">
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Categoría</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                        <th>Proveedor</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Audífonos A12</td>
-                        <td>Electrónica</td>
-                        <td>$4.50</td>
-                        <td>150</td>
-                        <td>TechSound</td>
-                        <td><span class="badge bg-success">Activo</span></td>
-                    </tr>
-                    <tr>
-                        <td>Taza Crazy Cup</td>
-                        <td>Hogar</td>
-                        <td>$2.75</td>
-                        <td>65</td>
-                        <td>Crazy Cups</td>
-                        <td><span class="badge bg-success">Activo</span></td>
-                    </tr>
-                    <tr>
-                        <td>Mouse inalámbrico MX</td>
-                        <td>Oficina</td>
-                        <td>$8.99</td>
-                        <td>24</td>
-                        <td>LogiPro</td>
-                        <td><span class="badge bg-warning text-dark">Bajo stock</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Acciones y notas -->
-<div class="row g-3">
-    <div class="col-12 col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent">
-                <h6 class="mb-0">Acciones frecuentes</h6>
-            </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0 d-grid gap-2">
-                    <li><a class="link-primary" href="/dashboards/productos/crear">➕ Registrar producto</a></li>
-                    <li><a class="link-primary" href="/dashboards/productos/listar">📦 Consultar inventario</a></li>
-                    <li><a class="link-primary" href="/dashboards/productos/editar">✏ Actualizar precios o stock</a></li>
-                    <li><a class="link-danger" href="/dashboards/productos/eliminar">🗑 Eliminar producto</a></li>
-                </ul>
+        <!-- Barras por tipo -->
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent"><h6 class="mb-0">Productos por Tipo (Top 8)</h6></div>
+                <div class="card-body">
+                    <ApexChart TItem="DataPoint<int>"
+                               Title="Por tipo"
+                               Options="BarOptions"
+                               Series="BarSeries"
+                               @ref="BarChart" />
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent">
-                <h6 class="mb-0">Notas</h6>
+    <!-- Alertas + Actividad -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">Alertas de catálogo</h6>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    @if (productos.Count == 0)
+                    {
+                        <div class="text-muted">No hay datos para evaluar alertas.</div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning d-flex align-items-start gap-2">
+                            <i class="ri-error-warning-line fs-5"></i>
+                            <div>
+                                <strong>@InactivosSinTipo.Count()</strong> inactivos con Tipo vacío o "(sin tipo)".
+                                <div class="small text-muted">Mejora la calidad del catálogo.</div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info d-flex align-items-start gap-2">
+                            <i class="ri-information-line fs-5"></i>
+                            <div>
+                                <strong>@NombresCortos.Count()</strong> productos con nombre muy corto (&lt; 4).
+                                <div class="small text-muted">Facilita la búsqueda y comprensión.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
-            <div class="card-body">
-                <p class="text-muted mb-2">
-                    Campos clave del producto: <strong>Nombre, Descripción, Precio, Categoría, Stock, Proveedor, Estado</strong>.
-                </p>
-                <p class="text-muted mb-0">
-                    Este dashboard usa valores estáticos de ejemplo. Próximamente se conectará con el backend para mostrar datos reales.
-                </p>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                    <h6 class="mb-0">Actividad reciente</h6>
+                </div>
+                <div class="card-body">
+                    @if (Ultimos.Count == 0)
+                    {
+                        <div class="text-muted">Sin registros recientes.</div>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var p in Ultimos)
+                            {
+                                <li class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="ri-price-tag-3-line text-primary"></i>
+                                        <div>
+                                            <div class="fw-medium">@p.Nombre</div>
+                                            <small class="text-muted">@p.Tipo • ID: @p.Id</small>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="badge @(p.Estado ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                            @(p.Estado ? "Activo" : "Inactivo")
+                                        </span>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Tabla de últimos -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+            <h6 class="mb-0">Últimos productos añadidos</h6>
+            <button class="btn btn-sm btn-outline-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/productos/listar"))">
+                Ver listado completo
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="text-muted">
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (cargando)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>Cargando...
+                                </td>
+                            </tr>
+                        }
+                        else if (Ultimos.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="ri-inbox-line fs-3 mb-2 d-block"></i>Sin registros
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var p in Ultimos)
+                            {
+                                <tr>
+                                    <td>@p.Nombre</td>
+                                    <td>@p.Tipo</td>
+                                    <td>
+                                        <span class="badge @(p.Estado ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                            @(p.Estado ? "Activo" : "Inactivo")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                @onclick="@(() => Nav.NavigateTo($"/dashboards/productos/editar/{p.Id}"))"
+                                                title="Editar">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
-</div>
+
 @code {
-    // Aquí luego inyectarás servicios y traerás datos reales (productos, KPIs, etc.)
+    // Usamos un único tipo para armar el Top por tipo y luego lo mapeamos a DataPoint<int>
+    private record BarItem(string Label, int Value);
+
+    private List<ProductoDto> productos = new();
+    private bool cargando = true;
+
+    private int KpiTotal, KpiActivos, KpiInactivos, TiposDistintos, KpiNuevos;
+    private double KpiDeltaTotal;
+
+    // Donut (DataPoint<decimal>)
+    private ApexChart<DataPoint<decimal>> DonutChart;
+    private List<Series<DataPoint<decimal>>> DonutSeries = new();
+    private ApexChartOptions<DataPoint<decimal>> DonutOptions = new()
+    {
+        Chart = new Chart { Type = ChartType.Donut },
+        Legend = new Legend { Position = LegendPosition.Bottom }
+    };
+
+    // Barras (DataPoint<int>)
+    private ApexChart<DataPoint<int>> BarChart;
+    private List<BarItem> BarData = new();
+    private List<Series<DataPoint<int>>> BarSeries = new();
+    private ApexChartOptions<DataPoint<int>> BarOptions = new()
+    {
+        PlotOptions = new PlotOptions { Bar = new PlotOptionsBar { Horizontal = false, ColumnWidth = "55%" } },
+        DataLabels = new DataLabels { Enabled = false },
+        Legend = new Legend { Position = LegendPosition.Top }
+    };
+
+    private IEnumerable<ProductoDto> InactivosSinTipo =>
+        productos.Where(p => !p.Estado && string.IsNullOrWhiteSpace(p.Tipo));
+    private IEnumerable<ProductoDto> NombresCortos =>
+        productos.Where(p => (p.Nombre ?? "").Trim().Length < 4);
+    private List<ProductoDto> Ultimos = new();
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Recargar() => await Cargar(true);
+
+    private async Task Cargar(bool toast = false)
+    {
+        try
+        {
+            cargando = true;
+            productos = await ProductosApi.GetAllAsync();
+
+            // KPIs
+            KpiTotal = productos.Count;
+            KpiActivos = productos.Count(p => p.Estado);
+            KpiInactivos = KpiTotal - KpiActivos;
+            TiposDistintos = productos.Select(p => (p.Tipo ?? "").Trim())
+                                       .Where(s => !string.IsNullOrWhiteSpace(s))
+                                       .Distinct(StringComparer.OrdinalIgnoreCase)
+                                       .Count();
+            KpiNuevos = Math.Min(5, productos.Count);   // <- corregido (Min con M mayúscula)
+            KpiDeltaTotal = 4.8;
+
+           
+
+            // Barras por Tipo (Top 8 + "Otros")
+            var porTipo = productos
+                .GroupBy(p => (p.Tipo ?? "(sin tipo)").Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(g => new BarItem(g.Key, g.Count()))
+                .OrderByDescending(x => x.Value)
+                .ToList();
+
+            if (porTipo.Count > 9)
+            {
+                var top8 = porTipo.Take(8).ToList();
+                var otros = porTipo.Skip(8).Sum(x => x.Value);
+                top8.Add(new BarItem("Otros", otros));
+                BarData = top8;
+            }
+            else
+            {
+                BarData = porTipo;
+            }
+
+            // Barras -> Series<DataPoint<int>> (coincide con TItem="DataPoint<int>" del markup)
+           
+
+            // Últimos
+            Ultimos = productos.OrderByDescending(p => p.Id).Take(8).ToList();
+
+            if (toast)
+            {
+                var isDark = await JS.InvokeAsync<bool>("isAppInDarkMode");
+                await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Toast = true,
+                    Position = SweetAlertPosition.TopEnd,
+                    Icon = SweetAlertIcon.Success,
+                    Title = $"Datos actualizados ({KpiTotal})",
+                    ShowConfirmButton = false,
+                    Timer = 1200,
+                    Background = isDark ? "#1e1e1e" : null,
+                    Color = isDark ? "#e6e6e6" : null
+                });
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Error al cargar",
+                Html = $"<small>{ex.Message}</small>",
+                Icon = SweetAlertIcon.Error
+            });
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
 }

@@ -62,8 +62,8 @@ body[data-theme-mode="dark"] .productos-dashboard .bg-success-subtle i,
 .dark .productos-dashboard .bg-success-subtle i {
     color: var(--pd-icon-success) !important;
 }
-
-/* Extra: mejora el contraste de encabezados de tablas en oscuro */
+ 
 html[data-theme-mode="dark"] .productos-dashboard .table thead th {
     color: #cbd5e1 !important; /* un gris claro legible */
 }
+ 

@@ -1,0 +1,173 @@
+﻿@page "/dashboards/lotes/crear"
+@page "/dashboards/lotes/crear/{productId:int}"
+@using System.ComponentModel.DataAnnotations
+@using sistemaFacturacion.Services
+@inject NavigationManager Nav
+@inject ILotesApiClient LotesApi
+@inject CurrieTechnologies.Razor.SweetAlert2.SweetAlertService Swal
+
+<h2 class="titulo-form">Crear lote desde producto</h2>
+<p class="descripcion-form">Completa los campos del lote. El lote se creará con estado <strong>Activo</strong>.</p>
+
+<EditForm Model="@lote" OnValidSubmit="@Guardar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3">
+
+                <!-- Producto -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label">ID Producto</label>
+                    <input class="form-control" value="@lote.IdPro" disabled />
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label">Producto</label>
+                    <input class="form-control" value="@ProductoNombreMostrada" disabled />
+                </div>
+
+                <!-- Fechas -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Fecha de compra</label>
+                    <InputDate class="form-control" @bind-Value="lote.FecCom" />
+                    <ValidationMessage For="@(() => lote.FecCom)" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Fecha de expiración</label>
+                    <InputDate class="form-control" @bind-Value="lote.FecExp" />
+                    <ValidationMessage For="@(() => lote.FecExp)" />
+                </div>
+
+                <!-- Cantidades -->
+                <div class="col-12 col-md-2">
+                    <label class="form-label">Cant. lote</label>
+                    <InputNumber class="form-control" @bind-Value="lote.CanLot" />
+                    <ValidationMessage For="@(() => lote.CanLot)" />
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label">Disponible</label>
+                    <InputNumber class="form-control" @bind-Value="lote.CanDis" />
+                    <ValidationMessage For="@(() => lote.CanDis)" />
+                </div>
+
+                <!-- Precios -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Precio compra ($)</label>
+                    <InputNumber class="form-control" @bind-Value="lote.PreCom" />
+                    <ValidationMessage For="@(() => lote.PreCom)" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Precio venta ($)</label>
+                    <InputNumber class="form-control" @bind-Value="lote.PreVen" />
+                    <ValidationMessage For="@(() => lote.PreVen)" />
+                </div>
+
+            </div>
+        </div>
+
+        <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-light" @onclick="Cancelar">Cancelar</button>
+            <button type="submit" class="btn btn-primary">
+                <i class="ri-save-3-line me-1"></i> Guardar
+            </button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public int? productId { get; set; }
+    [SupplyParameterFromQuery(Name = "productName")] public string? productName { get; set; }
+
+    private LoteCreateRequest lote = new();
+    private string ProductoNombreMostrada => string.IsNullOrWhiteSpace(productName) ? "(sin nombre)" : productName!;
+
+    protected override void OnParametersSet()
+    {
+        if (productId.HasValue)
+            lote.IdPro = productId.Value;        
+
+        if (lote.FecCom == default)
+            lote.FecCom = DateTime.Today;
+
+        if (lote.FecExp == default)
+            lote.FecExp = DateTime.Today.AddYears(1);
+    }
+
+
+    private async Task<bool> ValidarCamposVisual()
+    {
+        if (lote.FecCom > lote.FecExp)
+        {
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Warning,
+                Title = "Fechas incorrectas",
+                Html = "<small>La fecha de compra no puede ser mayor que la fecha de expiración.</small>",
+                ConfirmButtonColor = "#0ea5e9"
+            });
+            return false;
+        }
+
+        if (lote.CanDis > lote.CanLot)
+        {
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Warning,
+                Title = "Cantidad inválida",
+                Html = "<small>La cantidad disponible no puede ser mayor a la cantidad del lote.</small>",
+                ConfirmButtonColor = "#0ea5e9"
+            });
+            return false;
+        }
+
+        if (lote.PreVen < lote.PreCom)
+        {
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Warning,
+                Title = "Precios inconsistentes",
+                Html = "<small>El precio de venta no puede ser menor que el precio de compra.</small>",
+                ConfirmButtonColor = "#0ea5e9"
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task Guardar()
+    {
+        if (!await ValidarCamposVisual())
+            return;
+
+        try
+        {
+            var creado = await LotesApi.CreateAsync(lote);
+
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Success,
+                Title = "Lote creado correctamente",
+                Html = $"<small>ID generado: <strong>{(creado?.Id > 0 ? creado.Id.ToString() : "(sin ID)")}</strong></small>",
+                Toast = true,
+                Position = SweetAlertPosition.TopEnd,
+                Timer = 1700,
+                ShowConfirmButton = false
+            });
+
+            Nav.NavigateTo("/dashboards/lotes/listar");
+        }
+        catch (HttpRequestException ex)
+        {
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Error,
+                Title = "Error al crear lote",
+                Html = $"<small>{ex.Message}</small>"
+            });
+        }
+    }
+
+    private void Cancelar() => Nav.NavigateTo("/dashboards/lotes");
+}
