@@ -63,6 +63,11 @@ public class SessionService
         return await _localStorage.GetItemAsStringAsync(TokenKey); // Usar GetItemAsStringAsync para strings
     }
 
+    public async Task RemoveTokenAsync()
+    {
+        await _localStorage.RemoveItemAsync(TokenKey);
+    }
+
     public async Task ClearAllSession()
     {
         await _localStorage.ClearAsync();

@@ -1,0 +1,119 @@
+﻿@page "/dashboards/productos/eliminar"
+@using System.ComponentModel.DataAnnotations
+
+<h2 class="titulo-form">Dar de baja producto</h2>
+<p class="descripcion-form">
+    Busca un producto por nombre o ID y marca su estado como <strong>Inactivo</strong>.
+</p>
+
+<EditForm Model="@form" OnValidSubmit="@BuscarProducto">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-grid">
+        <div class="campo descripcion">
+            <label for="criterio">Nombre o ID del producto</label>
+            <InputText id="criterio" class="form-control" @bind-Value="form.Criterio" placeholder="Ej: Audífonos A12 o 1" />
+            <ValidationMessage For="@(() => form.Criterio)" />
+        </div>
+    </div>
+
+    <div class="acciones">
+        <button type="submit" class="btn-guardar">🔍 Buscar</button>
+        <button type="button" class="btn-cancelar" @onclick="Cancelar">Cancelar</button>
+    </div>
+</EditForm>
+
+@if (productoEncontrado is not null)
+{
+    <div class="resultado">
+        <h4 class="mb-2">Producto encontrado:</h4>
+        <ul>
+            <li><strong>ID:</strong> @productoEncontrado.IdPro</li>
+            <li><strong>Nombre:</strong> @productoEncontrado.NomPro</li>
+            <li><strong>Tipo:</strong> @productoEncontrado.TipPro</li>
+            <li><strong>Descripción:</strong> @productoEncontrado.DesPro</li>
+            <li><strong>Precio:</strong> $@productoEncontrado.PrePro</li>
+            <li><strong>Estado actual:</strong> @(productoEncontrado.EstPro ? "Activo ✅" : "Inactivo ⛔")</li>
+        </ul>
+
+        @if (productoEncontrado.EstPro)
+        {
+            <div class="acciones mt-3">
+                <button class="btn btn-danger" @onclick="DarDeBaja">⛔ Marcar como Inactivo</button>
+            </div>
+        }
+        else
+        {
+            <div class="alerta-exito mt-2">⚠ Este producto ya está inactivo.</div>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="alerta-exito">@mensaje</div>
+}
+
+@code {
+    // --- Modelos ---
+    private BuscarForm form = new();
+    private Producto? productoEncontrado;
+    private string? mensaje;
+
+    public class BuscarForm
+    {
+        [Required(ErrorMessage = "Ingrese un criterio de búsqueda (nombre o ID).")]
+        public string Criterio { get; set; } = string.Empty;
+    }
+
+    public class Producto
+    {
+        public int IdPro { get; set; }
+        public string TipPro { get; set; } = "";
+        public string NomPro { get; set; } = "";
+        public string DesPro { get; set; } = "";
+        public decimal PrePro { get; set; }
+        public bool EstPro { get; set; }
+    }
+
+    // --- Datos simulados ---
+    private List<Producto> productos = new()
+    {
+        new() { IdPro = 1, TipPro = "Electrónica", NomPro = "Audífonos A12", DesPro = "Cancelación de ruido", PrePro = 4.50m, EstPro = true },
+        new() { IdPro = 2, TipPro = "Hogar", NomPro = "Taza Crazy Cup", DesPro = "Cerámica 350ml", PrePro = 2.75m, EstPro = true },
+        new() { IdPro = 3, TipPro = "Oficina", NomPro = "Mouse MX", DesPro = "1600 DPI", PrePro = 8.99m, EstPro = false }
+    };
+
+    // --- Acciones ---
+    private void BuscarProducto()
+    {
+        mensaje = null;
+        productoEncontrado = null;
+
+        var criterio = form.Criterio.Trim().ToLowerInvariant();
+
+        productoEncontrado = productos.FirstOrDefault(p =>
+            p.NomPro.ToLowerInvariant().Contains(criterio) ||
+            p.IdPro.ToString() == criterio);
+
+        if (productoEncontrado is null)
+            mensaje = "⚠ No se encontró ningún producto con ese criterio.";
+    }
+
+    private void DarDeBaja()
+    {
+        if (productoEncontrado is not null && productoEncontrado.EstPro)
+        {
+            productoEncontrado.EstPro = false;
+            mensaje = $"⛔ Producto '{productoEncontrado.NomPro}' ha sido marcado como INACTIVO (simulado).";
+        }
+    }
+
+    private void Cancelar()
+    {
+        form = new();
+        productoEncontrado = null;
+        mensaje = null;
+    }
+}

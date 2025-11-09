@@ -1,5 +1,9 @@
-﻿@inject StateService stateService
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject StateService stateService
 @inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthStateProvider
+@inject SessionService SessionService
+@inject AuthService AuthService
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager 
 
     <!-- app-header -->
@@ -429,7 +433,14 @@
                                     </li>
                                 </ul>        
                             </li>
-                        <li><a class="dropdown-item d-flex align-items-center" href="/signin/basic"><i class="ti ti-logout fs-18 me-2"></i>Log Out</a></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" 
+                               href="/" 
+                               @onclick="LogoutAsync"
+                               @onclick:preventDefault="true"
+                               @onclick:stopPropagation="true">
+                               <i class="ti ti-logout fs-18 me-2"></i>Log Out</a>
+                        </li>
                         </ul>
                     </div>
                 </li>  
@@ -648,5 +659,25 @@
     private void DeleteItem(CartItem item)
     {
         CartItemsData.Remove(item);
+    }
+
+    private async Task LogoutAsync()
+    {
+        try
+        {
+            // (Opcional) informa al backend si tienes endpoint para invalidar refresh token
+            await AuthService.LogoutAsync(); // si no existe, omite esta línea
+        }
+        catch { /* no bloquear por errors del endpoint */ }
+
+        // limpia almacenamiento local y header Authorization
+        await SessionService.RemoveTokenAsync(); // o RemoveTokenAsync()
+
+        if (AuthStateProvider is CustomAuthStateProvider cap)
+            cap.NotifyUserLogout();
+
+
+        // redirige al login (tu "/" o "/index")
+        NavigationManager.NavigateTo("/", forceLoad: true);
     }
 }

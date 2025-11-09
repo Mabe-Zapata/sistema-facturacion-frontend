@@ -1,4 +1,203 @@
-﻿@page "/dashboard/productos"
+﻿@page "/dashboards/productos"
+@using Microsoft.AspNetCore.Components
+<div class="productos-dashboard">
 
-<h1>Gestión de Productos</h1>
-<p>Sección para administrar seguros, planes y coberturas.</p>
+<div class="page-header mb-4">
+    <h1 class="page-title fw-semibold fs-20">Gestión de Productos</h1>
+    <p class="text-muted fs-13">Panel general · accesos rápidos y actividad reciente</p>
+</div>
+
+<!-- Accesos rápidos -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="/dashboards/productos/crear" class="text-decoration-none">
+            <div class="card h-100 shadow-sm border-0 hover-scale">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-3 bg-primary-subtle">
+                        <i class="ri-add-box-line fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Crear producto</h5>
+                        <small class="text-muted">Registrar un nuevo producto</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="/dashboards/productos/editar" class="text-decoration-none">
+            <div class="card h-100 shadow-sm border-0 hover-scale">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-3 bg-warning-subtle">
+                        <i class="ri-edit-2-line fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Editar producto</h5>
+                        <small class="text-muted">Actualizar información del producto</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="/dashboards/productos/eliminar" class="text-decoration-none">
+            <div class="card h-100 shadow-sm border-0 hover-scale">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-3 bg-danger-subtle">
+                        <i class="ri-delete-bin-6-line fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Eliminar producto</h5>
+                        <small class="text-muted">Dar de baja productos obsoletos</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <a href="/dashboards/productos/listar" class="text-decoration-none">
+            <div class="card h-100 shadow-sm border-0 hover-scale">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-3 bg-success-subtle">
+                        <i class="ri-database-2-line fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Listar productos</h5>
+                        <small class="text-muted">Consulta, filtros y exportación</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- KPIs rápidos -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Total productos</div>
+                <div class="fs-3 fw-semibold">328</div>
+                <div class="text-success fs-12">▲ +4.8% vs mes anterior</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Productos activos</div>
+                <div class="fs-3 fw-semibold">310</div>
+                <div class="text-success fs-12">▲ +3 nuevos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Productos con bajo stock</div>
+                <div class="fs-3 fw-semibold text-warning">12</div>
+                <div class="text-danger fs-12">▼ -2 vs mes anterior</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted fs-12">Productos descontinuados</div>
+                <div class="fs-3 fw-semibold text-muted">6</div>
+                <div class="text-secondary fs-12">Sin variaciones</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla rápida de últimos productos -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent">
+        <h6 class="mb-0">Últimos productos añadidos</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="text-muted">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Proveedor</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Audífonos A12</td>
+                        <td>Electrónica</td>
+                        <td>$4.50</td>
+                        <td>150</td>
+                        <td>TechSound</td>
+                        <td><span class="badge bg-success">Activo</span></td>
+                    </tr>
+                    <tr>
+                        <td>Taza Crazy Cup</td>
+                        <td>Hogar</td>
+                        <td>$2.75</td>
+                        <td>65</td>
+                        <td>Crazy Cups</td>
+                        <td><span class="badge bg-success">Activo</span></td>
+                    </tr>
+                    <tr>
+                        <td>Mouse inalámbrico MX</td>
+                        <td>Oficina</td>
+                        <td>$8.99</td>
+                        <td>24</td>
+                        <td>LogiPro</td>
+                        <td><span class="badge bg-warning text-dark">Bajo stock</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones y notas -->
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0">Acciones frecuentes</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0 d-grid gap-2">
+                    <li><a class="link-primary" href="/dashboards/productos/crear">➕ Registrar producto</a></li>
+                    <li><a class="link-primary" href="/dashboards/productos/listar">📦 Consultar inventario</a></li>
+                    <li><a class="link-primary" href="/dashboards/productos/editar">✏ Actualizar precios o stock</a></li>
+                    <li><a class="link-danger" href="/dashboards/productos/eliminar">🗑 Eliminar producto</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0">Notas</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-2">
+                    Campos clave del producto: <strong>Nombre, Descripción, Precio, Categoría, Stock, Proveedor, Estado</strong>.
+                </p>
+                <p class="text-muted mb-0">
+                    Este dashboard usa valores estáticos de ejemplo. Próximamente se conectará con el backend para mostrar datos reales.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+@code {
+    // Aquí luego inyectarás servicios y traerás datos reales (productos, KPIs, etc.)
+}

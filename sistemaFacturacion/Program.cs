@@ -1,4 +1,4 @@
-using BlazorColorPicker;
+﻿using BlazorColorPicker;
 using Blazored.LocalStorage;
 using Soenneker.Blazor.TomSelect.Registrars;
 using Soenneker.Blazor.FilePond.Registrars;
@@ -48,6 +48,8 @@ namespace sistemaFacturacion
 
             builder.Services.AddWMBOS();
             builder.Services.AddWMBSC();
+
+            builder.Services.AddScoped<IClientesApiClient, ClientesApiClient>();
 
             await builder.Build().RunAsync();
         }
