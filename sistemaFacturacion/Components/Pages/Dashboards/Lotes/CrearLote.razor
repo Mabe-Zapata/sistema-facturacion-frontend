@@ -5,6 +5,7 @@
 @inject NavigationManager Nav
 @inject ILotesApiClient LotesApi
 @inject CurrieTechnologies.Razor.SweetAlert2.SweetAlertService Swal
+@inject IJSRuntime JSRuntime
 
 <h2 class="titulo-form">Crear lote desde producto</h2>
 <p class="descripcion-form">Completa los campos del lote. El lote se creará con estado <strong>Activo</strong>.</p>
@@ -145,16 +146,29 @@
         {
             var creado = await LotesApi.CreateAsync(lote);
 
-            await Swal.FireAsync(new()
+            bool isDark = false;
+            try { isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode"); } catch { }
+
+            var titleColor = isDark ? "var(--default-text-color)" : "#0f172a";
+            var subColor = isDark ? "var(--text-muted)" : "#64748b";
+            var boxBg = isDark ? "var(--form-control-bg)" : "#f8fafc";
+            var boxBrd = isDark ? "var(--default-border)" : "#e5e7eb";
+            var valColor = isDark ? "var(--default-text-color)" : "#0f172a";
+            
+
+            await Swal.FireAsync(new SweetAlertOptions
             {
                 Icon = SweetAlertIcon.Success,
                 Title = "Lote creado correctamente",
-                Html = $"<small>ID generado: <strong>{(creado?.Id > 0 ? creado.Id.ToString() : "(sin ID)")}</strong></small>",
+                Html = $"<small>ID generado: <strong>{(creado?.Id > 0 ? creado.Id.ToString() : "")}</strong></small>",
                 Toast = true,
                 Position = SweetAlertPosition.TopEnd,
                 Timer = 1700,
-                ShowConfirmButton = false
+                ShowConfirmButton = false,
+                Background = isDark ? "var(--form-control-bg)" : null,
+                Color = isDark ? "var(--default-text-color)" : null
             });
+
 
             Nav.NavigateTo("/dashboards/lotes/listar");
         }
