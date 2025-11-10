@@ -25,16 +25,16 @@ else
         <ValidationSummary />
 
         <!-- Identificación -->
-        <div class="card border-0 shadow-sm mb-3">
+        <div class="card mb-3 border-0 shadow-sm">
             <div class="card-header bg-transparent"><strong>Identificación</strong></div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-12 col-md-3">
+                    <div class="col-md-3 col-12">
                         <label class="form-label">ID Lote</label>
                         <input class="form-control" value="@vm.Id" disabled />
                     </div>
 
-                    <div class="col-12 col-md-9">
+                    <div class="col-md-9 col-12">
                         <label class="form-label">Producto</label>
                         <!-- Importante: usamos value + @onchange para evitar errores de doble bind -->
                         <InputSelect class="form-select"
@@ -52,11 +52,11 @@ else
                         <ValidationMessage For="@(() => vm.IdPro)" />
                     </div>
 
-                    <div class="col-12 col-md-6">
+                    <div class="col-md-6 col-12">
                         <label class="form-label">Nombre (referencia)</label>
                         <input class="form-control" value="@vm.NombreProducto" disabled />
                     </div>
-                    <div class="col-12 col-md-6">
+                    <div class="col-md-6 col-12">
                         <label class="form-label">Tipo (referencia)</label>
                         <input class="form-control" value="@vm.TipoProducto" disabled />
                     </div>
@@ -65,21 +65,21 @@ else
         </div>
 
         <!-- Fechas -->
-        <div class="card border-0 shadow-sm mb-3">
+        <div class="card mb-3 border-0 shadow-sm">
             <div class="card-header bg-transparent"><strong>Fechas</strong></div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-12 col-md-4">
+                    <div class="col-md-4 col-12">
                         <label class="form-label">Fecha de compra</label>
                         <InputDate class="form-control" @bind-Value="vm.FecCom" />
                         <ValidationMessage For="@(() => vm.FecCom)" />
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-md-4 col-12">
                         <label class="form-label">Fecha de expiración</label>
                         <InputDate class="form-control" @bind-Value="vm.FecExp" />
                         <ValidationMessage For="@(() => vm.FecExp)" />
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-md-4 col-12">
                         <label class="form-label">Estado actual</label>
                         <input class="form-control" value="@(vm.EstLot ? "Activo" : "Inactivo")" disabled />
                     </div>
@@ -88,34 +88,40 @@ else
         </div>
 
         <!-- Cantidades y precios -->
-        <div class="card border-0 shadow-sm mb-3">
+        <div class="card mb-3 border-0 shadow-sm">
             <div class="card-header bg-transparent"><strong>Cantidades y precios</strong></div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-12 col-md-3">
+                    <div class="col-md-3 col-12">
                         <label class="form-label">Cantidad del lote</label>
                         <InputNumber class="form-control" @bind-Value="vm.CanLot" />
                         <ValidationMessage For="@(() => vm.CanLot)" />
                     </div>
-                    <div class="col-12 col-md-3">
+                    <div class="col-md-3 col-12">
                         <label class="form-label">Disponible</label>
                         <InputNumber class="form-control" @bind-Value="vm.CanDis" />
                         <ValidationMessage For="@(() => vm.CanDis)" />
                     </div>
-                    <div class="col-12 col-md-3">
+                    <div class="col-md-3 col-12">
                         <label class="form-label">Precio compra ($)</label>
-                        <InputNumber class="form-control" @bind-Value="vm.PreCom" />
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <InputNumber class="form-control" @bind-Value="vm.PreCom" />
+                        </div>
                         <ValidationMessage For="@(() => vm.PreCom)" />
                     </div>
-                    <div class="col-12 col-md-3">
+                    <div class="col-md-3 col-12">
                         <label class="form-label">Precio venta ($)</label>
-                        <InputNumber class="form-control" @bind-Value="vm.PreVen" />
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <InputNumber class="form-control" @bind-Value="vm.PreVen" />
+                        </div>
                         <ValidationMessage For="@(() => vm.PreVen)" />
                     </div>
                 </div>
             </div>
 
-            <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+            <div class="card-footer d-flex justify-content-end gap-2 bg-transparent">
                 <button type="button" class="btn btn-light" @onclick="Volver">Cancelar</button>
                 <button type="submit" class="btn btn-primary">
                     <i class="ri-save-3-line me-1"></i> Guardar cambios

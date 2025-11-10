@@ -69,7 +69,6 @@ public class SessionService
         await _localStorage.RemoveItemAsync(TokenKey);
     }
 
-
     public async Task ClearAllSession()
     {
         await _localStorage.ClearAsync();

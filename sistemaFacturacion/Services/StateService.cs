@@ -7,17 +7,17 @@ public class AppState
 {
     public string ColorTheme { get; set; } = "light";                   // light, dark
     public string Direction { get; set; } = "ltr";                      // ltr, rtl
-    public string NavigationStyles { get; set; } = "vertical";          // vertical, horizontal   
+    public string NavigationStyles { get; set; } = "vertical";          // vertical, horizontal
     public string MenuStyles { get; set; } = "";                        // menu-click, menu-hover, icon-click, icon-hover
-    public string LayoutStyles { get; set; } = "doublemenu";            // doublemenu, detached, icon-overlay, icontext-menu, closed-menu, default-menu 
+    public string LayoutStyles { get; set; } = "doublemenu";            // doublemenu, detached, icon-overlay, icontext-menu, closed-menu, default-menu
     public string PageStyles { get; set; } = "flat";                    // regular, classic, modern, flat
     public string WidthStyles { get; set; } = "fullwidth";              // default, fullwidth, boxed
     public string MenuPosition { get; set; } = "fixed";                 // fixed, scrollable
     public string HeaderPosition { get; set; } = "fixed";               // fixed, scrollable
     public string MenuColor { get; set; } = "transparent";              // light, dark, color, gradient, transparent
     public string HeaderColor { get; set; } = "transparent";            // light, dark, color, gradient, transparent
-    public string ThemePrimary { get; set; } = "";                      // '106, 91, 204', '100, 149, 237', '0, 123, 167', '10, 180, 255', '46, 81, 145'
-    public string ThemeBackground { get; set; } = "";                   //make sure to add rgb valies like example :- '49, 63, 141' and also same for ThemeBackground1
+    public string ThemePrimary { get; set; } = "";                      // '106, 91, 204', '100, 149, 237', ...
+    public string ThemeBackground { get; set; } = "";                   // add rgb values like '49, 63, 141' and same for ThemeBackground1
     public string ThemeBackground1 { get; set; } = "";
     public string BackgroundImage { get; set; } = "";                   // bgimg1, bgimg2, bgimg3, bgimg4, bgimg5
     public MainMenuItems? currentItem { get; set; } = null;
@@ -42,17 +42,11 @@ public class AppState
             (currentItem != null ? !currentItem.Equals(other.currentItem) : other.currentItem != null);
     }
 
-    // Override Equals method to compare properties
     public override bool Equals(object? obj)
     {
-        if (obj == null || GetType() != obj.GetType())
-        {
-            return false;
-        }
-
+        if (obj == null || GetType() != obj.GetType()) return false;
         AppState other = (AppState)obj;
 
-        // Compare each property
         return ColorTheme == other.ColorTheme &&
                Direction == other.Direction &&
                NavigationStyles == other.NavigationStyles &&
@@ -71,12 +65,7 @@ public class AppState
                Equals(currentItem, other.currentItem);
     }
 
-    // Override GetHashCode if you override Equals
-    public override int GetHashCode()
-    {
-        // Implement based on your comparison logic
-        return base.GetHashCode();
-    }
+    public override int GetHashCode() => base.GetHashCode();
 
     public void CopyFrom(AppState other)
     {
@@ -122,17 +111,11 @@ public class StateService
     private readonly IJSRuntime _jsRuntime;
     private readonly SessionService _sessionService;
     private readonly AppState _currentState;
-    private readonly ILogger<AppState> _logger; // Define ILogger
+    private readonly ILogger<AppState> _logger;
 
-    // private AppState _currentState = new AppState(); // Initialize with default state
-
-    public AppState GetAppState()
-    {
-        return _currentState;
-    }
+    public AppState GetAppState() => _currentState;
 
     public event Action OnChange;
-    // Event to notify subscribers about state changes
     public event Action? OnStateChanged;
 
     public StateService(IJSRuntime jsRuntime, SessionService sessionService, AppState appState, ILogger<AppState> logger)
@@ -141,46 +124,36 @@ public class StateService
         _sessionService = sessionService;
         _currentState = appState;
         OnChange = () => { };
-        _logger = logger; // Initialize ILogger in constructor
+        _logger = logger;
     }
 
     public async Task InitializeAsync()
     {
         try
         {
-            // Retrieve session values asynchronously
             var sessionState = await _sessionService.GetAppStateFromSession();
             var initialAppState = await _sessionService.GetInitalAppStateFromSession();
             if (initialAppState == null)
             {
                 await _sessionService.SetInitalAppStateToSession(_currentState);
             }
-            // Initialize AppState from session or default values
             await _currentState.InitializeFromSession(sessionState, _sessionService);
 
-            // Notify state change if needed
             OnChange?.Invoke();
             NotifyStateChanged();
-
-            //_logger.LogInformation("AppState initialized: {AppState}", JsonSerializer.Serialize(_currentState));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error initializing AppState");
-            // Handle exception as needed
         }
     }
 
     public async Task InitializeLandingAppState()
     {
-        // Retrieve session values
         var sessionState = await _sessionService.GetAppStateFromSession();
         _currentState.NavigationStyles = "horizontal";
         _currentState.MenuStyles = "menu-hover";
-        // Initialize AppState from session or default values
         await _currentState.InitializeFromSession(sessionState, _sessionService);
-
-        // Notify state change
         NotifyStateChanged();
     }
 
@@ -189,14 +162,12 @@ public class StateService
         await _sessionService.SetAppStateToSession(_currentState);
         var json = JsonSerializer.Serialize(_currentState);
         await _jsRuntime.InvokeVoidAsync("interop.setLocalStorageItem", LocalStorageKey, json);
-        // Invoke the event to notify subscribers
         OnStateChanged?.Invoke();
     }
 
     public async Task directionFn(string val)
     {
-        _currentState.Direction = val; // Update the color theme in the app state
-
+        _currentState.Direction = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "dir", val);
         NotifyStateChanged();
     }
@@ -209,13 +180,12 @@ public class StateService
 
     public async Task colorthemeFn(string val, bool stateClick)
     {
-        _currentState.ColorTheme = val; // Update the color theme in the app state
+        _currentState.ColorTheme = val;
         if (stateClick)
         {
-            _currentState.ThemeBackground = ""; // Update the color theme in the app state
-            _currentState.ThemeBackground1 = ""; // Update the color theme in the app state
+            _currentState.ThemeBackground = "";
+            _currentState.ThemeBackground1 = "";
         }
-        // await _jsRuntime.InvokeVoidAsync("interop.setclearCssVariables");
 
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-theme-mode", val);
         if (stateClick)
@@ -242,9 +212,9 @@ public class StateService
     }
 
     int screenSize = 1268;
+
     public async Task navigationStylesFn(string val, bool stateClick)
     {
-
         if (string.IsNullOrEmpty(_currentState.MenuStyles) && val == "horizontal")
         {
             _currentState.MenuStyles = "menu-click";
@@ -255,24 +225,14 @@ public class StateService
         {
             _currentState.MenuStyles = "";
             _currentState.LayoutStyles = "doublemenu";
-
         }
-        // else
-        // {
-        //     // _currentState.LayoutStyles = "";
-        //     await menuStylesFn(_currentState.MenuStyles);
-        // }
-        _currentState.NavigationStyles = val; // Update the color theme in the app state
+
+        _currentState.NavigationStyles = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-nav-layout", val);
+
         if (val == "horizontal")
         {
             await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-vertical-style");
-
-            // string result = await _jsRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-nav-style");
-            // if (result != null)
-            // {
-            //     await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-nav-style", "menu-click");
-            // }
         }
         else
         {
@@ -280,28 +240,23 @@ public class StateService
             await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-vertical-style", "doublemenu");
             await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "double-menu-open");
             await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-nav-style");
-
-            // if (await _jsRuntime.InvokeAsync<int>("interop.inner", "innerWidth") > 992)
-            // {
-            //     await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-toggled");
-            // }
         }
-
 
         screenSize = await _jsRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
 
         if (screenSize < 992)
         {
-            await _jsRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
+            await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "close");
         }
         NotifyStateChanged();
     }
 
     public async Task layoutStylesFn(string val)
     {
-        _currentState.LayoutStyles = val; // Update the color theme in the app state
-        _currentState.MenuStyles = ""; // Update the color theme in the app state
+        _currentState.LayoutStyles = val;
+        _currentState.MenuStyles = "";
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-nav-style");
+
         switch (val)
         {
             case "default-menu":
@@ -333,9 +288,7 @@ public class StateService
                 await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "icon-overlay-close");
                 break;
             case "doublemenu":
-
                 var isdoubleMenuActive = await _jsRuntime.InvokeAsync<bool>("interop.isEleExist", ".double-menu-active");
-
                 await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-vertical-style", "doublemenu");
                 await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-nav-layout", "vertical");
                 await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "double-menu-open");
@@ -345,19 +298,20 @@ public class StateService
                 }
                 break;
         }
+
         screenSize = await _jsRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
 
         if (screenSize < 992)
         {
-            await _jsRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
+            await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "close");
         }
         NotifyStateChanged();
     }
 
     public async Task menuStylesFn(string val)
     {
-        _currentState.LayoutStyles = ""; // Update the color theme in the app state
-        _currentState.MenuStyles = val; // Update the color theme in the app state
+        _currentState.LayoutStyles = "";
+        _currentState.MenuStyles = val;
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-vertical-style");
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-hor-style");
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-nav-style", val);
@@ -365,7 +319,7 @@ public class StateService
         screenSize = await _jsRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
         if (screenSize < 992)
         {
-            await _jsRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
+            await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "close");
         }
         else
         {
@@ -377,57 +331,57 @@ public class StateService
 
     public async Task pageStyleFn(string val)
     {
-        _currentState.PageStyles = val; // Update the color theme in the app state 
+        _currentState.PageStyles = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-page-style", val);
         NotifyStateChanged();
     }
 
     public async Task widthStylessFn(string val)
     {
-        _currentState.WidthStyles = val; // Update the color theme in the app state
+        _currentState.WidthStyles = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-width", val);
         NotifyStateChanged();
     }
 
     public async Task menuPositionFn(string val)
     {
-        _currentState.MenuPosition = val; // Update the color theme in the app state
+        _currentState.MenuPosition = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-menu-position", val);
         NotifyStateChanged();
     }
 
     public async Task headerPositionFn(string val)
     {
-        _currentState.HeaderPosition = val; // Update the color theme in the app state
+        _currentState.HeaderPosition = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-header-position", val);
         NotifyStateChanged();
     }
 
     public async Task menuColorFn(string val)
     {
-        _currentState.MenuColor = val; // Update the color theme in the app state
+        _currentState.MenuColor = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-menu-styles", val);
         NotifyStateChanged();
     }
 
     public async Task headerColorFn(string val)
     {
-        _currentState.HeaderColor = val; // Update the color theme in the app state
+        _currentState.HeaderColor = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-header-styles", val);
         NotifyStateChanged();
     }
 
     public async Task themePrimaryFn(string val)
     {
-        _currentState.ThemePrimary = val; // Update the color theme in the app state
+        _currentState.ThemePrimary = val;
         await _jsRuntime.InvokeVoidAsync("interop.setCssVariable", "--primary-rgb", val);
         NotifyStateChanged();
     }
 
     public async Task themeBackgroundFn(string val, string val2, bool stateClick)
     {
-        _currentState.ThemeBackground = val; // Update the color theme in the app state
-        _currentState.ThemeBackground1 = val2; // Update the color theme in the app state
+        _currentState.ThemeBackground = val;
+        _currentState.ThemeBackground1 = val2;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-theme-mode", "dark");
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-header-styles", "dark");
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-menu-styles", "dark");
@@ -448,63 +402,52 @@ public class StateService
 
     public async Task backgroundImageFn(string val)
     {
-        _currentState.BackgroundImage = val; // Update the color theme in the app state
+        _currentState.BackgroundImage = val;
         await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-bg-img", val);
         NotifyStateChanged();
     }
 
     public async Task reset()
     {
-        _currentState.ColorTheme = "light";                   // light, dark
-        _currentState.Direction = "ltr";                      // ltr, rtl
-        _currentState.NavigationStyles = "vertical";          // vertical, horizontal   
-        _currentState.MenuStyles = "";                        // menu-click, menu-hover, icon-click, icon-hover
-        _currentState.LayoutStyles = "doublemenu";            // doublemenu, detached, icon-overlay, icontext-menu, closed-menu, default-menu 
-        _currentState.PageStyles = "flat";                    // regular, classic, modern, flat
-        _currentState.WidthStyles = "fullwidth";              // default, fullwidth, boxed
-        _currentState.MenuPosition = "fixed";                 // fixed, scrollable
-        _currentState.HeaderPosition = "fixed";               // fixed, scrollable
-        _currentState.MenuColor = "transparent";              // light, dark, color, gradient, transparent
-        _currentState.HeaderColor = "transparent";            // light, dark, color, gradient, transparent
-        _currentState.ThemePrimary = "";                      // '58, 88, 146', '92, 144, 163', '161, 90, 223', '78, 172, 76', '223, 90, 90'
+        _currentState.ColorTheme = "light";
+        _currentState.Direction = "ltr";
+        _currentState.NavigationStyles = "vertical";
+        _currentState.MenuStyles = "";
+        _currentState.LayoutStyles = "doublemenu";
+        _currentState.PageStyles = "flat";
+        _currentState.WidthStyles = "fullwidth";
+        _currentState.MenuPosition = "fixed";
+        _currentState.HeaderPosition = "fixed";
+        _currentState.MenuColor = "transparent";
+        _currentState.HeaderColor = "transparent";
+        _currentState.ThemePrimary = "";
         _currentState.ThemeBackground = "";
         _currentState.ThemeBackground1 = "";
-        _currentState.BackgroundImage = "";                   // bgimg1, bgimg2, bgimg3, bgimg4, bgimg5
+        _currentState.BackgroundImage = "";
 
-        // clearing localstorage
         await _jsRuntime.InvokeVoidAsync("interop.clearAllLocalStorage");
         await _jsRuntime.InvokeVoidAsync("interop.setclearCssVariables");
 
-        // reseting to light
         await colorthemeFn("light", false);
 
-        //To reset the light-rgb
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "style");
 
-        // clearing attibutes
-        // removing header, menu, pageStyle & boxed
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-nav-style");
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-menu-position");
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-header-position");
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-page-style");
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-width");
 
-        // removing theme styles
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-bg-img");
 
-        // reseting to ltr
         await directionFn("ltr");
 
-        //resetting layoutStyle
         await layoutStylesFn("doublemenu");
 
-        // reseting to default
         await widthStylessFn("fullwidth");
 
-        // reseting to vertical
         await navigationStylesFn("vertical", false);
 
-        // resetting the menu Color
         await menuColorFn("transparent");
 
         var innerWidth = await _jsRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
@@ -514,11 +457,9 @@ public class StateService
         }
         else
         {
-
             await _jsRuntime.InvokeVoidAsync("interop.addAttributeToHtml", "data-toggled", "double-menu-close");
         }
 
-        // resetting the menu Color
         await headerColorFn("transparent");
 
         await _sessionService.DeleteAppStateFromSession();
@@ -528,17 +469,12 @@ public class StateService
 
     public async Task Landingreset()
     {
-        // clearing localstorage
         await _jsRuntime.InvokeVoidAsync("interop.clearAllLocalStorage");
 
-        // reseting to light
         await colorthemeFn("light", false);
 
-        //To reset the light-rgb
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "style");
-        // removing theme styles
 
-        // reseting to ltr
         await directionFn("ltr");
         await menuColorFn("transparent");
         _currentState.ThemePrimary = "";
@@ -573,8 +509,6 @@ public class StateService
         {
             await themeBackgroundFn(Vyzorbgcolor, Vyzorbgcolor1, false);
             _currentState.ColorTheme = "dark";
-            // _currentState.MenuColor = "dark";
-            // _currentState.HeaderColor = "dark";
         }
         string VyzorMenu = _currentState.MenuColor;
         await menuColorFn(VyzorMenu);
@@ -601,19 +535,17 @@ public class StateService
         _currentState.LayoutStyles = "";
         await menuStylesFn("menu-hover");
 
-        string direction = await _jsRuntime.InvokeAsync<string>("interop.getLocalStorageItem", "Vyzordirection") ?? _currentState.Direction;
+        string direction = await _jsRuntime.InvokeAsync<string>("interop.getLocalStorageItem", "vyzordirection") ?? _currentState.Direction;
         await directionFn(direction);
-        string Vyzorcolortheme = await _jsRuntime.InvokeAsync<string>("interop.getLocalStorageItem", "Vyzorcolortheme") ?? _currentState.ColorTheme;
+        string Vyzorcolortheme = await _jsRuntime.InvokeAsync<string>("interop.getLocalStorageItem", "vyzorcolortheme") ?? _currentState.ColorTheme;
         await colorthemeFn(Vyzorcolortheme, false);
-        string VyzorprimaryRGB = await _jsRuntime.InvokeAsync<string>("interop.getLocalStorageItem", "VyzorprimaryRGB") ?? _currentState.ThemePrimary;
+        string VyzorprimaryRGB = await _jsRuntime.InvokeAsync<string>("interop.getLocalStorageItem", "vyzorprimaryRGB") ?? _currentState.ThemePrimary;
         await themePrimaryFn(VyzorprimaryRGB);
 
-        // clearing attibutes
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-header-styles");
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-menu-styles");
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-page-style");
         await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-width");
-        // await _jsRuntime.InvokeVoidAsync("interop.removeAttributeFromHtml", "data-header-position");
 
         var innerWidth = await _jsRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
         if (innerWidth < 992)
@@ -626,9 +558,7 @@ public class StateService
 
     private async Task PersistState()
     {
-        // Logic to persist state (e.g., save to local storage or database)
-        // This can vary depending on your application requirements
-        await Task.Delay(0); // Placeholder for actual persistence logic
+        await Task.Delay(0);
         await _sessionService.SetAppStateToSession(_currentState);
         var json = JsonSerializer.Serialize(_currentState);
         await _jsRuntime.InvokeVoidAsync("interop.setLocalStorageItem", LocalStorageKey, json);

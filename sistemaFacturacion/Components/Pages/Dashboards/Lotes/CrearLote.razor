@@ -19,55 +19,61 @@
             <div class="row g-3">
 
                 <!-- Producto -->
-                <div class="col-12 col-md-4">
+                <div class="col-md-4 col-12">
                     <label class="form-label">ID Producto</label>
                     <input class="form-control" value="@lote.IdPro" disabled />
                 </div>
-                <div class="col-12 col-md-8">
+                <div class="col-md-8 col-12">
                     <label class="form-label">Producto</label>
                     <input class="form-control" value="@ProductoNombreMostrada" disabled />
                 </div>
 
                 <!-- Fechas -->
-                <div class="col-12 col-md-4">
+                <div class="col-md-4 col-12">
                     <label class="form-label">Fecha de compra</label>
                     <InputDate class="form-control" @bind-Value="lote.FecCom" />
                     <ValidationMessage For="@(() => lote.FecCom)" />
                 </div>
-                <div class="col-12 col-md-4">
+                <div class="col-md-4 col-12">
                     <label class="form-label">Fecha de expiración</label>
                     <InputDate class="form-control" @bind-Value="lote.FecExp" />
                     <ValidationMessage For="@(() => lote.FecExp)" />
                 </div>
 
                 <!-- Cantidades -->
-                <div class="col-12 col-md-2">
+                <div class="col-md-2 col-12">
                     <label class="form-label">Cant. lote</label>
                     <InputNumber class="form-control" @bind-Value="lote.CanLot" />
                     <ValidationMessage For="@(() => lote.CanLot)" />
                 </div>
-                <div class="col-12 col-md-2">
+                <div class="col-md-2 col-12">
                     <label class="form-label">Disponible</label>
                     <InputNumber class="form-control" @bind-Value="lote.CanDis" />
                     <ValidationMessage For="@(() => lote.CanDis)" />
                 </div>
 
                 <!-- Precios -->
-                <div class="col-12 col-md-3">
+                <div class="col-md-3 col-12">
                     <label class="form-label">Precio compra ($)</label>
-                    <InputNumber class="form-control" @bind-Value="lote.PreCom" />
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <InputNumber class="form-control" @bind-Value="lote.PreCom" />
+                    </div>
                     <ValidationMessage For="@(() => lote.PreCom)" />
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-md-3 col-12">
                     <label class="form-label">Precio venta ($)</label>
-                    <InputNumber class="form-control" @bind-Value="lote.PreVen" />
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <InputNumber class="form-control" @bind-Value="lote.PreVen" />
+                    </div>
                     <ValidationMessage For="@(() => lote.PreVen)" />
                 </div>
 
             </div>
         </div>
 
-        <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+        <div class="card-footer d-flex justify-content-end gap-2 bg-transparent">
             <button type="button" class="btn btn-light" @onclick="Cancelar">Cancelar</button>
             <button type="submit" class="btn btn-primary">
                 <i class="ri-save-3-line me-1"></i> Guardar
