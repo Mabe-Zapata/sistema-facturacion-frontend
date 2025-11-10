@@ -6,6 +6,12 @@
     <RootNamespace>sistemaFacturacion</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Components\Pages\Dashboards\NewFolder\**" />
+    <Content Remove="Components\Pages\Dashboards\NewFolder\**" />
+    <EmbeddedResource Remove="Components\Pages\Dashboards\NewFolder\**" />
+    <None Remove="Components\Pages\Dashboards\NewFolder\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="wwwroot\assets\js\ui\effects\particles\background-vector.js" />
     <None Include="wwwroot\assets\js\ui\effects\particles\index.js" />
   </ItemGroup>
@@ -29,8 +35,5 @@
     <PackageReference Include="WMBlazorSlickCarousel" Version="1.0.1" />
     <PackageReference Include="BlazorCalendar" Version="2.7.1" />
     <PackageReference Include="FlatpickrBlazor" Version="5.0.8" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Components\Pages\Dashboards\NewFolder\" />
   </ItemGroup>
 </Project>
