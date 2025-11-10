@@ -43,7 +43,7 @@
         </div>
         @if (!string.IsNullOrWhiteSpace(searchError))
         {
-            <div class="alert alert-danger mb-0 mt-3">@searchError</div>
+            <div class="alert alert-danger mt-3 mb-0">@searchError</div>
         }
     </div>
 </div>
@@ -88,13 +88,13 @@ else if (form is not null)
                 <div class="row g-3">
                     <div class="col-md-6 col-12">
                         <label class="form-label">Nombre</label>
-                        <InputText class="form-control" @bind-Value="form.Nombre" />
-                        <ValidationMessage For="@(() => form.Nombre)" />
+                        <InputText class="form-control" @bind-Value="form.Nombre" readonly />
+                        <small class="text-muted">Campo no editable.</small>
                     </div>
                     <div class="col-md-6 col-12">
                         <label class="form-label">Apellido</label>
-                        <InputText class="form-control" @bind-Value="form.Apellido" />
-                        <ValidationMessage For="@(() => form.Apellido)" />
+                        <InputText class="form-control" @bind-Value="form.Apellido" readonly />
+                        <small class="text-muted">Campo no editable.</small>
                     </div>
                 </div>
                 <div class="row g-3 mt-1">
@@ -184,8 +184,8 @@ else if (yaBusco)
     {
         public string? TipoIdentificacion { get; set; }
         public string? Identificacion { get; set; }
-        [Required, RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"), StringLength(80)] public string? Nombre { get; set; }
-        [Required, RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"), StringLength(80)] public string? Apellido { get; set; }
+        public string? Nombre { get; set; }
+        public string? Apellido { get; set; }
         [Required, StringLength(150)] public string? Direccion { get; set; }
         [Required, RegularExpression(@"^\d{7,15}$")] public string? Telefono { get; set; }
         [Required, EmailAddress] public string? Correo { get; set; }
@@ -298,7 +298,7 @@ else if (yaBusco)
                 var nDoc = CleanIdentByTipo(search.Identificacion);
                 var all = await ClientesApi.GetAllAsync();
                 var sugerencias = all.Where(c => string.Equals((c.TipCli ?? "").Trim(), nTipo, StringComparison.OrdinalIgnoreCase)
-                                              && ((nTipo is "CEDULA" or "RUC") ? DigitsOnly(c.IdeCli) : AlnumOnly(c.IdeCli)).StartsWith(nDoc))
+                                                && ((nTipo is "CEDULA" or "RUC") ? DigitsOnly(c.IdeCli) : AlnumOnly(c.IdeCli)).StartsWith(nDoc))
                                      .ToList();
                 if (sugerencias.Count == 0)
                 {
@@ -323,16 +323,9 @@ else if (yaBusco)
                     CancelButtonText = "Cancelar",
                     Width = "600px",
                     CustomClass = new SweetAlertCustomClass { Popup = "swal2-suggest" },
-                    Html =
-                        "<style>" +
-                        ".swal2-suggest .swal2-html-container{margin:0;padding:0}" +
-                        ".swal2-suggest .swal2-radio{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-height:360px;overflow:auto;padding-right:4px;margin-top:6px}" +
-                        ".swal2-suggest .swal2-radio label{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;border:1px solid #eef0f3;border-radius:10px;background:#fff;margin:0}" +
-                        ".swal2-suggest .swal2-radio input{margin-top:2px}" +
-                        ".swal2-suggest .swal2-radio span{white-space:pre-line;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.2;font-size:0.92rem;word-break:break-word}" +
-                        "</style>" +
-                        (total > top.Count ? $"<div class='text-muted small mt-2'>Mostrando {top.Count} de {total}. Refina la búsqueda para ver más.</div>" : null)
+                    Html =(total > top.Count ? $"<div class='text-muted small mt-2'>Mostrando {top.Count} de {total}. Refina la búsqueda para ver más.</div>" : null)
                 });
+
 
                 if (pick.IsConfirmed && !string.IsNullOrWhiteSpace(pick.Value))
                 {

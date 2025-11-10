@@ -42,7 +42,10 @@
                                inputmode="@(form.TipoIdentificacion == "Pasaporte" ? "text" : "numeric")"
                                maxlength="@MaxDocLenStr"
                                autocomplete="off"
-                               @oninput="e => form.Identificacion = CleanInputByType(e.Value?.ToString())" />
+                               @oninput="e => {
+                               form.Identificacion = CleanInputByType(e.Value?.ToString());
+                               CurrentEditContext?.NotifyFieldChanged(FieldIdentifier.Create(() => form.Identificacion));
+                                                              }" />
                     <small class="text-muted">@IdentHelpText</small>
                     <ValidationMessage For="@(() => form.Identificacion)" />
                 </div>
@@ -59,7 +62,10 @@
                                placeholder="Nombres"
                                maxlength="100"
                                autocomplete="off"
-                               @oninput="e => form.Nombre = CleanSoloLetras(e.Value?.ToString(), 100)" />
+                               @oninput="e => {
+                                                                  form.Nombre = CleanSoloLetras(e.Value?.ToString(), 100);
+                               CurrentEditContext?.NotifyFieldChanged(FieldIdentifier.Create(() => form.Nombre));
+                                                              }" />
                     <ValidationMessage For="@(() => form.Nombre)" />
                 </div>
                 <div class="col-md-6 col-12">
@@ -70,7 +76,10 @@
                                placeholder="Apellidos"
                                maxlength="100"
                                autocomplete="off"
-                               @oninput="e => form.Apellido = CleanSoloLetras(e.Value?.ToString(), 100)" />
+                               @oninput="e => {
+                                                                  form.Apellido = CleanSoloLetras(e.Value?.ToString(), 100);
+                               CurrentEditContext?.NotifyFieldChanged(FieldIdentifier.Create(() => form.Apellido));
+                                                              }" />
                     <ValidationMessage For="@(() => form.Apellido)" />
                 </div>
             </div>
@@ -84,7 +93,10 @@
                                placeholder="Dirección"
                                maxlength="200"
                                autocomplete="off"
-                               @oninput="e => form.Direccion = CleanSoloLetras(e.Value?.ToString(), 200)" />
+                               @oninput="e => {
+                                                                  form.Direccion = CleanSoloLetras(e.Value?.ToString(), 200);
+                               CurrentEditContext?.NotifyFieldChanged(FieldIdentifier.Create(() => form.Direccion));
+                                                              }" />
                     <ValidationMessage For="@(() => form.Direccion)" />
                 </div>
 
@@ -97,7 +109,10 @@
                                placeholder="Ej: 0999999999"
                                maxlength="10"
                                autocomplete="off"
-                               @oninput="e => form.Telefono = CleanTelefono(e.Value?.ToString())" />
+                               @oninput="e => {
+                                                                  form.Telefono = CleanTelefono(e.Value?.ToString());
+                               CurrentEditContext?.NotifyFieldChanged(FieldIdentifier.Create(() => form.Telefono));
+                                                              }" />
                     <ValidationMessage For="@(() => form.Telefono)" />
                 </div>
 
@@ -222,6 +237,8 @@
 </script>
 
 @code {
+    [CascadingParameter] private EditContext? CurrentEditContext { get; set; }
+
     private static readonly Regex _regexSoloLetras = new Regex(@"[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]", RegexOptions.Compiled);
 
     private int? MaxDocLen => (form.TipoIdentificacion ?? "").ToUpperInvariant() switch

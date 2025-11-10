@@ -85,7 +85,7 @@
 @code {
     private bool _submitting;
     private UsuarioEmpleadoVM vm = new();
-    private string _sueldoText = ""; // no se resetea al escribir
+    private string _sueldoText = ""; 
     private EditContext _ctx = default!;
     private ValidationMessageStore _store = default!;
 
@@ -124,10 +124,9 @@
         public string CarEmp { get; set; } = string.Empty;
 
         [Range(0.01, 1000000, ErrorMessage = "Ingrese un sueldo válido (> 0).")]
-        public decimal SueEmp { get; set; } = 0m; // se asigna al enviar
+        public decimal SueEmp { get; set; } = 0m; 
     }
 
-    // --- Sanitizadores seguros (sin excepciones) ---
     private void OnTelefonoInput(ChangeEventArgs e)
     {
         try
@@ -142,7 +141,7 @@
                 StateHasChanged();
             }
         }
-        catch { /* evita propagación al runtime */ }
+        catch {  }
     }
 
     private void OnSueldoInput(ChangeEventArgs e)
@@ -150,25 +149,25 @@
         try
         {
             var s = e?.Value?.ToString() ?? "";
-            // permite dígitos y separador decimal
+
             s = new string(s.Where(ch => char.IsDigit(ch) || ch == '.' || ch == ',').ToArray());
             s = s.Replace(',', '.');
 
-            // solo un punto
+ 
             var first = s.IndexOf('.');
             if (first >= 0)
             {
                 var head = s[..(first + 1)];
                 var tail = s[(first + 1)..].Replace(".", "");
-                if (tail.Length > 2) tail = tail[..2]; // máx 2 decimales
+                if (tail.Length > 2) tail = tail[..2]; 
                 s = head + tail;
             }
             if (s.StartsWith(".")) s = "0" + s;
 
-            _sueldoText = s; // nunca limpiar automáticamente
+            _sueldoText = s; 
             StateHasChanged();
         }
-        catch { /* evita propagación al runtime */ }
+        catch { }
     }
 
     private async Task CrearAsync()
