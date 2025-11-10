@@ -27,9 +27,6 @@ public class LotesApiClient : ILotesApiClient
         _sessionService = sessionService;
     }
 
-    // =========================================================
-    // 🔍 DEBUG DEL TOKEN
-    // =========================================================
     private async Task EnsureAuthAsync()
     {
         var token = await _sessionService.GetTokenAsync();

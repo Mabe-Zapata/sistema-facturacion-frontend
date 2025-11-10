@@ -23,7 +23,7 @@ export async function mountParticlesBG(elementId = "particles-js", options = {})
                 value: "#6366f1"
             },
             size: {
-                value: { min: 2, max: 4 } // 3. Error de sintaxis corregido (se quitó /)
+                value: { min: 2, max: 4 } 
             },
             opacity: {
                 value: 0.8
@@ -59,7 +59,6 @@ export async function mountParticlesBG(elementId = "particles-js", options = {})
 
     console.log('Cargando partículas en:', elementId);
 
-    // 4. Llama a .load() usando la variable importada 'tsParticles'
     const result = await tsParticles.load(elementId, cfg);
     console.log('Partículas cargadas:', result);
 
