@@ -61,12 +61,14 @@
 
                 <div class="col-md-6 col-12">
                     <label class="form-label">Sueldo</label>
-                    <input class="form-control"
-                           value="@_sueldoText"
-                           @oninput="OnSueldoInput"
-                           inputmode="decimal"
-                           placeholder="0.00" />
-                    <ValidationMessage For="@(() => vm.SueEmp)" />
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <InputNumber class="form-control"
+                                     @bind-Value="vm.SueEmp"
+                                     placeholder="0.00"
+                                     ParsingErrorMessage="El valor debe ser un número." />
+                        <ValidationMessage For="@(() => vm.SueEmp)" />
+                    </div>
                 </div>
             </div>
 
@@ -74,7 +76,7 @@
                 <button type="submit" class="btn btn-primary px-4" disabled="@_submitting">
                     @(_submitting ? "Guardando..." : "Guardar")
                 </button>
-                <a href="/dashboards/usuarios" class="btn btn-secondary px-4" onclick="return @_submitting ? false : true">Cancelar</a>
+                <a href="/dashboards/empleados" class="btn btn-secondary px-4" onclick="return @_submitting ? false : true">Cancelar</a>
             </div>
         </EditForm>
     </div>
@@ -177,19 +179,8 @@
 
         try
         {
-            // parse robusto del sueldo
-            var normalized = (_sueldoText ?? "").Trim().Replace(',', '.');
-            if (normalized.EndsWith(".")) normalized = normalized.TrimEnd('.');
 
-            if (!decimal.TryParse(normalized, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var sueldo) || sueldo <= 0)
-            {
-                _store.Clear(new FieldIdentifier(vm, nameof(vm.SueEmp)));
-                _store.Add(new FieldIdentifier(vm, nameof(vm.SueEmp)), "Ingrese un sueldo válido (> 0).");
-                _ctx.NotifyValidationStateChanged();
-                return;
-            }
-
-            vm.SueEmp = Math.Round(sueldo, 2, MidpointRounding.AwayFromZero);
+            vm.SueEmp = Math.Round(vm.SueEmp, 2, MidpointRounding.AwayFromZero);
 
             var req = new CreateEmpleadoRequest
             {
