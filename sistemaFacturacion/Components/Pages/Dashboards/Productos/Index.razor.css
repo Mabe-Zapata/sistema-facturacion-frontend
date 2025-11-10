@@ -17,6 +17,14 @@ body[data-theme-mode="dark"] .productos-dashboard,
     font-size: 1.875rem; /* ~ fs-3 */
     font-weight: 600;
 }
+kpi-number {
+    color: inherit;
+}
+
+
+[data-theme-mode="dark"] .kpi-number {
+    color: #ffffff;
+}
 
 html[data-theme-mode="dark"] .productos-dashboard .kpi-value,
 body[data-theme-mode="dark"] .productos-dashboard .kpi-value,
