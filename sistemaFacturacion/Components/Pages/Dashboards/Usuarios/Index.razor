@@ -9,7 +9,7 @@
 @inject SweetAlertService Swal
 @inject IJSRuntime JS
 @inject NavigationManager Nav
-@attribute [Authorize(Roles ="Admin")]
+@attribute [Authorize(Roles = "Admin")]
 
 <div class="empleados-dashboard">
 
@@ -37,9 +37,7 @@
                 <div class="card-body">
                     <div class="text-muted fs-12">Total empleados</div>
                     <div class="fs-3 fw-semibold kpi-number">@KpiTotal</div>
-                    <div class="fs-12 @(KpiDeltaTotal >= 0 ? "text-success" : "text-danger")">
-                        @(KpiDeltaTotal >= 0 ? "▲" : "▼") @KpiDeltaTotal.ToString("+#0.0;-#0.0")% vs 30 días prev.
-                    </div>
+                    <div class="fs-12 @KpiTotalLabelCss">@KpiTotalLabelText</div>
                 </div>
             </div>
         </div>
@@ -48,7 +46,7 @@
                 <div class="card-body">
                     <div class="text-muted fs-12">Activos</div>
                     <div class="fs-3 fw-semibold kpi-number">@KpiActivos</div>
-                    <div class="text-success fs-12">+@KpiNuevos últimos 30 días</div>
+                    <div class="fs-12 @KpiActivosLabelCss">@KpiActivosLabelText</div>
                 </div>
             </div>
         </div>
@@ -293,6 +291,12 @@
     private int KpiTotal, KpiActivos, KpiInactivos, KpiConCargo, KpiNuevos;
     private double KpiDeltaTotal;
 
+    private string KpiTotalLabelText = string.Empty;
+    private string KpiTotalLabelCss = "text-muted";
+
+    private string KpiActivosLabelText = string.Empty;
+    private string KpiActivosLabelCss = "text-success";
+
     private ApexChart<Order>? DonutChart;
     private List<Order> DonutSeries = new();
     private ApexChartOptions<Order> DonutOptions = new();
@@ -455,34 +459,95 @@
         return (usuariosLista.Where(u => u.IdRol == 2).ToList(), empleadosLista);
     }
 
-    private void CalcularKpis()
+private void CalcularKpis()
     {
         var empIndex = empleados.ToDictionary(e => e.IdUsu, e => e);
 
         KpiTotal = usuarios.Count;
+
         KpiActivos = usuarios.Count(u =>
         {
             empIndex.TryGetValue(u.IdUsu, out var emp);
             var estado = emp?.EstEmp ?? u.EstUsu;
             return estado;
         });
+
         KpiInactivos = KpiTotal - KpiActivos;
 
         KpiConCargo = usuarios.Count(u =>
         {
-            empIndex.TryGetValue(u.IdUsu, out var em);
-            var cargo = em?.CarEmp ?? u.CarEmp ?? "";
-            var sue = (em?.SueEmp) ?? u.SueEmp ?? 0m;
-            return !string.IsNullOrWhiteSpace(cargo) && sue > 0;
+            empIndex.TryGetValue(u.IdUsu, out var emp);
+            var cargo = emp?.CarEmp ?? u.CarEmp ?? string.Empty;
+            var sueldo = (emp?.SueEmp) ?? u.SueEmp ?? 0m;
+            return !string.IsNullOrWhiteSpace(cargo) && sueldo > 0;
         });
 
         var now = DateTimeOffset.Now;
         var hace30 = now.AddDays(-30);
-        var ult30 = usuarios.Count(u => u.FecCre.HasValue && u.FecCre.Value >= hace30);
-        var prev30 = usuarios.Count(u => u.FecCre.HasValue && u.FecCre.Value < hace30 && u.FecCre.Value >= hace30.AddDays(-30));
 
-        KpiNuevos = ult30;
-        KpiDeltaTotal = prev30 > 0 ? (double)(ult30 - prev30) / prev30 * 100.0 : (ult30 > 0 ? 100.0 : 0.0);
+        KpiNuevos = usuarios.Count(u => u.FecCre.HasValue && u.FecCre.Value >= hace30);
+
+        if (KpiNuevos > 0)
+        {
+            KpiActivosLabelText = $"+{KpiNuevos} nuevos (30d)";
+            KpiActivosLabelCss = "text-success";
+        }
+        else
+        {
+            var sinFecha = usuarios.Count(u => !u.FecCre.HasValue);
+            if (sinFecha > 0)
+            {
+                KpiActivosLabelText = $"{sinFecha} sin fecha reg.";
+                KpiActivosLabelCss = "text-warning";
+            }
+            else
+            {
+                KpiActivosLabelText = "Sin nuevos en 30 días";
+                KpiActivosLabelCss = "text-muted";
+            }
+        }
+
+        var totalHace30 = usuarios.Count(u =>
+        {
+            if (!u.FecCre.HasValue) return false;
+            return u.FecCre.Value <= hace30;
+        });
+
+        if (totalHace30 == 0)
+        {
+            if (KpiTotal == 0)
+            {
+                KpiDeltaTotal = 0;
+                KpiTotalLabelText = "Sin datos";
+                KpiTotalLabelCss = "text-muted";
+            }
+            else
+            {
+                KpiDeltaTotal = 100;
+                KpiTotalLabelText = "▲ +100.0% vs 30 días";
+                KpiTotalLabelCss = "text-success";
+            }
+        }
+        else
+        {
+            KpiDeltaTotal = Math.Round(((double)KpiTotal - totalHace30) / totalHace30 * 100.0, 1);
+
+            if (KpiDeltaTotal > 0)
+            {
+                KpiTotalLabelText = $"▲ {KpiDeltaTotal:+0.0;-0.0}% vs 30 días";
+                KpiTotalLabelCss = "text-success";
+            }
+            else if (KpiDeltaTotal < 0)
+            {
+                KpiTotalLabelText = $"▼ {KpiDeltaTotal:+0.0;-0.0}% vs 30 días";
+                KpiTotalLabelCss = "text-danger";
+            }
+            else
+            {
+                KpiTotalLabelText = "Sin variación";
+                KpiTotalLabelCss = "text-secondary";
+            }
+        }
     }
 
     private void ActualizarGraficos()

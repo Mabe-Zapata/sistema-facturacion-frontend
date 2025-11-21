@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
 
 public class AuthService
 {
@@ -12,9 +13,14 @@ public class AuthService
     private readonly SessionService _sessionService;
 
     public sealed record RecoverPasswordResult(bool Success, bool NotFound, string? Message);
-    public AuthService(HttpClient httpClient,
-                       AuthenticationStateProvider authenticationStateProvider,
-                       SessionService sessionService)
+    public sealed record ValidateResetTokenResult(bool Success, string? ResetSessionId, string? Message);
+    public sealed record ResetPasswordResult(bool Success, bool InvalidOrExpired, string? Message);
+    private sealed record ResetPasswordResponse(bool Success, string? ErrorMessage);
+
+    public AuthService(
+        HttpClient httpClient,
+        AuthenticationStateProvider authenticationStateProvider,
+        SessionService sessionService)
     {
         _httpClient = httpClient;
         _authenticationStateProvider = authenticationStateProvider;
@@ -25,23 +31,22 @@ public class AuthService
     {
         try
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(loginRequest);
-
             var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginRequest);
-
             var responseBody = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode) return false;
+            if (!response.IsSuccessStatusCode)
+                return false;
 
             var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
-            if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token)) return false;
+            if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token))
+                return false;
 
             await _sessionService.SaveTokenAsync(loginResponse.Token);
             ((CustomAuthStateProvider)_authenticationStateProvider).NotifyUserAuthentication(loginResponse.Token);
 
             return true;
         }
-        catch (Exception ex)
+        catch
         {
             throw;
         }
@@ -69,12 +74,43 @@ public class AuthService
     public async Task<bool> SendPasswordResetEmailAsync(string email, CancellationToken ct = default)
     {
         var r = await RecoverPasswordAsync(email, ct);
-        return r.Success; 
+        return r.Success;
     }
 
     public async Task LogoutAsync()
     {
         await _sessionService.ClearAllSession();
         ((CustomAuthStateProvider)_authenticationStateProvider).NotifyUserLogout();
+    }
+
+
+    public async Task<ResetPasswordResult> ResetPasswordAsync(
+        string token,
+        string newPassword,
+        CancellationToken ct = default)
+    {
+        var payload = new { token, newPassword };
+
+        using var resp = await _httpClient.PostAsJsonAsync("api/auth/reset-password", payload, ct);
+
+        if (resp.IsSuccessStatusCode)
+            return new ResetPasswordResult(true, false, null);
+
+        if (resp.StatusCode == HttpStatusCode.BadRequest || resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            var txt = await resp.Content.ReadAsStringAsync(ct);
+            var msg = string.IsNullOrWhiteSpace(txt)
+                ? "El enlace de recuperación es inválido o ha caducado."
+                : txt;
+
+            return new ResetPasswordResult(false, true, msg);
+        }
+
+        var body = await resp.Content.ReadAsStringAsync(ct);
+        var fallback = string.IsNullOrWhiteSpace(body)
+            ? "No se pudo restablecer la contraseña."
+            : body;
+
+        return new ResetPasswordResult(false, false, fallback);
     }
 }

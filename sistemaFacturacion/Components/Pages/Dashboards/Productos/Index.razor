@@ -12,7 +12,6 @@
 
 <div class="productos-dashboard">
 
-    <!-- Header + acciones -->
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <div>
             <h1 class="page-title fw-semibold fs-20 mb-0">Gestión de Productos</h1>
@@ -28,7 +27,6 @@
         </div>
     </div>
 
-    <!-- KPIs -->
     <div class="row g-3 mb-3">
         <div class="col-sm-6 col-xl-3 col-12">
             <div class="card h-100 border-0 shadow-sm">
@@ -70,38 +68,46 @@
         </div>
     </div>
 
-    <!-- Charts -->
     <div class="row g-3 mb-3">
-        <!-- Donut: Activos vs Inactivos -->
         <div class="col-lg-5 col-12">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-transparent"><h6 class="mb-0">Estado de productos</h6></div>
                 <div class="card-body">
-                    <ApexChart TItem="DataPoint<decimal>"
+                    <ApexChart TItem="EstadoProductoChartItem"
                                Title="Activos vs Inactivos"
                                Options="DonutOptions"
-                               Series="DonutSeries"
-                               @ref="DonutChart" />
+                               @ref="DonutChart">
+                        <ApexPointSeries TItem="EstadoProductoChartItem"
+                                         Items="DonutData"
+                                         Name="Productos"
+                                         SeriesType="SeriesType.Donut"
+                                         XValue="e => e.Estado"
+                                         YValue="e => e.Cantidad" />
+                    </ApexChart>
                 </div>
             </div>
         </div>
 
-        <!-- Barras por tipo -->
         <div class="col-lg-7 col-12">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-transparent"><h6 class="mb-0">Productos por Tipo (Top 8)</h6></div>
                 <div class="card-body">
-                    <ApexChart TItem="DataPoint<int>"
+                    <ApexChart TItem="BarItem"
                                Title="Por tipo"
                                Options="BarOptions"
-                               Series="BarSeries"
-                               @ref="BarChart" />
+                               @ref="BarChart">
+                        <ApexPointSeries TItem="BarItem"
+                                         Items="BarData"
+                                         Name="Productos"
+                                         SeriesType="SeriesType.Bar"
+                                         XValue="e => e.Label"
+                                         YValue="e => e.Value" />
+                    </ApexChart>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Alertas + Actividad -->
     <div class="row g-3 mb-3">
         <div class="col-lg-6 col-12">
             <div class="card h-100 border-0 shadow-sm">
@@ -153,7 +159,7 @@
                                     <div class="d-flex align-items-center gap-2">
                                         <i class="ri-price-tag-3-line text-primary"></i>
                                         <div>
-                                            <div class="fw-medium kpi-number"> @p.Nombre</div>
+                                            <div class="fw-medium kpi-number">@p.Nombre</div>
                                             <small class="text-muted">@p.Tipo • ID: @p.Id</small>
                                         </div>
                                     </div>
@@ -171,7 +177,6 @@
         </div>
     </div>
 
-    <!-- Tabla de últimos -->
     <div class="card border-0 shadow-sm">
         <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
             <h6 class="mb-0">Últimos productos añadidos</h6>
@@ -238,39 +243,54 @@
 </div>
 
 @code {
-    // Usamos un único tipo para armar el Top por tipo y luego lo mapeamos a DataPoint<int>
     private record BarItem(string Label, int Value);
+
+    private sealed class EstadoProductoChartItem
+    {
+        public string Estado { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
+    }
 
     private List<ProductoDto> productos = new();
     private bool cargando = true;
 
-    private int KpiTotal, KpiActivos, KpiInactivos, TiposDistintos, KpiNuevos;
+    private int KpiTotal;
+    private int KpiActivos;
+    private int KpiInactivos;
+    private int TiposDistintos;
+    private int KpiNuevos;
     private double KpiDeltaTotal;
 
-    // Donut (DataPoint<decimal>)
-    private ApexChart<DataPoint<decimal>> DonutChart;
-    private List<Series<DataPoint<decimal>>> DonutSeries = new();
-    private ApexChartOptions<DataPoint<decimal>> DonutOptions = new()
+    private ApexChart<EstadoProductoChartItem> DonutChart;
+    private List<EstadoProductoChartItem> DonutData = new();
+    private ApexChartOptions<EstadoProductoChartItem> DonutOptions = new()
     {
         Chart = new Chart { Type = ChartType.Donut },
         Legend = new Legend { Position = LegendPosition.Bottom }
     };
 
-    // Barras (DataPoint<int>)
-    private ApexChart<DataPoint<int>> BarChart;
+    private ApexChart<BarItem> BarChart;
     private List<BarItem> BarData = new();
-    private List<Series<DataPoint<int>>> BarSeries = new();
-    private ApexChartOptions<DataPoint<int>> BarOptions = new()
+    private ApexChartOptions<BarItem> BarOptions = new()
     {
-        PlotOptions = new PlotOptions { Bar = new PlotOptionsBar { Horizontal = false, ColumnWidth = "55%" } },
+        PlotOptions = new PlotOptions
+        {
+            Bar = new PlotOptionsBar
+            {
+                Horizontal = false,
+                ColumnWidth = "55%"
+            }
+        },
         DataLabels = new DataLabels { Enabled = false },
         Legend = new Legend { Position = LegendPosition.Top }
     };
 
     private IEnumerable<ProductoDto> InactivosSinTipo =>
         productos.Where(p => !p.Estado && string.IsNullOrWhiteSpace(p.Tipo));
+
     private IEnumerable<ProductoDto> NombresCortos =>
-        productos.Where(p => (p.Nombre ?? "").Trim().Length < 4);
+        productos.Where(p => (p.Nombre ?? string.Empty).Trim().Length < 4);
+
     private List<ProductoDto> Ultimos = new();
 
     protected override async Task OnInitializedAsync() => await Cargar();
@@ -284,20 +304,31 @@
             cargando = true;
             productos = await ProductosApi.GetAllAsync();
 
-            // KPIs
             KpiTotal = productos.Count;
             KpiActivos = productos.Count(p => p.Estado);
             KpiInactivos = KpiTotal - KpiActivos;
-            TiposDistintos = productos.Select(p => (p.Tipo ?? "").Trim())
-                                       .Where(s => !string.IsNullOrWhiteSpace(s))
-                                       .Distinct(StringComparer.OrdinalIgnoreCase)
-                                       .Count();
-            KpiNuevos = Math.Min(5, productos.Count);   // <- corregido (Min con M mayúscula)
+            TiposDistintos = productos
+                .Select(p => (p.Tipo ?? string.Empty).Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+            KpiNuevos = Math.Min(5, productos.Count);
             KpiDeltaTotal = 4.8;
 
-           
+            DonutData = new List<EstadoProductoChartItem>
+            {
+                new EstadoProductoChartItem
+                {
+                    Estado = "Activos",
+                    Cantidad = KpiActivos
+                },
+                new EstadoProductoChartItem
+                {
+                    Estado = "Inactivos",
+                    Cantidad = KpiInactivos
+                }
+            };
 
-            // Barras por Tipo (Top 8 + "Otros")
             var porTipo = productos
                 .GroupBy(p => (p.Tipo ?? "(sin tipo)").Trim(), StringComparer.OrdinalIgnoreCase)
                 .Select(g => new BarItem(g.Key, g.Count()))
@@ -316,11 +347,10 @@
                 BarData = porTipo;
             }
 
-            // Barras -> Series<DataPoint<int>> (coincide con TItem="DataPoint<int>" del markup)
-           
-
-            // Últimos
-            Ultimos = productos.OrderByDescending(p => p.Id).Take(8).ToList();
+            Ultimos = productos
+                .OrderByDescending(p => p.Id)
+                .Take(8)
+                .ToList();
 
             if (toast)
             {
