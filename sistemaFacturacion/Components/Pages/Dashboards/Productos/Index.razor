@@ -73,17 +73,24 @@
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-transparent"><h6 class="mb-0">Estado de productos</h6></div>
                 <div class="card-body">
-                    <ApexChart TItem="EstadoProductoChartItem"
-                               Title="Activos vs Inactivos"
-                               Options="DonutOptions"
-                               @ref="DonutChart">
-                        <ApexPointSeries TItem="EstadoProductoChartItem"
-                                         Items="DonutData"
-                                         Name="Productos"
-                                         SeriesType="SeriesType.Donut"
-                                         XValue="e => e.Estado"
-                                         YValue="e => e.Cantidad" />
-                    </ApexChart>
+                    @if (DonutData.Any())
+                    {
+                        <ApexChart TItem="EstadoProductoChartItem"
+                                   Title="Activos vs Inactivos"
+                                   Options="DonutOptions"
+                                   @ref="DonutChart">
+                            <ApexPointSeries TItem="EstadoProductoChartItem"
+                                             Items="DonutData"
+                                             Name="Productos"
+                                             SeriesType="SeriesType.Donut"
+                                             XValue="e => e.Estado"
+                                             YValue="e => e.Cantidad" />
+                        </ApexChart>
+                    }
+                    else
+                    {
+                        <div class="text-muted small">Sin datos para mostrar.</div>
+                    }
                 </div>
             </div>
         </div>
@@ -92,17 +99,24 @@
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-transparent"><h6 class="mb-0">Productos por Tipo (Top 8)</h6></div>
                 <div class="card-body">
-                    <ApexChart TItem="BarItem"
-                               Title="Por tipo"
-                               Options="BarOptions"
-                               @ref="BarChart">
-                        <ApexPointSeries TItem="BarItem"
-                                         Items="BarData"
-                                         Name="Productos"
-                                         SeriesType="SeriesType.Bar"
-                                         XValue="e => e.Label"
-                                         YValue="e => e.Value" />
-                    </ApexChart>
+                    @if (BarData.Any())
+                    {
+                        <ApexChart TItem="BarItem"
+                                   Title="Por tipo"
+                                   Options="BarOptions"
+                                   @ref="BarChart">
+                            <ApexPointSeries TItem="BarItem"
+                                             Items="BarData"
+                                             Name="Productos"
+                                             SeriesType="SeriesType.Bar"
+                                             XValue="e => e.Label"
+                                             YValue="e => e.Value" />
+                        </ApexChart>
+                    }
+                    else
+                    {
+                        <div class="text-muted small">Sin datos para mostrar.</div>
+                    }
                 </div>
             </div>
         </div>
@@ -243,16 +257,17 @@
 </div>
 
 @code {
-    private record BarItem(string Label, int Value);
-
     private sealed class EstadoProductoChartItem
     {
         public string Estado { get; set; } = string.Empty;
         public int Cantidad { get; set; }
     }
 
+    private record BarItem(string Label, int Value);
+
     private List<ProductoDto> productos = new();
     private bool cargando = true;
+    private bool isDarkMode = false;
 
     private int KpiTotal;
     private int KpiActivos;
@@ -261,29 +276,13 @@
     private int KpiNuevos;
     private double KpiDeltaTotal;
 
-    private ApexChart<EstadoProductoChartItem> DonutChart;
+    private ApexChart<EstadoProductoChartItem>? DonutChart;
     private List<EstadoProductoChartItem> DonutData = new();
-    private ApexChartOptions<EstadoProductoChartItem> DonutOptions = new()
-    {
-        Chart = new Chart { Type = ChartType.Donut },
-        Legend = new Legend { Position = LegendPosition.Bottom }
-    };
+    private ApexChartOptions<EstadoProductoChartItem> DonutOptions = new();
 
-    private ApexChart<BarItem> BarChart;
+    private ApexChart<BarItem>? BarChart;
     private List<BarItem> BarData = new();
-    private ApexChartOptions<BarItem> BarOptions = new()
-    {
-        PlotOptions = new PlotOptions
-        {
-            Bar = new PlotOptionsBar
-            {
-                Horizontal = false,
-                ColumnWidth = "55%"
-            }
-        },
-        DataLabels = new DataLabels { Enabled = false },
-        Legend = new Legend { Position = LegendPosition.Top }
-    };
+    private ApexChartOptions<BarItem> BarOptions = new();
 
     private IEnumerable<ProductoDto> InactivosSinTipo =>
         productos.Where(p => !p.Estado && string.IsNullOrWhiteSpace(p.Tipo));
@@ -293,15 +292,113 @@
 
     private List<ProductoDto> Ultimos = new();
 
-    protected override async Task OnInitializedAsync() => await Cargar();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Cargar();
+        }
+    }
 
     private async Task Recargar() => await Cargar(true);
+
+    private void ConfigurarGraficos()
+    {
+        var textColor = isDarkMode ? "#ffffff" : "#373d3f";
+        var labelColor = isDarkMode ? "#b0b0b0" : "#666666";
+
+        DonutOptions = new ApexChartOptions<EstadoProductoChartItem>
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Donut,
+                Background = "transparent"
+            },
+            Legend = new Legend
+            {
+                Position = LegendPosition.Bottom,
+                Labels = new LegendLabels
+                {
+                    Colors = textColor
+                }
+            },
+            Theme = new Theme
+            {
+                Mode = isDarkMode ? Mode.Dark : Mode.Light
+            },
+            DataLabels = new DataLabels
+            {
+                Style = new DataLabelsStyle
+                {
+                    Colors = new List<string> { "#ffffff" }
+                }
+            }
+        };
+
+        BarOptions = new ApexChartOptions<BarItem>
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Bar,
+                Background = "transparent"
+            },
+            PlotOptions = new PlotOptions
+            {
+                Bar = new PlotOptionsBar
+                {
+                    Horizontal = false,
+                    ColumnWidth = "55%"
+                }
+            },
+            DataLabels = new DataLabels { Enabled = false },
+            Legend = new Legend
+            {
+                Position = LegendPosition.Top,
+                Labels = new LegendLabels
+                {
+                    Colors = textColor
+                }
+            },
+            Xaxis = new XAxis
+            {
+                Labels = new XAxisLabels
+                {
+                    Style = new AxisLabelStyle
+                    {
+                        Colors = labelColor
+                    }
+                }
+            },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Labels = new YAxisLabels
+                    {
+                        Style = new AxisLabelStyle
+                        {
+                            Colors = labelColor
+                        }
+                    }
+                }
+            },
+            Theme = new Theme
+            {
+                Mode = isDarkMode ? Mode.Dark : Mode.Light
+            }
+        };
+    }
 
     private async Task Cargar(bool toast = false)
     {
         try
         {
             cargando = true;
+            StateHasChanged();
+
+            isDarkMode = await JS.InvokeAsync<bool>("isAppInDarkMode");
+            ConfigurarGraficos();
+
             productos = await ProductosApi.GetAllAsync();
 
             KpiTotal = productos.Count;
@@ -317,12 +414,12 @@
 
             DonutData = new List<EstadoProductoChartItem>
             {
-                new EstadoProductoChartItem
+                new()
                 {
                     Estado = "Activos",
                     Cantidad = KpiActivos
                 },
-                new EstadoProductoChartItem
+                new()
                 {
                     Estado = "Inactivos",
                     Cantidad = KpiInactivos
@@ -354,7 +451,6 @@
 
             if (toast)
             {
-                var isDark = await JS.InvokeAsync<bool>("isAppInDarkMode");
                 await Swal.FireAsync(new SweetAlertOptions
                 {
                     Toast = true,
@@ -363,8 +459,8 @@
                     Title = $"Datos actualizados ({KpiTotal})",
                     ShowConfirmButton = false,
                     Timer = 1200,
-                    Background = isDark ? "#1e1e1e" : null,
-                    Color = isDark ? "#e6e6e6" : null
+                    Background = isDarkMode ? "#1e1e1e" : null,
+                    Color = isDarkMode ? "#e6e6e6" : null
                 });
             }
         }

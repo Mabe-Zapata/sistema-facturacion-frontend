@@ -1,16 +1,19 @@
 ﻿@page "/dashboards/clientes"
 @using Microsoft.AspNetCore.Authorization
-@using sistemaFacturacion
+@using sistemaFacturacion.Models
 @using CurrieTechnologies.Razor.SweetAlert2
-@using System.Linq
+@using ApexCharts
 @attribute [Authorize]
+
 @inject IClientesApiClient ClientesApi
 @inject SweetAlertService Swal
+@inject IJSRuntime JS
+@inject NavigationManager Nav
 
 <section class="clientes-dashboard">
     <div class="page-header mb-4">
         <h1 class="page-title fw-semibold fs-20">Gestión de Clientes</h1>
-        <p class="text-muted fs-13">Panel general · accesos rápidos y actividad reciente</p>
+        <p class="text-muted fs-13">Panel general · accesos rápidos, KPIs y visualizaciones.</p>
     </div>
 
     <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
@@ -55,7 +58,7 @@
                         </div>
                         <div>
                             <h5 class="mb-1">Listar clientes</h5>
-                            <small class="text-muted">Búsqueda y filtros</small>
+                            <small class="text-muted">Búsqueda avanzada y filtros</small>
                         </div>
                     </div>
                 </div>
@@ -75,7 +78,7 @@
     {
         <div class="row g-3 mb-4">
             <div class="col-sm-6 col-xl-3 col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body">
                         <div class="text-muted fs-12">Total clientes</div>
                         <div class="fs-3 fw-semibold">@totalClientes</div>
@@ -84,7 +87,7 @@
                 </div>
             </div>
             <div class="col-sm-6 col-xl-3 col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body">
                         <div class="text-muted fs-12">Clientes activos</div>
                         <div class="fs-3 fw-semibold">@activos</div>
@@ -93,7 +96,7 @@
                 </div>
             </div>
             <div class="col-sm-6 col-xl-3 col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body">
                         <div class="text-muted fs-12">Clientes nuevos (últimos 30 días)</div>
                         <div class="fs-3 fw-semibold">@nuevos30d</div>
@@ -102,11 +105,69 @@
                 </div>
             </div>
             <div class="col-sm-6 col-xl-3 col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body">
                         <div class="text-muted fs-12">Clientes inactivos</div>
                         <div class="fs-3 fw-semibold">@inactivos</div>
                         <div class="text-muted fs-12">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-5 col-12">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-transparent">
+                        <h6 class="mb-0">Clientes por Tipo de Identificación</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (DonutData.Any())
+                        {
+                            <ApexChart TItem="ChartSlice"
+                                       Title="Distribución de Tipos"
+                                       Options="DonutOptions"
+                                       @ref="DonutChart">
+                                <ApexPointSeries TItem="ChartSlice"
+                                                 Items="DonutData"
+                                                 Name="Clientes"
+                                                 SeriesType="SeriesType.Donut"
+                                                 XValue="e => e.Label"
+                                                 YValue="e => e.Value" />
+                            </ApexChart>
+                        }
+                        else
+                        {
+                            <div class="text-muted small">Sin datos para mostrar.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7 col-12">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-transparent">
+                        <h6 class="mb-0">Top 5 Dominios de Correo</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (BarData.Any())
+                        {
+                            <ApexChart TItem="ChartSlice"
+                                       Title="Dominios más usados"
+                                       Options="BarOptions"
+                                       @ref="BarChart">
+                                <ApexPointSeries TItem="ChartSlice"
+                                                 Items="BarData"
+                                                 Name="Clientes"
+                                                 SeriesType="SeriesType.Bar"
+                                                 XValue="e => e.Label"
+                                                 YValue="e => e.Value" />
+                            </ApexChart>
+                        }
+                        else
+                        {
+                            <div class="text-muted small">Sin datos para mostrar.</div>
+                        }
                     </div>
                 </div>
             </div>
@@ -132,7 +193,9 @@
                         <tbody>
                             @if (ultimos5.Count == 0)
                             {
-                                <tr><td colspan="6" class="text-muted text-center">Sin registros recientes</td></tr>
+                                <tr>
+                                    <td colspan="6" class="text-muted text-center">Sin registros recientes</td>
+                                </tr>
                             }
                             else
                             {
@@ -156,7 +219,7 @@
 
         <div class="row g-3">
             <div class="col-lg-6 col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="card h-100 border-0 shadow-sm">
                     <div class="card-header bg-transparent">
                         <h6 class="mb-0">Acciones frecuentes</h6>
                     </div>
@@ -168,12 +231,11 @@
                             <li><a class="link-danger" href="/dashboards/clientes/eliminar"><i class="bi bi-trash"></i> Dar de baja</a></li>
                         </ul>
                     </div>
-
                 </div>
             </div>
 
             <div class="col-lg-6 col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="card h-100 border-0 shadow-sm">
                     <div class="card-header bg-transparent">
                         <h6 class="mb-0">Notas</h6>
                     </div>
@@ -181,7 +243,9 @@
                         <p class="text-muted mb-2">
                             Campos clave del cliente: <strong>Nombre, Apellido, Identificación/RUC, Tipo de Identificación, Dirección, Teléfono, Correo</strong>.
                         </p>
-                        <p class="text-muted mb-0">KPIs calculados desde el listado actual.</p>
+                        <p class="text-muted mb-0">
+                            KPIs y gráficos calculados desde el listado actual de clientes.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -194,6 +258,7 @@
     private List<ClienteDto> ultimos5 = new();
     private bool cargando = true;
     private string? error;
+
     private int totalClientes;
     private int activos;
     private int inactivos;
@@ -204,12 +269,58 @@
     private string nuevosTrendText = "—";
     private string nuevosTrendClass = "text-muted";
 
-    protected override async Task OnInitializedAsync()
+    private bool isDarkMode;
+
+    private sealed class ChartSlice
+    {
+        public string Label { get; set; } = string.Empty;
+        public int Value { get; set; }
+    }
+
+    private ApexChart<ChartSlice>? DonutChart;
+    private List<ChartSlice> DonutData = new();
+    private ApexChartOptions<ChartSlice> DonutOptions = new();
+
+    private ApexChart<ChartSlice>? BarChart;
+    private List<ChartSlice> BarData = new();
+    private ApexChartOptions<ChartSlice> BarOptions = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Cargar();
+        }
+    }
+
+    private async Task Cargar(bool toast = false)
     {
         try
         {
+            cargando = true;
+            StateHasChanged();
+
+            isDarkMode = await JS.InvokeAsync<bool>("isAppInDarkMode");
+            ConfigurarGraficos();
+
             clientes = await ClientesApi.GetAllAsync();
             CalcularKpisYRecientes();
+            CalcularDatosGraficos();
+
+            if (toast)
+            {
+                await Swal.FireAsync(new SweetAlertOptions
+                {
+                    Toast = true,
+                    Position = SweetAlertPosition.TopEnd,
+                    Icon = SweetAlertIcon.Success,
+                    Title = $"Datos actualizados ({totalClientes})",
+                    ShowConfirmButton = false,
+                    Timer = 1200,
+                    Background = isDarkMode ? "#1e1e1e" : null,
+                    Color = isDarkMode ? "#e6e6e6" : null
+                });
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -224,7 +335,95 @@
         finally
         {
             cargando = false;
+            StateHasChanged();
         }
+    }
+
+    private void ConfigurarGraficos()
+    {
+        var textColor = isDarkMode ? "#ffffff" : "#373d3f";
+        var labelColor = isDarkMode ? "#b0b0b0" : "#666666";
+
+        DonutOptions = new ApexChartOptions<ChartSlice>
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Donut,
+                Background = "transparent"
+            },
+            Legend = new Legend
+            {
+                Position = LegendPosition.Bottom,
+                Labels = new LegendLabels
+                {
+                    Colors = textColor
+                }
+            },
+            Theme = new Theme
+            {
+                Mode = isDarkMode ? Mode.Dark : Mode.Light
+            },
+            DataLabels = new DataLabels
+            {
+                Style = new DataLabelsStyle
+                {
+                    Colors = new List<string> { "#ffffff" }
+                }
+            }
+        };
+
+        BarOptions = new ApexChartOptions<ChartSlice>
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Bar,
+                Background = "transparent"
+            },
+            PlotOptions = new PlotOptions
+            {
+                Bar = new PlotOptionsBar
+                {
+                    Horizontal = false,
+                    ColumnWidth = "55%"
+                }
+            },
+            DataLabels = new DataLabels { Enabled = false },
+            Legend = new Legend
+            {
+                Position = LegendPosition.Top,
+                Labels = new LegendLabels
+                {
+                    Colors = textColor
+                }
+            },
+            Xaxis = new XAxis
+            {
+                Labels = new XAxisLabels
+                {
+                    Style = new AxisLabelStyle
+                    {
+                        Colors = labelColor
+                    }
+                }
+            },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Labels = new YAxisLabels
+                    {
+                        Style = new AxisLabelStyle
+                        {
+                            Colors = labelColor
+                        }
+                    }
+                }
+            },
+            Theme = new Theme
+            {
+                Mode = isDarkMode ? Mode.Dark : Mode.Light
+            }
+        };
     }
 
     private void CalcularKpisYRecientes()
@@ -256,6 +455,33 @@
             .ToList();
     }
 
+    private void CalcularDatosGraficos()
+    {
+        DonutData = new List<ChartSlice>
+        {
+            new ChartSlice { Label = "Cédula", Value = CountByTipo("CEDULA") },
+            new ChartSlice { Label = "RUC", Value = CountByTipo("RUC") },
+            new ChartSlice { Label = "Pasaporte", Value = CountByTipo("PASAPORTE") }
+        };
+
+        BarData = clientes
+            .Where(c => !string.IsNullOrWhiteSpace(c.CorCli))
+            .GroupBy(c => Dominio(c.CorCli!))
+            .Select(g => new ChartSlice { Label = g.Key, Value = g.Count() })
+            .OrderByDescending(x => x.Value)
+            .Take(5)
+            .ToList();
+    }
+
+    private int CountByTipo(string tipo) =>
+        clientes.Count(c => c.TipCli?.Equals(tipo, StringComparison.OrdinalIgnoreCase) ?? false);
+
+    private static string Dominio(string correo)
+    {
+        var at = correo.IndexOf('@');
+        return at > 0 && at < correo.Length - 1 ? correo[(at + 1)..] : "(desconocido)";
+    }
+
     private static void SetTrend(int current, int baseline, out string text, out string css, string suffix)
     {
         if (baseline <= 0)
@@ -264,6 +490,7 @@
             css = "text-muted";
             return;
         }
+
         var pct = (current - baseline) * 100.0 / baseline;
         var sign = pct >= 0 ? "▲" : "▼";
         css = pct >= 0 ? "text-success" : "text-danger";
@@ -279,6 +506,7 @@
             css = "text-muted";
             return;
         }
+
         var sign = delta > 0 ? "▲" : "▼";
         css = delta > 0 ? "text-success" : "text-danger";
         text = $"{sign} {Math.Abs(delta)} vs 30d previos";

@@ -1,220 +1,491 @@
 ﻿@page "/dashboards/clientes/listar"
-@using ApexCharts
 @using Microsoft.AspNetCore.Authorization
 @using CurrieTechnologies.Razor.SweetAlert2
+@using sistemaFacturacion.Models
 @attribute [Authorize]
+
 @inject IJSRuntime JSRuntime
 @inject IClientesApiClient ClientesApi
 @inject NavigationManager Navigation
 @inject SweetAlertService Swal
 
 <div class="page-header mb-3">
-  <h2 class="page-title fs-18">Listado de Clientes</h2>
-  <p class="text-muted">Búsqueda, filtros, tabla paginada y métricas rápidas.</p>
+    <h2 class="page-title fs-18">Listado de Clientes</h2>
+    <p class="text-muted">Búsqueda, filtros, tabla paginada y métricas rápidas.</p>
 </div>
 
 @if (cargando)
 {
-  <div class="alert alert-info">
-    <span class="spinner-border spinner-border-sm me-2"></span>
-    Cargando clientes...
-  </div>
+    <div class="alert alert-info">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Cargando clientes...
+    </div>
 }
 else if (!string.IsNullOrWhiteSpace(error))
 {
-  <div class="alert alert-danger">
-    <i class="ri-error-warning-line me-2"></i>@error
-  </div>
+    <div class="alert alert-danger">
+        <i class="ri-error-warning-line me-2"></i>@error
+    </div>
 }
 else
 {
-  <div class="card mb-3 border-0 shadow-sm">
-    <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-3 col-12">
-          <label class="form-label">Buscar (nombre, apellido, identificación, correo, teléfono)</label>
-          <input class="form-control" @bind="filtroTexto" @bind:event="oninput" placeholder="Escribe para filtrar..." />
-        </div>
-        <div class="col-md-2 col-6">
-          <label class="form-label">Tipo de identificación</label>
-          <select class="form-select" @bind="filtroTipo">
-            <option value="">Todos</option>
-            <option value="CEDULA">Cédula</option>
-            <option value="RUC">RUC</option>
-            <option value="PASAPORTE">Pasaporte</option>
-          </select>
-        </div>
-        <div class="col-md-2 col-6">
-          <label class="form-label">Ordenar por fecha</label>
-          <select class="form-select" @bind="ordenFecha">
-            <option value="">Sin orden</option>
-            <option value="recientes">Más recientes</option>
-            <option value="antiguos">Más antiguos</option>
-          </select>
-        </div>
-        <div class="col-md-2 col-6">
-          <label class="form-label">Estado</label>
-          <select class="form-select" @bind="filtroEstado">
-            <option value="">Todos</option>
-            <option value="activos">Activos</option>
-            <option value="inactivos">Inactivos</option>
-          </select>
-        </div>
-        <div class="col-md-1 col-6">
-          <label class="form-label">Por página</label>
-          <select class="form-select" @bind="pageSize">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-        </div>
-        <div class="col-md-2 d-grid col-12">
-          <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
-            <i class="ri-filter-off-line me-1"></i> Limpiar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+    <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3 col-12">
+                    <label class="form-label">Buscar (nombre, apellido, identificación, correo, teléfono)</label>
+                    <input class="form-control"
+                           @bind="FiltroTexto"
+                           @bind:event="oninput"
+                           placeholder="Escribe para filtrar..." />
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="form-label">Tipo de identificación</label>
+                    <select class="form-select" @bind="FiltroTipo">
+                        <option value="">Todos</option>
+                        <option value="CEDULA">Cédula</option>
+                        <option value="RUC">RUC</option>
+                        <option value="PASAPORTE">Pasaporte</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="form-label">Ordenar por fecha</label>
+                    <select class="form-select" @bind="OrdenFecha">
+                        <option value="">Sin orden</option>
+                        <option value="recientes">Más recientes</option>
+                        <option value="antiguos">Más antiguos</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" @bind="FiltroEstado">
+                        <option value="">Todos</option>
+                        <option value="activos">Activos</option>
+                        <option value="inactivos">Inactivos</option>
+                    </select>
+                </div>
+                <div class="col-md-1 col-6">
+                    <label class="form-label">Por página</label>
+                    <select class="form-select" @bind="pageSize">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid col-12">
+                    <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                        <i class="ri-filter-off-line me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
 
-  <div class="row g-3 metrics mb-3">
-    <div class="col-xl-3 col-md-6 col-12">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted fs-12">Total (filtrado)</div>
-          <div class="fs-3 fw-semibold">@FilteredCount</div>
-          <small class="text-muted">de @totalClientes clientes</small>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-md-6 col-12">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted fs-12">Cédula</div>
-          <div class="fs-3 fw-semibold">@CountBy("CEDULA")</div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-md-6 col-12">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted fs-12">RUC</div>
-          <div class="fs-3 fw-semibold">@CountBy("RUC")</div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-md-6 col-12">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="text-muted fs-12">Pasaporte</div>
-          <div class="fs-3 fw-semibold">@CountBy("PASAPORTE")</div>
-        </div>
-      </div>
-    </div>
-  </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <button type="button"
+                        class="btn btn-sm btn-link px-0"
+                        @onclick="ToggleFiltrosAvanzados">
+                    <i class="ri-filter-3-line me-1"></i>
+                    @(mostrarFiltrosAvanzados ? "Ocultar filtros avanzados" : "Mostrar filtros avanzados")
+                </button>
+                <span class="text-muted small">
+                    Filtros específicos con autocompletado y periodo de registro.
+                </span>
+            </div>
 
-  <div class="row g-3 mb-3">
-    <div class="col-lg-6 col-12">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-header bg-transparent"><h6 class="mb-0">Clientes por Tipo de Identificación</h6></div>
-        <div class="card-body">
-          <ApexChart TItem="ChartSlice" Title="Distribución de Tipos" ChartType="ChartType.Donut" Height="260">
-            <ApexPointSeries TItem="ChartSlice" Items="DonutData" Name="Clientes" XValue="@(x => x.Label)" YValue="@(x => x.Value)" />
-            <ApexChartLegend Position="LegendPosition.Bottom" />
-          </ApexChart>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-6 col-12">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-header bg-transparent"><h6 class="mb-0">Top 5 Dominios de Correo</h6></div>
-        <div class="card-body">
-          <ApexChart TItem="ChartSlice" Title="Dominios Más Usados" ChartType="ChartType.Bar" Height="260">
-            <ApexPointSeries TItem="ChartSlice" Items="BarData" Name="Clientes" XValue="@(x => x.Label)" YValue="@(x => x.Value)" />
-            <ApexChartLegend Position="LegendPosition.Bottom" />
-          </ApexChart>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card border-0 shadow-sm">
-    <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
-      <h6 class="mb-0">Clientes (@FilteredCount resultados)</h6>
-      <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-sm btn-light" title="Recargar" @onclick="RecargarDatos"><i class="ri-refresh-line"></i></button>
-        <button class="btn btn-sm btn-light" title="Anterior" @onclick="PrevPage" disabled="@(pageIndex==1)"><i class="ri-arrow-left-s-line"></i></button>
-        <span class="small text-muted">Página @pageIndex de @TotalPages</span>
-        <button class="btn btn-sm btn-light" title="Siguiente" @onclick="NextPage" disabled="@(pageIndex==TotalPages)"><i class="ri-arrow-right-s-line"></i></button>
-      </div>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table-hover mb-0 table align-middle">
-          <thead class="text-muted">
-            <tr>
-              <th @onclick="@(()=>OrdenarPor(nameof(ClienteDto.NomCli)))" role="button" class="user-select-none">Nombre @IconoOrden(nameof(ClienteDto.NomCli))</th>
-              <th @onclick="@(()=>OrdenarPor(nameof(ClienteDto.ApeCli)))" role="button" class="user-select-none">Apellido @IconoOrden(nameof(ClienteDto.ApeCli))</th>
-              <th @onclick="@(()=>OrdenarPor(nameof(ClienteDto.IdeCli)))" role="button" class="user-select-none">Identificación @IconoOrden(nameof(ClienteDto.IdeCli))</th>
-              <th @onclick="@(()=>OrdenarPor(nameof(ClienteDto.TipCli)))" role="button" class="user-select-none">Tipo @IconoOrden(nameof(ClienteDto.TipCli))</th>
-              <th>Dirección</th>
-              <th>Teléfono</th>
-              <th @onclick="@(()=>OrdenarPor(nameof(ClienteDto.CorCli)))" role="button" class="user-select-none">Correo @IconoOrden(nameof(ClienteDto.CorCli))</th>
-              <th @onclick="@(()=>OrdenarPor(nameof(ClienteDto.FecCli)))" role="button" class="user-select-none">Fecha Registro @IconoOrden(nameof(ClienteDto.FecCli))</th>
-              <th>Estado</th>
-              <th class="text-end">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (Paged.Count == 0)
+            @if (mostrarFiltrosAvanzados)
             {
-              <tr><td colspan="10" class="text-muted py-4 text-center"><i class="ri-inbox-line fs-3 d-block mb-2"></i>No hay resultados con los filtros aplicados.</td></tr>
+                <div class="row g-3 mt-2">
+                    <!-- Fila 1 -->
+                    <div class="col-lg-4 col-md-6">
+                        <label class="form-label">Nombre / Apellido</label>
+                        <div class="position-relative">
+                            <input class="form-control"
+                                   value="@filtroNombreCompleto"
+                                   @oninput="OnNombreCompletoInput"
+                                   placeholder="Filtrar por nombre o apellido..."
+                                   autocomplete="off" />
+                            @if (sugerenciasNombreCompleto.Count > 0)
+                            {
+                                <div class="dropdown-menu show w-100 shadow-sm">
+                                    @foreach (var s in sugerenciasNombreCompleto)
+                                    {
+                                        <button type="button"
+                                                class="dropdown-item"
+                                                @onclick="() => SeleccionarSugerenciaNombreCompleto(s)">
+                                            @s
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="form-label">Correo</label>
+                        <div class="position-relative">
+                            <input class="form-control"
+                                   value="@filtroCorreo"
+                                   @oninput="OnCorreoInput"
+                                   placeholder="Filtrar por correo..."
+                                   autocomplete="off" />
+                            @if (sugerenciasCorreo.Count > 0)
+                            {
+                                <div class="dropdown-menu show w-100 shadow-sm">
+                                    @foreach (var s in sugerenciasCorreo)
+                                    {
+                                        <button type="button"
+                                                class="dropdown-item"
+                                                @onclick="() => SeleccionarSugerenciaCorreo(s)">
+                                            @s
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="form-label">Teléfono</label>
+                        <div class="position-relative">
+                            <input class="form-control"
+                                   value="@filtroTelefono"
+                                   @oninput="OnTelefonoInput"
+                                   placeholder="Filtrar por teléfono..."
+                                   autocomplete="off" />
+                            @if (sugerenciasTelefono.Count > 0)
+                            {
+                                <div class="dropdown-menu show w-100 shadow-sm">
+                                    @foreach (var s in sugerenciasTelefono)
+                                    {
+                                        <button type="button"
+                                                class="dropdown-item"
+                                                @onclick="() => SeleccionarSugerenciaTelefono(s)">
+                                            @s
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Fila 2 -->
+                    <div class="col-lg-4 col-md-6">
+                        <label class="form-label">Dirección</label>
+                        <div class="position-relative">
+                            <input class="form-control"
+                                   value="@filtroDireccion"
+                                   @oninput="OnDireccionInput"
+                                   placeholder="Filtrar por dirección..."
+                                   autocomplete="off" />
+                            @if (sugerenciasDireccion.Count > 0)
+                            {
+                                <div class="dropdown-menu show w-100 shadow-sm">
+                                    @foreach (var s in sugerenciasDireccion)
+                                    {
+                                        <button type="button"
+                                                class="dropdown-item"
+                                                @onclick="() => SeleccionarSugerenciaDireccion(s)">
+                                            @s
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="form-label">Periodo de registro</label>
+                        <select class="form-select" @bind="FiltroPeriodo">
+                            <option value="">Todos</option>
+                            <option value="week">Últimos 7 días</option>
+                            <option value="month">Últimos 30 días</option>
+                            <option value="year">Últimos 12 meses</option>
+                            <option value="custom">Rango personalizado</option>
+                        </select>
+
+                        @if (FiltroPeriodo == "custom")
+                        {
+                            <div class="d-flex mt-2 gap-2">
+                                <input type="date"
+                                       class="form-control form-control-sm"
+                                       @bind="PeriodoDesde" />
+                                <input type="date"
+                                       class="form-control form-control-sm"
+                                       @bind="PeriodoHasta" />
+                            </div>
+                            <small class="text-muted">Filtra por fecha de registro.</small>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(FiltroPeriodo))
+                        {
+                            <small class="text-muted">
+                                Basado en la fecha de registro del cliente.
+                            </small>
+                        }
+                    </div>
+
+                    <!-- Columna "dummy" para mantener simetría 3x2 en desktop -->
+                    <div class="col-lg-4 d-none d-lg-block"></div>
+                </div>
             }
-            else
-            {
-              @foreach (var c in Paged)
-              {
-                <tr @key="c.IdCli">
-                  <td>@c.NomCli</td>
-                  <td>@c.ApeCli</td>
-                  <td><code>@c.IdeCli</code></td>
-                  <td><span class="badge bg-@GetTipoBadgeColor(c.TipCli)-subtle text-@GetTipoBadgeColor(c.TipCli)">@MostrarTipo(c.TipCli)</span></td>
-                  <td><small class="text-muted">@c.DirCli</small></td>
-                  <td><small>@c.TelCli</small></td>
-                  <td><small>@c.CorCli</small></td>
-                  <td><small class="text-muted">@c.FecCli.ToString("dd/MM/yyyy")</small></td>
-                  <td>
-                    @if (c.EstCli)
-                    { <span class="badge bg-success-subtle text-success"><i class="ri-check-line"></i> Activo</span> }
-                    else
-                    { <span class="badge bg-danger-subtle text-danger"><i class="ri-close-line"></i> Inactivo</span> }
-                  </td>
-                  <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => IrAEditar(c)" title="Editar cliente"><i class="ri-edit-line"></i></button>
-                    <button class="btn btn-sm btn-outline-info me-1" @onclick="() => VerDetalles(c)" title="Ver detalles"><i class="ri-eye-line"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarEliminar(c)" title="Eliminar cliente"><i class="ri-delete-bin-line"></i></button>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
+        </div>
     </div>
-  </div>
+
+    <div class="row g-3 metrics mb-3">
+        <div class="col-xl-3 col-md-6 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Total (filtrado)</div>
+                    <div class="fs-3 fw-semibold">@FilteredCount</div>
+                    <small class="text-muted">de @totalClientes clientes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Cédula</div>
+                    <div class="fs-3 fw-semibold">@CountBy("CEDULA")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted fs-12">RUC</div>
+                    <div class="fs-3 fw-semibold">@CountBy("RUC")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-12">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted fs-12">Pasaporte</div>
+                    <div class="fs-3 fw-semibold">@CountBy("PASAPORTE")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
+            <h6 class="mb-0">Clientes (@FilteredCount resultados)</h6>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-light" title="Recargar" @onclick="RecargarDatos">
+                    <i class="ri-refresh-line"></i>
+                </button>
+                <button class="btn btn-sm btn-light" title="Anterior" @onclick="PrevPage" disabled="@(pageIndex == 1)">
+                    <i class="ri-arrow-left-s-line"></i>
+                </button>
+                <span class="small text-muted">Página @pageIndex de @TotalPages</span>
+                <button class="btn btn-sm btn-light" title="Siguiente" @onclick="NextPage" disabled="@(pageIndex == TotalPages)">
+                    <i class="ri-arrow-right-s-line"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table-hover mb-0 table align-middle">
+                    <thead class="text-muted">
+                        <tr>
+                            <th @onclick="@(() => OrdenarPor(nameof(ClienteDto.NomCli)))"
+                                role="button"
+                                class="user-select-none">
+                                Nombre @IconoOrden(nameof(ClienteDto.NomCli))
+                            </th>
+                            <th @onclick="@(() => OrdenarPor(nameof(ClienteDto.ApeCli)))"
+                                role="button"
+                                class="user-select-none">
+                                Apellido @IconoOrden(nameof(ClienteDto.ApeCli))
+                            </th>
+                            <th @onclick="@(() => OrdenarPor(nameof(ClienteDto.IdeCli)))"
+                                role="button"
+                                class="user-select-none">
+                                Identificación @IconoOrden(nameof(ClienteDto.IdeCli))
+                            </th>
+                            <th @onclick="@(() => OrdenarPor(nameof(ClienteDto.TipCli)))"
+                                role="button"
+                                class="user-select-none">
+                                Tipo @IconoOrden(nameof(ClienteDto.TipCli))
+                            </th>
+                            <th>Dirección</th>
+                            <th>Teléfono</th>
+                            <th @onclick="@(() => OrdenarPor(nameof(ClienteDto.CorCli)))"
+                                role="button"
+                                class="user-select-none">
+                                Correo @IconoOrden(nameof(ClienteDto.CorCli))
+                            </th>
+                            <th @onclick="@(() => OrdenarPor(nameof(ClienteDto.FecCli)))"
+                                role="button"
+                                class="user-select-none">
+                                Fecha Registro @IconoOrden(nameof(ClienteDto.FecCli))
+                            </th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Paged.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="10" class="text-muted py-4 text-center">
+                                    <i class="ri-inbox-line fs-3 d-block mb-2"></i>
+                                    No hay resultados con los filtros aplicados.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var c in Paged)
+                            {
+                                <tr @key="c.IdCli">
+                                    <td>@c.NomCli</td>
+                                    <td>@c.ApeCli</td>
+                                    <td><code>@c.IdeCli</code></td>
+                                    <td>
+                                        <span class="badge bg-@GetTipoBadgeColor(c.TipCli)-subtle text-@GetTipoBadgeColor(c.TipCli)">
+                                            @MostrarTipo(c.TipCli)
+                                        </span>
+                                    </td>
+                                    <td><small class="text-muted">@c.DirCli</small></td>
+                                    <td><small>@c.TelCli</small></td>
+                                    <td><small>@c.CorCli</small></td>
+                                    <td><small class="text-muted">@c.FecCli.ToString("dd/MM/yyyy")</small></td>
+                                    <td>
+                                        @if (c.EstCli)
+                                        {
+                                            <span class="badge bg-success-subtle text-success">
+                                                <i class="ri-check-line"></i> Activo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger">
+                                                <i class="ri-close-line"></i> Inactivo
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary me-1"
+                                                @onclick="() => IrAEditar(c)"
+                                                title="Editar cliente">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info me-1"
+                                                @onclick="() => VerDetalles(c)"
+                                                title="Ver detalles">
+                                            <i class="ri-eye-line"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => ConfirmarEliminar(c)"
+                                                title="Eliminar cliente">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
     private List<ClienteDto> clientes = new();
-    private int totalClientes = 0;
+    private int totalClientes;
     private bool cargando = true;
     private string? error;
 
-    private string? filtroTexto;
-    private string? filtroTipo;
-    private string? filtroEstado;
-    private string? ordenFecha;
+    private string? _filtroTexto;
+    private string? _filtroTipo;
+    private string? _filtroEstado;
+    private string? _ordenFecha;
+
+    private string? FiltroTexto
+    {
+        get => _filtroTexto;
+        set { if (_filtroTexto != value) { _filtroTexto = value; pageIndex = 1; } }
+    }
+
+    private string? FiltroTipo
+    {
+        get => _filtroTipo;
+        set { if (_filtroTipo != value) { _filtroTipo = value; pageIndex = 1; } }
+    }
+
+    private string? FiltroEstado
+    {
+        get => _filtroEstado;
+        set { if (_filtroEstado != value) { _filtroEstado = value; pageIndex = 1; } }
+    }
+
+    private string? OrdenFecha
+    {
+        get => _ordenFecha;
+        set { if (_ordenFecha != value) { _ordenFecha = value; pageIndex = 1; } }
+    }
+
+    // Filtro de periodo
+    private string? _filtroPeriodo;
+    private string? FiltroPeriodo
+    {
+        get => _filtroPeriodo;
+        set
+        {
+            if (_filtroPeriodo != value)
+            {
+                _filtroPeriodo = value;
+                if (_filtroPeriodo != "custom")
+                {
+                    _periodoDesde = null;
+                    _periodoHasta = null;
+                }
+                pageIndex = 1;
+            }
+        }
+    }
+
+    private DateTime? _periodoDesde;
+    private DateTime? PeriodoDesde
+    {
+        get => _periodoDesde;
+        set
+        {
+            if (_periodoDesde != value)
+            {
+                _periodoDesde = value;
+                pageIndex = 1;
+            }
+        }
+    }
+
+    private DateTime? _periodoHasta;
+    private DateTime? PeriodoHasta
+    {
+        get => _periodoHasta;
+        set
+        {
+            if (_periodoHasta != value)
+            {
+                _periodoHasta = value;
+                pageIndex = 1;
+            }
+        }
+    }
+
+    // Filtros avanzados (sin identificación)
+    private string? filtroNombreCompleto;
+    private string? filtroCorreo;
+    private string? filtroTelefono;
+    private string? filtroDireccion;
+
+    private bool mostrarFiltrosAvanzados;
+
+    private List<string> sugerenciasNombreCompleto = new();
+    private List<string> sugerenciasCorreo = new();
+    private List<string> sugerenciasTelefono = new();
+    private List<string> sugerenciasDireccion = new();
 
     private int pageIndex = 1;
 
@@ -222,14 +493,7 @@ else
     private int pageSize
     {
         get => _pageSize;
-        set
-        {
-            if (_pageSize != value)
-            {
-                _pageSize = value;
-                pageIndex = 1; // 🔧 evita @onchange duplicado con @bind
-            }
-        }
+        set { if (_pageSize != value) { _pageSize = value; pageIndex = 1; } }
     }
 
     private string? sortBy;
@@ -241,77 +505,141 @@ else
     {
         try
         {
-            cargando = true; error = null;
+            cargando = true;
+            error = null;
+
             clientes = await ClientesApi.GetAllAsync();
             totalClientes = clientes.Count;
-            bool isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
-            if (isDark)
-            {
-                await Swal.FireAsync(new SweetAlertOptions
-                {
-                    Toast = true,
-                    Position = SweetAlertPosition.TopEnd,
-                    Icon = SweetAlertIcon.Success,
-                    Title = $"✓ {totalClientes} clientes cargados",
-                    ShowConfirmButton = false,
-                    Timer = 2000,
-                    TimerProgressBar = true,
-                    Background = "#1e1e1e", 
-                    Color = "#e6e6e6"
-                });
-            }else
-            {
-                await Swal.FireAsync(new SweetAlertOptions
-                {
-                    Toast = true,
-                    Position = SweetAlertPosition.TopEnd,
-                    Icon = SweetAlertIcon.Success,
-                    Title = $"✓ {totalClientes} clientes cargados",
-                    ShowConfirmButton = false,
-                    Timer = 2000,
-                    TimerProgressBar = true,
-                });
-            }
 
+            var isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Toast = true,
+                Position = SweetAlertPosition.TopEnd,
+                Icon = SweetAlertIcon.Success,
+                Title = $"✓ {totalClientes} clientes cargados",
+                ShowConfirmButton = false,
+                Timer = 2000,
+                TimerProgressBar = true,
+                Background = isDark ? "#1e1e1e" : null,
+                Color = isDark ? "#e6e6e6" : null
+            });
         }
         catch (HttpRequestException ex)
         {
             error = $"Error al cargar clientes: {ex.Message}";
-            await Swal.FireAsync(new SweetAlertOptions { Title = "Error al cargar", Html = $"<small>{ex.Message}</small>", Icon = SweetAlertIcon.Error, ConfirmButtonText = "Entendido" });
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Error al cargar",
+                Html = $"<small>{ex.Message}</small>",
+                Icon = SweetAlertIcon.Error,
+                ConfirmButtonText = "Entendido"
+            });
         }
-        finally { cargando = false; }
+        finally
+        {
+            cargando = false;
+        }
     }
 
     private async Task RecargarDatos()
-    {     
-        bool isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
-        if (isDark)
+    {
+        var isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+        await Swal.FireAsync(new SweetAlertOptions
         {
-            await Swal.FireAsync(new SweetAlertOptions
-            {
-                Toast = true,
-                Position = SweetAlertPosition.TopEnd,
-                Icon = SweetAlertIcon.Info,
-                Title = "Recargando datos...",
-                ShowConfirmButton = false,
-                Timer = 1000,
-                Background = "#1e1e1e",
-                Color = "#e6e6e6"
-            });
-        }
-        else
-        {
-            await Swal.FireAsync(new SweetAlertOptions
-            {
-                Toast = true,
-                Position = SweetAlertPosition.TopEnd,
-                Icon = SweetAlertIcon.Info,
-                Title = "Recargando datos...",
-                ShowConfirmButton = false,
-                Timer = 1000
-            });
-        }
+            Toast = true,
+            Position = SweetAlertPosition.TopEnd,
+            Icon = SweetAlertIcon.Info,
+            Title = "Recargando datos...",
+            ShowConfirmButton = false,
+            Timer = 1000,
+            Background = isDark ? "#1e1e1e" : null,
+            Color = isDark ? "#e6e6e6" : null
+        });
+
         await CargarClientes();
+        pageIndex = 1;
+    }
+
+    private void ToggleFiltrosAvanzados() => mostrarFiltrosAvanzados = !mostrarFiltrosAvanzados;
+
+    private void OnNombreCompletoInput(ChangeEventArgs e)
+    {
+        filtroNombreCompleto = e.Value?.ToString();
+        sugerenciasNombreCompleto = CalcularSugerencias(
+            filtroNombreCompleto,
+            c => string.Join(" ", new[] { c.NomCli, c.ApeCli }.Where(v => !string.IsNullOrWhiteSpace(v)))
+        );
+        pageIndex = 1;
+    }
+
+    private void OnCorreoInput(ChangeEventArgs e)
+    {
+        filtroCorreo = e.Value?.ToString();
+        sugerenciasCorreo = CalcularSugerencias(filtroCorreo, c => c.CorCli);
+        pageIndex = 1;
+    }
+
+    private void OnTelefonoInput(ChangeEventArgs e)
+    {
+        filtroTelefono = e.Value?.ToString();
+        sugerenciasTelefono = CalcularSugerencias(filtroTelefono, c => c.TelCli);
+        pageIndex = 1;
+    }
+
+    private void OnDireccionInput(ChangeEventArgs e)
+    {
+        filtroDireccion = e.Value?.ToString();
+        sugerenciasDireccion = CalcularSugerencias(filtroDireccion, c => c.DirCli);
+        pageIndex = 1;
+    }
+
+    private void SeleccionarSugerenciaNombreCompleto(string valor)
+    {
+        filtroNombreCompleto = valor;
+        sugerenciasNombreCompleto.Clear();
+        pageIndex = 1;
+    }
+
+    private void SeleccionarSugerenciaCorreo(string valor)
+    {
+        filtroCorreo = valor;
+        sugerenciasCorreo.Clear();
+        pageIndex = 1;
+    }
+
+    private void SeleccionarSugerenciaTelefono(string valor)
+    {
+        filtroTelefono = valor;
+        sugerenciasTelefono.Clear();
+        pageIndex = 1;
+    }
+
+    private void SeleccionarSugerenciaDireccion(string valor)
+    {
+        filtroDireccion = valor;
+        sugerenciasDireccion.Clear();
+        pageIndex = 1;
+    }
+
+    private List<string> CalcularSugerencias(string? valor, Func<ClienteDto, string?> selector)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+            return new List<string>();
+
+        var query = valor.Trim();
+        if (query.Length < 2)
+            return new List<string>();
+
+        return clientes
+            .Select(selector)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(s => s.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+            .OrderBy(s => s)
+            .Take(8)
+            .ToList();
     }
 
     private List<ClienteDto> Filtered
@@ -319,23 +647,110 @@ else
         get
         {
             var r = clientes.AsEnumerable();
-            if (!string.IsNullOrWhiteSpace(filtroTexto))
+
+            // Búsqueda global
+            if (!string.IsNullOrWhiteSpace(_filtroTexto))
             {
-                var q = filtroTexto.Trim().ToLower();
+                var q = _filtroTexto.Trim();
                 r = r.Where(c =>
-                  (c.NomCli?.ToLower().Contains(q) ?? false) ||
-                  (c.ApeCli?.ToLower().Contains(q) ?? false) ||
-                  (c.IdeCli?.ToLower().Contains(q) ?? false) ||
-                  (c.CorCli?.ToLower().Contains(q) ?? false) ||
-                  (c.TelCli?.ToLower().Contains(q) ?? false));
+                    ContainsIgnoreCase(c.NomCli, q) ||
+                    ContainsIgnoreCase(c.ApeCli, q) ||
+                    ContainsIgnoreCase(c.IdeCli, q) ||
+                    ContainsIgnoreCase(c.CorCli, q) ||
+                    ContainsIgnoreCase(c.TelCli, q));
             }
-            if (!string.IsNullOrWhiteSpace(filtroTipo))
-                r = r.Where(c => c.TipCli?.Equals(filtroTipo, StringComparison.OrdinalIgnoreCase) ?? false);
-            if (!string.IsNullOrWhiteSpace(filtroEstado))
+
+            // Filtros avanzados
+            if (!string.IsNullOrWhiteSpace(filtroNombreCompleto))
             {
-                var activo = filtroEstado == "activos";
+                var q = filtroNombreCompleto.Trim();
+                r = r.Where(c =>
+                {
+                    var full = string.Join(" ", new[] { c.NomCli, c.ApeCli }.Where(v => !string.IsNullOrWhiteSpace(v)));
+                    return ContainsIgnoreCase(full, q);
+                });
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroCorreo))
+            {
+                var q = filtroCorreo.Trim();
+                r = r.Where(c => ContainsIgnoreCase(c.CorCli, q));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroTelefono))
+            {
+                var q = filtroTelefono.Trim();
+                r = r.Where(c => ContainsIgnoreCase(c.TelCli, q));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filtroDireccion))
+            {
+                var q = filtroDireccion.Trim();
+                r = r.Where(c => ContainsIgnoreCase(c.DirCli, q));
+            }
+
+            // Filtros simples
+            if (!string.IsNullOrWhiteSpace(_filtroTipo))
+            {
+                r = r.Where(c => c.TipCli?.Equals(_filtroTipo, StringComparison.OrdinalIgnoreCase) ?? false);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_filtroEstado))
+            {
+                var activo = _filtroEstado == "activos";
                 r = r.Where(c => c.EstCli == activo);
             }
+
+            // Filtro por periodo de registro
+            if (!string.IsNullOrWhiteSpace(_filtroPeriodo) || PeriodoDesde.HasValue || PeriodoHasta.HasValue)
+            {
+                var now = DateTimeOffset.Now;
+                DateTimeOffset? from = null;
+                DateTimeOffset? to = null;
+
+                switch (_filtroPeriodo)
+                {
+                    case "week":
+                        from = now.AddDays(-7);
+                        break;
+                    case "month":
+                        from = now.AddDays(-30);
+                        break;
+                    case "year":
+                        from = now.AddYears(-1);
+                        break;
+                    case "custom":
+                        if (PeriodoDesde.HasValue)
+                            from = new DateTimeOffset(PeriodoDesde.Value.Date, TimeSpan.Zero);
+                        if (PeriodoHasta.HasValue)
+                            to = new DateTimeOffset(PeriodoHasta.Value.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero);
+                        break;
+                }
+
+                // Si el usuario selecciona solo el rango personalizado sin cambiar el select
+                if (string.IsNullOrWhiteSpace(_filtroPeriodo) && (PeriodoDesde.HasValue || PeriodoHasta.HasValue))
+                {
+                    from ??= PeriodoDesde.HasValue
+                        ? new DateTimeOffset(PeriodoDesde.Value.Date, TimeSpan.Zero)
+                        : null;
+
+                    to ??= PeriodoHasta.HasValue
+                        ? new DateTimeOffset(PeriodoHasta.Value.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero)
+                        : null;
+                }
+
+                if (from.HasValue || to.HasValue)
+                {
+                    r = r.Where(c =>
+                    {
+                        var fecha = c.FecCli; // asumiendo DateTimeOffset no nulo
+                        if (from.HasValue && fecha < from.Value) return false;
+                        if (to.HasValue && fecha > to.Value) return false;
+                        return true;
+                    });
+                }
+            }
+
             r = Ordenar(r);
             return r.ToList();
         }
@@ -347,8 +762,12 @@ else
 
     private IEnumerable<ClienteDto> Ordenar(IEnumerable<ClienteDto> src)
     {
-        if (!string.IsNullOrWhiteSpace(ordenFecha))
-            src = ordenFecha == "recientes" ? src.OrderByDescending(c => c.FecCli) : src.OrderBy(c => c.FecCli);
+        if (!string.IsNullOrWhiteSpace(_ordenFecha))
+        {
+            src = _ordenFecha == "recientes"
+                ? src.OrderByDescending(c => c.FecCli)
+                : src.OrderBy(c => c.FecCli);
+        }
 
         if (!string.IsNullOrWhiteSpace(sortBy))
         {
@@ -364,122 +783,175 @@ else
             };
             src = sortAsc ? src.OrderBy(key) : src.OrderByDescending(key);
         }
+
         return src;
     }
 
     private void OrdenarPor(string prop)
     {
-        if (sortBy == prop) sortAsc = !sortAsc;
-        else { sortBy = prop; sortAsc = true; }
+        if (sortBy == prop)
+        {
+            sortAsc = !sortAsc;
+        }
+        else
+        {
+            sortBy = prop;
+            sortAsc = true;
+        }
+
         pageIndex = 1;
     }
 
-    private string IconoOrden(string prop) => sortBy != prop ? "" : (sortAsc ? "↑" : "↓");
-    private async Task LimpiarFiltros() { 
-        bool isDark =  await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
-        filtroTexto = filtroTipo = filtroEstado = ordenFecha = null; sortBy = null; sortAsc = true; pageIndex = 1; 
-        if(isDark)
+    private string IconoOrden(string prop) =>
+        sortBy != prop ? string.Empty : (sortAsc ? "↑" : "↓");
+
+    private async Task LimpiarFiltros()
+    {
+        var isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
+
+        FiltroTexto = null;
+        FiltroTipo = null;
+        FiltroEstado = null;
+        OrdenFecha = null;
+
+        filtroNombreCompleto = null;
+        filtroCorreo = null;
+        filtroTelefono = null;
+        filtroDireccion = null;
+
+        // Limpiar periodo
+        _filtroPeriodo = null;
+        _periodoDesde = null;
+        _periodoHasta = null;
+
+        sugerenciasNombreCompleto.Clear();
+        sugerenciasCorreo.Clear();
+        sugerenciasTelefono.Clear();
+        sugerenciasDireccion.Clear();
+
+        sortBy = null;
+        sortAsc = true;
+        pageIndex = 1;
+
+        await Swal.FireAsync(new SweetAlertOptions
         {
-            await Swal.FireAsync(
-              new SweetAlertOptions
-                 {
-                     Toast = true,
-                     Position = SweetAlertPosition.TopEnd,
-                     Icon = SweetAlertIcon.Info,
-                     Title = "Filtros limpiados",
-                     ShowConfirmButton = false,
-                     Timer = 1500,
-                     Background = "#1e1e1e",
-                     Color = "#e6e6e6"
-                 });
-        } else
+            Toast = true,
+            Position = SweetAlertPosition.TopEnd,
+            Icon = SweetAlertIcon.Info,
+            Title = "Filtros limpiados",
+            ShowConfirmButton = false,
+            Timer = 1500,
+            Background = isDark ? "#1e1e1e" : null,
+            Color = isDark ? "#e6e6e6" : null
+        });
+    }
+
+    private void PrevPage()
+    {
+        if (pageIndex > 1) pageIndex--;
+    }
+
+    private void NextPage()
+    {
+        if (pageIndex < TotalPages) pageIndex++;
+    }
+
+    private async Task IrAEditar(ClienteDto c)
+    {
+        if (c == null || c.IdCli <= 0)
         {
-            await Swal.FireAsync(
-              new SweetAlertOptions
-                  {
-                      Toast = true,
-                      Position = SweetAlertPosition.TopEnd,
-                      Icon = SweetAlertIcon.Info,
-                      Title = "Filtros limpiados",
-                      ShowConfirmButton = false,
-                      Timer = 1500
-                  });
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "ID inválido",
+                Text = "El registro no tiene un identificador válido.",
+                Icon = SweetAlertIcon.Warning
+            });
+            return;
         }
-  }
-  private void PrevPage() { if (pageIndex > 1) pageIndex--; }
-  private void NextPage() { if (pageIndex < TotalPages) pageIndex++; }
 
-  private async Task IrAEditar(ClienteDto c)
-  {
-    if (c == null || (c.IdCli <= 0))
-    {
-      await Swal.FireAsync(new SweetAlertOptions { Title = "ID inválido", Text = "El registro no tiene un identificador válido.", Icon = SweetAlertIcon.Warning });
-      return;
+        Navigation.NavigateTo($"/dashboards/clientes/editar/{c.IdCli}");
     }
-    Navigation.NavigateTo($"/dashboards/clientes/editar/{c.IdCli}");
-  }
 
-  private async Task VerDetalles(ClienteDto c)
-  {
-    await Swal.FireAsync(new SweetAlertOptions
+    private async Task VerDetalles(ClienteDto c)
     {
-      Title = $"{c.NomCli} {c.ApeCli}",
-      Html = $@"<div class='text-start'>
-                  <p><strong>Identificación:</strong> {c.IdeCli} ({MostrarTipo(c.TipCli)})</p>
-                  <p><strong>Dirección:</strong> {c.DirCli}</p>
-                  <p><strong>Teléfono:</strong> {c.TelCli}</p>
-                  <p><strong>Correo:</strong> {c.CorCli}</p>
-                  <p><strong>Fecha de registro:</strong> {c.FecCli:dd/MM/yyyy HH:mm}</p>
-                  <p><strong>Estado:</strong> {(c.EstCli ? true : false)}</p>
-                </div>",
-      Icon = SweetAlertIcon.Info,
-      ConfirmButtonText = "Cerrar",
-      Width = "600px"
-    });
-  }
+        var estadoTexto = c.EstCli ? "Activo" : "Inactivo";
 
-  private async Task ConfirmarEliminar(ClienteDto c)
-  {
-    var r = await Swal.FireAsync(new SweetAlertOptions
-    {
-      Title = "¿Estás seguro?",
-      Html = $"Se eliminará el cliente <strong>{c.NomCli} {c.ApeCli}</strong><br><small>({c.IdeCli})</small>",
-      Icon = SweetAlertIcon.Warning,
-      ShowCancelButton = true,
-      ConfirmButtonText = "Sí, eliminar",
-      CancelButtonText = "Cancelar",
-      ConfirmButtonColor = "#dc3545",
-      CancelButtonColor = "#6c757d"
-    });
-    if (r.IsConfirmed)
-    {
-      await Swal.FireAsync(new SweetAlertOptions { Title = "¡Eliminado!", Text = "El cliente ha sido eliminado exitosamente.", Icon = SweetAlertIcon.Success, Timer = 2000, ShowConfirmButton = false });
-      await CargarClientes();
+        var html =
+            "<div class='text-start'>" +
+            $"<p><strong>Identificación:</strong> {c.IdeCli} ({MostrarTipo(c.TipCli)})</p>" +
+            $"<p><strong>Dirección:</strong> {c.DirCli}</p>" +
+            $"<p><strong>Teléfono:</strong> {c.TelCli}</p>" +
+            $"<p><strong>Correo:</strong> {c.CorCli}</p>" +
+            $"<p><strong>Fecha de registro:</strong> {c.FecCli:dd/MM/yyyy HH:mm}</p>" +
+            $"<p><strong>Estado:</strong> {estadoTexto}</p>" +
+            "</div>";
+
+        await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = $"{c.NomCli} {c.ApeCli}",
+            Html = html,
+            Icon = SweetAlertIcon.Info,
+            ConfirmButtonText = "Cerrar",
+            Width = "600px"
+        });
     }
-  }
 
-  private int CountBy(string tipo) => Filtered.Count(c => c.TipCli?.Equals(tipo, StringComparison.OrdinalIgnoreCase) ?? false);
-  private static string MostrarTipo(string? tip) => (tip ?? "").Trim().ToUpperInvariant() switch
-  {
-    "CEDULA" => "Cédula",
-    "RUC" => "RUC",
-    "PASAPORTE" => "Pasaporte",
-    _ => tip ?? ""
-  };
-  private static string GetTipoBadgeColor(string? tip) => (tip ?? "").Trim().ToUpperInvariant() switch
-  {
-    "CEDULA" => "primary",
-    "RUC" => "success",
-    "PASAPORTE" => "info",
-    _ => "secondary"
-  };
+    private async Task ConfirmarEliminar(ClienteDto c)
+    {
+        var r = await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "¿Estás seguro?",
+            Html = $"Se eliminará el cliente <strong>{c.NomCli} {c.ApeCli}</strong><br><small>({c.IdeCli})</small>",
+            Icon = SweetAlertIcon.Warning,
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sí, eliminar",
+            CancelButtonText = "Cancelar",
+            ConfirmButtonColor = "#dc3545",
+            CancelButtonColor = "#6c757d"
+        });
 
-  private record ChartSlice(string Label, int Value);
-  private List<ChartSlice> DonutData => new() { new("Cédula", CountBy("CEDULA")), new("RUC", CountBy("RUC")), new("Pasaporte", CountBy("PASAPORTE")) };
-  private List<ChartSlice> BarData => Filtered.Where(c => !string.IsNullOrWhiteSpace(c.CorCli))
-                                              .GroupBy(c => Dominio(c.CorCli!))
-                                              .Select(g => new ChartSlice(g.Key, g.Count()))
-                                              .OrderByDescending(x => x.Value)
-                                              .Take(5).ToList();
-  private static string Dominio(string correo) { var at = correo.IndexOf('@'); return at > 0 && at < correo.Length - 1 ? correo[(at + 1)..] : "(desconocido)"; }
+        if (r.IsConfirmed)
+        {
+            // Aquí va la llamada real al API de eliminación cuando la tengas.
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "¡Eliminado!",
+                Text = "El cliente ha sido eliminado exitosamente.",
+                Icon = SweetAlertIcon.Success,
+                Timer = 2000,
+                ShowConfirmButton = false
+            });
+
+            await CargarClientes();
+        }
+    }
+
+    private int CountBy(string tipo) =>
+        Filtered.Count(c => c.TipCli?.Equals(tipo, StringComparison.OrdinalIgnoreCase) ?? false);
+
+    private static string MostrarTipo(string? tip) =>
+        (tip ?? "").Trim().ToUpperInvariant() switch
+        {
+            "CEDULA" => "Cédula",
+            "RUC" => "RUC",
+            "PASAPORTE" => "Pasaporte",
+            _ => tip ?? ""
+        };
+
+    private static string GetTipoBadgeColor(string? tip) =>
+        (tip ?? "").Trim().ToUpperInvariant() switch
+        {
+            "CEDULA" => "primary",
+            "RUC" => "success",
+            "PASAPORTE" => "info",
+            _ => "secondary"
+        };
+
+    private static bool ContainsIgnoreCase(string? source, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(value))
+            return false;
+
+        return source.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
 }
