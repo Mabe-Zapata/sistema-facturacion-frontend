@@ -1,23 +1,25 @@
 ﻿@page "/dashboards/lotes/listar"
+@using Microsoft.AspNetCore.Authorization
 @using sistemaFacturacion.Models
 @using sistemaFacturacion.Services
 @inject NavigationManager Nav
 @inject ILotesApiClient LotesApi
+@attribute [Authorize]
 
 <h2 class="page-title fw-semibold fs-20 mb-2">Listado de Lotes</h2>
-<p class="text-muted mb-3">Búsqueda, filtros y acciones rápidas.</p>
+<p class="text-muted mb-3">Búsqueda, filtros y agrupación por tipo de producto.</p>
 
-<div class="card border-0 shadow-sm mb-3">
+<div class="card mb-3 border-0 shadow-sm">
     <div class="card-body">
         <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-4">
+            <div class="col-md-4 col-12">
                 <label class="form-label">Buscar</label>
                 <input class="form-control"
                        placeholder="ID lote, ID producto, producto, tipo…"
                        @bind="filtroTexto" @bind:event="oninput" />
             </div>
 
-            <div class="col-6 col-md-3">
+            <div class="col-md-3 col-6">
                 <label class="form-label">Estado</label>
                 <select class="form-select" @bind="filtroEstado">
                     <option value="Todos">Todos</option>
@@ -26,16 +28,16 @@
                 </select>
             </div>
 
-            <div class="col-6 col-md-3">
+            <div class="col-md-3 col-6">
                 <label class="form-label">Rango (desde)</label>
                 <InputDate class="form-control" @bind-Value="filtroDesde" />
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-md-3 col-6">
                 <label class="form-label">Rango (hasta)</label>
                 <InputDate class="form-control" @bind-Value="filtroHasta" />
             </div>
 
-            <div class="col-12 col-md-2 d-grid">
+            <div class="col-md-2 d-grid col-12">
                 <button class="btn btn-light" @onclick="LimpiarFiltros">
                     <i class="ri-eraser-line me-1"></i> Limpiar
                 </button>
@@ -45,8 +47,8 @@
 </div>
 
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-        <h6 class="mb-0">Lotes</h6>
+    <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
+        <h6 class="mb-0">Lotes por tipo de producto</h6>
         <div class="d-flex gap-2">
             <button class="btn btn-sm btn-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/lotes"))">
                 Crear lote (desde producto)
@@ -57,16 +59,40 @@
     <div class="card-body p-0">
         @if (isLoading)
         {
-            <div class="p-4 text-muted">Cargando lotes...</div>
+            <div class="text-muted p-4">Cargando lotes...</div>
         }
         else if (errorMessage != null)
         {
-            <div class="p-4 text-danger">Error: @errorMessage</div>
+            <div class="text-danger p-4">Error: @errorMessage</div>
         }
         else
         {
+            <div class="px-3 pt-3">
+                @if (tiposProductos.Count == 0)
+                {
+                    <div class="text-muted small mb-2">No hay tipos de producto registrados.</div>
+                }
+                else
+                {
+                    <nav class="nav nav-style-1 nav-pills mb-3" role="tablist">
+                        @foreach (var tipo in tiposProductos)
+                        {
+                            var activo = string.Equals(
+                            tipo, tipoSeleccionado,
+                            StringComparison.OrdinalIgnoreCase);
+
+                            <button type="button"
+                                    class="nav-link @(activo ? "active" : "")"
+                                    @onclick="@(() => SeleccionarTipo(tipo))">
+                                @tipo
+                            </button>
+                        }
+                    </nav>
+                }
+            </div>
+
             <div class="table-responsive">
-                <table class="table mb-0 align-middle">
+                <table class="mb-0 table align-middle">
                     <thead class="text-muted">
                         <tr>
                             <th>ID Lote</th>
@@ -83,31 +109,46 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var l in LotesFiltrados())
+                        @{
+                            var lista = LotesFiltrados().ToList();
+                        }
+
+                        @if (lista.Count == 0)
                         {
                             <tr>
-                                <td>@l.Id</td>
-                                <td>@l.IdPro</td>
-                                <td>@l.NombreProducto</td>
-                                <td>@l.TipoProducto</td>
-                                <td>@l.FecCom.ToString("yyyy-MM-dd")</td>
-                                <td>@l.FecExp.ToString("yyyy-MM-dd")</td>
-                                <td>@l.CanLot</td>
-                                <td>@l.CanDis</td>
-                                <td>$ @l.PreVen.ToString("0.00")</td>
-                                <td>
-                                    <span class="badge @(ClaseEstado(l.EstLot))">
-                                        @(l.EstLot ? "Activo" : "Inactivo")
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary"
-                                            @onclick="@(() => Nav.NavigateTo($"/dashboards/lotes/editar/{l.Id}"))"
-                                            title="Editar lote">
-                                        <i class="ri-edit-line"></i>
-                                    </button>
+                                <td colspan="11" class="text-muted py-4 text-center">
+                                    No hay lotes para el tipo seleccionado y filtros aplicados.
                                 </td>
                             </tr>
+                        }
+                        else
+                        {
+                            @foreach (var l in lista)
+                            {
+                                <tr>
+                                    <td>@l.Id</td>
+                                    <td>@l.IdPro</td>
+                                    <td>@l.NombreProducto</td>
+                                    <td>@l.TipoProducto</td>
+                                    <td>@l.FecCom.ToString("yyyy-MM-dd")</td>
+                                    <td>@l.FecExp.ToString("yyyy-MM-dd")</td>
+                                    <td>@l.CanLot</td>
+                                    <td>@l.CanDis</td>
+                                    <td>$ @l.PreVen.ToString("0.00")</td>
+                                    <td>
+                                        <span class="badge @(ClaseEstado(l.EstLot))">
+                                            @(l.EstLot ? "Activo" : "Inactivo")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                @onclick="@(() => Nav.NavigateTo($"/dashboards/lotes/editar/{l.Id}"))"
+                                                title="Editar lote">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
                         }
                     </tbody>
                 </table>
@@ -126,12 +167,28 @@
     private DateTime? filtroDesde;
     private DateTime? filtroHasta;
 
+    private readonly List<string> tiposProductos = new();
+    private string? tipoSeleccionado;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             isLoading = true;
             lotes = await LotesApi.GetAllAsync();
+
+            var tipos = lotes
+                .Select(x => x.TipoProducto)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x)
+                .ToList();
+
+            tiposProductos.Clear();
+            tiposProductos.AddRange(tipos);
+
+            if (tiposProductos.Count > 0)
+                tipoSeleccionado = tiposProductos[0];
         }
         catch (Exception ex)
         {
@@ -147,6 +204,12 @@
     {
         IEnumerable<LoteDto> q = lotes;
 
+        if (!string.IsNullOrWhiteSpace(tipoSeleccionado))
+            q = q.Where(x => string.Equals(
+                x.TipoProducto,
+                tipoSeleccionado,
+                StringComparison.OrdinalIgnoreCase));
+
         if (!string.IsNullOrWhiteSpace(filtroTexto))
             q = q.Where(x => ($"{x.Id} {x.IdPro} {x.NombreProducto} {x.TipoProducto}")
                  .Contains(filtroTexto, StringComparison.OrdinalIgnoreCase));
@@ -161,6 +224,11 @@
             q = q.Where(x => x.FecCom.Date <= filtroHasta.Value.Date);
 
         return q.OrderByDescending(x => x.Id);
+    }
+
+    private void SeleccionarTipo(string tipo)
+    {
+        tipoSeleccionado = tipo;
     }
 
     private void LimpiarFiltros()

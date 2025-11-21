@@ -1,11 +1,15 @@
 ﻿@page "/dashboards/lotes/crear"
 @page "/dashboards/lotes/crear/{productId:int}"
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using System.Net
+@using sistemaFacturacion.Models
 @using sistemaFacturacion.Services
 @inject NavigationManager Nav
 @inject ILotesApiClient LotesApi
 @inject CurrieTechnologies.Razor.SweetAlert2.SweetAlertService Swal
 @inject IJSRuntime JSRuntime
+@attribute [Authorize]
 
 <h2 class="titulo-form">Crear lote desde producto</h2>
 <p class="descripcion-form">Completa los campos del lote. El lote se creará con estado <strong>Activo</strong>.</p>
@@ -68,6 +72,12 @@
                         <InputNumber class="form-control" @bind-Value="lote.PreVen" />
                     </div>
                     <ValidationMessage For="@(() => lote.PreVen)" />
+                    @if (precioMinSugerido.HasValue && precioMaxSugerido.HasValue)
+                    {
+                        <small class="text-muted">
+                            @($"Rango sugerido: ${precioMinSugerido.Value:0.00} – ${precioMaxSugerido.Value:0.00}")
+                        </small>
+                    }
                 </div>
 
             </div>
@@ -87,12 +97,21 @@
     [SupplyParameterFromQuery(Name = "productName")] public string? productName { get; set; }
 
     private LoteCreateRequest lote = new();
-    private string ProductoNombreMostrada => string.IsNullOrWhiteSpace(productName) ? "(sin nombre)" : productName!;
+
+    // Política de precios
+    private const decimal MargenBase = 0.30m;
+    private const decimal FactorDemanda = 0.10m;
+
+    private decimal? precioMinSugerido;
+    private decimal? precioMaxSugerido;
+
+    private string ProductoNombreMostrada =>
+        string.IsNullOrWhiteSpace(productName) ? "(sin nombre)" : productName!;
 
     protected override void OnParametersSet()
     {
         if (productId.HasValue)
-            lote.IdPro = productId.Value;        
+            lote.IdPro = productId.Value;
 
         if (lote.FecCom == default)
             lote.FecCom = DateTime.Today;
@@ -101,9 +120,20 @@
             lote.FecExp = DateTime.Today.AddYears(1);
     }
 
-
     private async Task<bool> ValidarCamposVisual()
     {
+        if (lote.IdPro <= 0)
+        {
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Warning,
+                Title = "Producto no válido",
+                Html = "<small>No se ha recibido un producto válido para crear el lote.</small>",
+                ConfirmButtonColor = "#0ea5e9"
+            });
+            return false;
+        }
+
         if (lote.FecCom > lote.FecExp)
         {
             await Swal.FireAsync(new()
@@ -128,19 +158,113 @@
             return false;
         }
 
-        if (lote.PreVen < lote.PreCom)
+        if (lote.PreCom <= 0)
         {
             await Swal.FireAsync(new()
             {
                 Icon = SweetAlertIcon.Warning,
-                Title = "Precios inconsistentes",
-                Html = "<small>El precio de venta no puede ser menor que el precio de compra.</small>",
+                Title = "Precio de compra inválido",
+                Html = "<small>El precio de compra debe ser mayor que 0.</small>",
+                ConfirmButtonColor = "#0ea5e9"
+            });
+            return false;
+        }
+
+        var rango = await ObtenerRangoPrecioAsync();
+        if (rango is null)
+        {
+            return true;
+        }
+
+        var (min, max) = rango.Value;
+
+        if (lote.PreVen < min || lote.PreVen > max)
+        {
+            await Swal.FireAsync(new()
+            {
+                Icon = SweetAlertIcon.Warning,
+                Title = "Precio de venta fuera de rango",
+                Html = $"<small>El precio de venta debe estar entre " +
+                       $"<strong>${min:0.00}</strong> y <strong>${max:0.00}</strong> " +
+                       $"para mantener la rentabilidad del producto.</small>",
                 ConfirmButtonColor = "#0ea5e9"
             });
             return false;
         }
 
         return true;
+    }
+
+    private async Task<(decimal Min, decimal Max)?> ObtenerRangoPrecioAsync()
+    {
+        if (lote.IdPro <= 0 || lote.PreCom <= 0)
+        {
+            precioMinSugerido = precioMaxSugerido = null;
+            return null;
+        }
+
+        List<LoteDto> lotesExistentes;
+        try
+        {
+            lotesExistentes = await LotesApi.GetByProductIdAsync(lote.IdPro);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            // No hay lotes aún para este producto
+            lotesExistentes = new List<LoteDto>();
+        }
+
+        decimal costoFifo;
+        decimal ultimoCosto;
+        decimal costoBase;
+
+        if (lotesExistentes.Any())
+        {
+            var activos = lotesExistentes
+                .Where(l => l.CanDis > 0)
+                .OrderBy(l => l.FecCom)
+                .ToList();
+
+            if (activos.Any())
+            {
+                costoFifo = activos.First().PreCom;
+                ultimoCosto = activos.Last().PreCom;
+            }
+            else
+            {
+                var ordenados = lotesExistentes.OrderBy(l => l.FecCom).ToList();
+                costoFifo = ordenados.First().PreCom;
+                ultimoCosto = ordenados.Last().PreCom;
+            }
+
+            costoBase = ultimoCosto;
+        }
+        else
+        {
+            // Caso especial solicitado: primer lote del producto
+            costoFifo = lote.PreCom;
+            ultimoCosto = lote.PreCom;
+            costoBase = lote.PreCom;
+        }
+
+        var (min, max) = CalcularRangoPrecio(costoFifo, ultimoCosto, costoBase);
+        precioMinSugerido = min;
+        precioMaxSugerido = max;
+        return (min, max);
+    }
+
+    private (decimal Min, decimal Max) CalcularRangoPrecio(decimal costoFifo, decimal ultimoCosto, decimal costoBase)
+    {
+        var minimo = Math.Max(
+            costoFifo * 1.20m,
+            ultimoCosto * 1.15m);
+
+        var maximo = costoBase * (1 + MargenBase) * (1 + FactorDemanda);
+
+        return (
+            decimal.Round(minimo, 2, MidpointRounding.AwayFromZero),
+            decimal.Round(maximo, 2, MidpointRounding.AwayFromZero)
+        );
     }
 
     private async Task Guardar()
@@ -155,13 +279,6 @@
             bool isDark = false;
             try { isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode"); } catch { }
 
-            var titleColor = isDark ? "var(--default-text-color)" : "#0f172a";
-            var subColor = isDark ? "var(--text-muted)" : "#64748b";
-            var boxBg = isDark ? "var(--form-control-bg)" : "#f8fafc";
-            var boxBrd = isDark ? "var(--default-border)" : "#e5e7eb";
-            var valColor = isDark ? "var(--default-text-color)" : "#0f172a";
-            
-
             await Swal.FireAsync(new SweetAlertOptions
             {
                 Icon = SweetAlertIcon.Success,
@@ -174,7 +291,6 @@
                 Background = isDark ? "var(--form-control-bg)" : null,
                 Color = isDark ? "var(--default-text-color)" : null
             });
-
 
             Nav.NavigateTo("/dashboards/lotes/listar");
         }

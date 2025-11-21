@@ -52,7 +52,6 @@ public class LotesApiClient : ILotesApiClient
                 HttpStatusCode.Unauthorized
             );
 
-        // 🔥 Limpiar y asignar SIEMPRE el token
         _http.DefaultRequestHeaders.Remove("Authorization");
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Trim());
 
@@ -62,9 +61,20 @@ public class LotesApiClient : ILotesApiClient
         Console.WriteLine("=======================================");
     }
 
-    // =========================================================
-    // POST CREAR LOTE
-    // =========================================================
+    private static string BuildErrorMessage(string accion, HttpStatusCode statusCode, string? body)
+    {
+        if (!string.IsNullOrWhiteSpace(body) &&
+            body.Contains("Usuario no autenticado", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Usuario no autenticado. Por favor inicia sesión nuevamente.";
+        }
+
+        if (string.IsNullOrWhiteSpace(body))
+            return $"Error al {accion} ({(int)statusCode}).";
+
+        return $"Error al {accion} ({(int)statusCode}): {body}";
+    }
+
     public async Task<LoteDto?> CreateAsync(LoteCreateRequest dto, CancellationToken ct = default)
     {
         await EnsureAuthAsync();
@@ -81,14 +91,14 @@ public class LotesApiClient : ILotesApiClient
         Console.WriteLine($"📥 Body: {bodyResp}");
 
         if (!resp.IsSuccessStatusCode)
-            throw new HttpRequestException($"Error al crear lote ({(int)resp.StatusCode}): {bodyResp}");
+            throw new HttpRequestException(
+                BuildErrorMessage("crear lote", resp.StatusCode, bodyResp),
+                null,
+                resp.StatusCode);
 
         return JsonSerializer.Deserialize<LoteDto>(bodyResp, _json);
     }
 
-    // =========================================================
-    // PUT EDITAR
-    // =========================================================
     public async Task<LoteDto> UpdateAsync(int id, LoteUpdateRequest dto, CancellationToken ct = default)
     {
         await EnsureAuthAsync();
@@ -102,16 +112,20 @@ public class LotesApiClient : ILotesApiClient
 
         Console.WriteLine($"📥 StatusCode: {resp.StatusCode}");
 
-        if (resp.StatusCode == HttpStatusCode.NotFound)
-            throw new HttpRequestException($"Lote {id} no encontrado (404).");
+        var bodyResp = await resp.Content.ReadAsStringAsync(ct);
 
-        resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<LoteDto>(_json, ct))!;
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+            throw new HttpRequestException($"Lote {id} no encontrado.", null, resp.StatusCode);
+
+        if (!resp.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                BuildErrorMessage("actualizar lote", resp.StatusCode, bodyResp),
+                null,
+                resp.StatusCode);
+
+        return JsonSerializer.Deserialize<LoteDto>(bodyResp, _json)!;
     }
 
-    // =========================================================
-    // GET ALL
-    // =========================================================
     public async Task<List<LoteDto>> GetAllAsync(CancellationToken ct = default)
     {
         await EnsureAuthAsync();
@@ -122,19 +136,19 @@ public class LotesApiClient : ILotesApiClient
 
         Console.WriteLine($"📥 StatusCode: {resp.StatusCode}");
 
+        var body = await resp.Content.ReadAsStringAsync(ct);
         if (!resp.IsSuccessStatusCode)
         {
-            var body = await resp.Content.ReadAsStringAsync(ct);
             Console.WriteLine($"📥 Error: {body}");
-            throw new HttpRequestException($"Error al obtener lotes ({(int)resp.StatusCode}): {body}");
+            throw new HttpRequestException(
+                BuildErrorMessage("obtener lotes", resp.StatusCode, body),
+                null,
+                resp.StatusCode);
         }
 
-        return await resp.Content.ReadFromJsonAsync<List<LoteDto>>(_json, ct) ?? new();
+        return JsonSerializer.Deserialize<List<LoteDto>>(body, _json) ?? new();
     }
 
-    // =========================================================
-    // GET BY ID
-    // =========================================================
     public async Task<LoteDto?> GetByIdAsync(int id, CancellationToken ct = default)
     {
         await EnsureAuthAsync();
@@ -148,5 +162,24 @@ public class LotesApiClient : ILotesApiClient
 
         resp.EnsureSuccessStatusCode();
         return await resp.Content.ReadFromJsonAsync<LoteDto>(_json, ct);
+    }
+
+    public async Task<List<LoteDto>> GetByProductIdAsync(int id, CancellationToken ct = default)
+    {
+        await EnsureAuthAsync();
+
+        using var resp = await _http.GetAsync($"{Resource}/producto/{id}", ct);
+        var body = await resp.Content.ReadAsStringAsync(ct);
+
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+            return new List<LoteDto>();
+
+        if (!resp.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                BuildErrorMessage($"obtener lotes del producto {id}", resp.StatusCode, body),
+                null,
+                resp.StatusCode);
+
+        return JsonSerializer.Deserialize<List<LoteDto>>(body, _json) ?? new();
     }
 }

@@ -1,11 +1,14 @@
 ﻿@page "/dashboards/lotes/editar/{id:int}"
 @using System.ComponentModel.DataAnnotations
+@using System.Net
+@using Microsoft.AspNetCore.Authorization
 @using sistemaFacturacion.Models
 @using sistemaFacturacion.Services
 @inject ILotesApiClient LotesApi
 @inject IProductosApiClient ProductosApi
 @inject NavigationManager Nav
 @inject CurrieTechnologies.Razor.SweetAlert2.SweetAlertService Swal
+@attribute [Authorize]
 
 <h2 class="page-title fw-semibold fs-20 mb-2">Editar lote</h2>
 <p class="text-muted mb-3">Actualiza los datos del lote y guarda los cambios.</p>
@@ -36,7 +39,6 @@ else
 
                     <div class="col-md-9 col-12">
                         <label class="form-label">Producto</label>
-                        <!-- Importante: usamos value + @onchange para evitar errores de doble bind -->
                         <InputSelect class="form-select"
                                      value="@vm.IdPro"
                                      @onchange="OnProductoChanged">
@@ -117,6 +119,12 @@ else
                             <InputNumber class="form-control" @bind-Value="vm.PreVen" />
                         </div>
                         <ValidationMessage For="@(() => vm.PreVen)" />
+                        @if (precioMinSugerido.HasValue && precioMaxSugerido.HasValue)
+                        {
+                            <small class="text-muted">
+                                Rango sugerido: $@precioMinSugerido.Value:0.00 – $@precioMaxSugerido.Value:0.00
+                            </small>
+                        }
                     </div>
                 </div>
             </div>
@@ -139,6 +147,13 @@ else
     private LoteVM vm = new();
     private List<ProductoDto> productos = new();
 
+    // Política de precios
+    private const decimal MargenBase = 0.30m;
+    private const decimal FactorDemanda = 0.10m;
+
+    private decimal? precioMinSugerido;
+    private decimal? precioMaxSugerido;
+
     protected override async Task OnParametersSetAsync()
     {
         try
@@ -146,9 +161,12 @@ else
             isLoading = true;
             error = null;
 
-            // 1) Traigo el lote
             var dto = await LotesApi.GetByIdAsync(id);
-            if (dto is null) { error = $"No se encontró el lote {id}."; return; }
+            if (dto is null)
+            {
+                error = $"No se encontró el lote {id}.";
+                return;
+            }
 
             vm = new LoteVM
             {
@@ -165,16 +183,16 @@ else
                 EstLot = dto.EstLot
             };
 
-            // 2) Cargo productos para el combo
             productos = await ProductosApi.GetAllAsync();
 
-            // 3) Si el IdPro actual existe en la lista, sincronizo nombre/tipo desde allí
             var pSel = productos.FirstOrDefault(p => p.Id == vm.IdPro);
             if (pSel is not null)
             {
                 vm.NombreProducto = pSel.Nombre;
                 vm.TipoProducto = pSel.Tipo;
             }
+
+            await ObtenerRangoPrecioAsync();
         }
         catch (Exception ex)
         {
@@ -186,7 +204,6 @@ else
         }
     }
 
-    // Cambio desde el combo de productos
     private async Task OnProductoChanged(ChangeEventArgs e)
     {
         if (!int.TryParse(e?.Value?.ToString(), out var nuevoId)) nuevoId = 0;
@@ -197,22 +214,143 @@ else
         {
             vm.NombreProducto = "";
             vm.TipoProducto = "";
+            precioMinSugerido = precioMaxSugerido = null;
             return;
         }
 
-        // Busco en la lista; si no está, hago GET por id
         var p = productos.FirstOrDefault(x => x.Id == nuevoId) ?? await ProductosApi.GetByIdAsync(nuevoId);
         vm.NombreProducto = p?.Nombre ?? "";
         vm.TipoProducto = p?.Tipo ?? "";
+
+        await ObtenerRangoPrecioAsync();
+    }
+
+    private async Task<bool> ValidarCamposAsync()
+    {
+        if (vm.IdPro <= 0)
+        {
+            await Alert("Producto requerido", "Selecciona un producto válido.");
+            return false;
+        }
+
+        if (vm.FecCom > vm.FecExp)
+        {
+            await Alert("Fechas inconsistentes", "La fecha de compra no puede ser mayor que la de expiración.");
+            return false;
+        }
+
+        if (vm.CanDis > vm.CanLot)
+        {
+            await Alert("Cantidad inválida", "Disponible no puede superar la cantidad del lote.");
+            return false;
+        }
+
+        if (vm.PreCom <= 0)
+        {
+            await Alert("Precio de compra inválido", "El precio de compra debe ser mayor que 0.");
+            return false;
+        }
+
+        var rango = await ObtenerRangoPrecioAsync();
+        if (rango is null)
+        {
+            return true;
+        }
+
+        var (min, max) = rango.Value;
+
+        if (vm.PreVen < min || vm.PreVen > max)
+        {
+            await Alert(
+                "Precio de venta fuera de rango",
+                $"El precio de venta debe estar entre <strong>${min:0.00}</strong> y <strong>${max:0.00}</strong> " +
+                "para mantener la rentabilidad del producto."
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<(decimal Min, decimal Max)?> ObtenerRangoPrecioAsync()
+    {
+        if (vm.IdPro <= 0 || vm.PreCom <= 0)
+        {
+            precioMinSugerido = precioMaxSugerido = null;
+            return null;
+        }
+
+        List<LoteDto> lotesProducto;
+        try
+        {
+            lotesProducto = await LotesApi.GetByProductIdAsync(vm.IdPro);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            lotesProducto = new List<LoteDto>();
+        }
+
+        var otrosLotes = lotesProducto
+            .Where(l => l.Id != vm.Id)
+            .ToList();
+
+        decimal costoFifo;
+        decimal ultimoCosto;
+        decimal costoBase;
+
+        if (otrosLotes.Any())
+        {
+            var activos = otrosLotes
+                .Where(l => l.CanDis > 0)
+                .OrderBy(l => l.FecCom)
+                .ToList();
+
+            if (activos.Any())
+            {
+                costoFifo = activos.First().PreCom;
+                ultimoCosto = activos.Last().PreCom;
+            }
+            else
+            {
+                var ordenados = otrosLotes.OrderBy(l => l.FecCom).ToList();
+                costoFifo = ordenados.First().PreCom;
+                ultimoCosto = ordenados.Last().PreCom;
+            }
+
+            costoBase = ultimoCosto;
+        }
+        else
+        {
+            // Caso en el que este lote es el único del producto
+            costoFifo = vm.PreCom;
+            ultimoCosto = vm.PreCom;
+            costoBase = vm.PreCom;
+        }
+
+        var (min, max) = CalcularRangoPrecio(costoFifo, ultimoCosto, costoBase);
+        precioMinSugerido = min;
+        precioMaxSugerido = max;
+        return (min, max);
+    }
+
+    private (decimal Min, decimal Max) CalcularRangoPrecio(decimal costoFifo, decimal ultimoCosto, decimal costoBase)
+    {
+        var minimo = Math.Max(
+            costoFifo * 1.20m,
+            ultimoCosto * 1.15m);
+
+        var maximo = costoBase * (1 + MargenBase) * (1 + FactorDemanda);
+
+        return (
+            decimal.Round(minimo, 2, MidpointRounding.AwayFromZero),
+            decimal.Round(maximo, 2, MidpointRounding.AwayFromZero)
+        );
     }
 
     private async Task Guardar()
     {
-        // Validaciones básicas
-        if (vm.IdPro <= 0) { await Alert("Producto requerido", "Selecciona un producto válido."); return; }
-        if (vm.FecCom > vm.FecExp) { await Alert("Fechas inconsistentes", "Compra no puede ser > expiración."); return; }
-        if (vm.CanDis > vm.CanLot) { await Alert("Cantidad inválida", "Disponible no puede superar Cant. Lote."); return; }
-        if (vm.PreVen < vm.PreCom) { await Alert("Precios inconsistentes", "Venta no puede ser menor que Compra."); return; }
+        if (!await ValidarCamposAsync())
+            return;
 
         try
         {
@@ -253,7 +391,13 @@ else
     }
 
     private Task Alert(string title, string html) =>
-        Swal.FireAsync(new() { Icon = SweetAlertIcon.Warning, Title = title, Html = $"<small>{html}</small>", ConfirmButtonColor = "#0ea5e9" });
+        Swal.FireAsync(new()
+        {
+            Icon = SweetAlertIcon.Warning,
+            Title = title,
+            Html = $"<small>{html}</small>",
+            ConfirmButtonColor = "#0ea5e9"
+        });
 
     private void Volver() => Nav.NavigateTo("/dashboards/lotes/listar");
 

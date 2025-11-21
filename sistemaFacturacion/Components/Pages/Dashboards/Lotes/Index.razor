@@ -1,4 +1,5 @@
 ﻿@page "/dashboards/lotes"
+@using Microsoft.AspNetCore.Authorization
 @using sistemaFacturacion.Models
 @using sistemaFacturacion.Services
 @using CurrieTechnologies.Razor.SweetAlert2
@@ -6,6 +7,7 @@
 @inject IProductosApiClient ProductosApi
 @inject SweetAlertService Swal
 @inject IJSRuntime JS
+@attribute [Authorize]
 
 <div class="lotes-dashboard">
 
@@ -42,7 +44,7 @@
     {
         <!-- Tabla de productos -->
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+            <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
                 <h6 class="mb-0">Productos (selecciona uno para crear un lote)</h6>
                 <button class="btn btn-sm btn-light" title="Recargar" @onclick="Recargar">
                     <i class="ri-refresh-line"></i>
@@ -51,7 +53,7 @@
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table mb-0 align-middle">
+                    <table class="mb-0 table align-middle">
                         <thead class="text-muted">
                             <tr>
                                 <th scope="col">ID</th>
@@ -66,8 +68,8 @@
                             @if (productos.Count == 0)
                             {
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">
-                                        <i class="ri-inbox-line fs-3 mb-2 d-block"></i>No hay productos disponibles.
+                                    <td colspan="6" class="text-muted py-4 text-center">
+                                        <i class="ri-inbox-line fs-3 d-block mb-2"></i>No hay productos disponibles.
                                     </td>
                                 </tr>
                             }
