@@ -210,7 +210,6 @@
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
-            // No hay lotes aún para este producto
             lotesExistentes = new List<LoteDto>();
         }
 

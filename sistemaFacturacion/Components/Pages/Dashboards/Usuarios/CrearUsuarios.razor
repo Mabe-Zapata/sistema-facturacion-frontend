@@ -10,73 +10,183 @@
 @inject IUsuariosApiClient UsuariosApi
 @inject SweetAlertService Swal
 @inject NavigationManager Nav
-@attribute [Authorize(Roles ="Admin")]
+@attribute [Authorize(Roles = "Admin")]
 
 <div class="page-header mb-4">
-    <h1 class="page-title fw-semibold fs-20">Crear Usuario</h1>
-    <p class="text-muted fs-13">Registrar un nuevo usuario como empleado</p>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h1 class="page-title fw-semibold fs-20 mb-1">Nuevo empleado</h1>
+            <div class="text-muted fs-13">
+                Registre los datos del usuario y la información laboral del empleado.
+            </div>
+        </div>
+        <div class="btn-list">
+            <a href="/dashboards/empleados"
+               class="btn btn-secondary-light btn-wave">
+                <i class="ri-arrow-go-back-line me-1"></i>
+                Volver
+            </a>
+        </div>
+    </div>
 </div>
 
-<div class="card border-0 shadow-sm">
+<div class="card custom-card border-0 shadow-sm">
     <div class="card-body">
         <EditForm EditContext="_ctx" OnValidSubmit="CrearAsync" OnInvalidSubmit="OnInvalidAsync">
             <DataAnnotationsValidator />
-            <ValidationSummary />
+            <ValidationSummary class="alert alert-danger small mb-3" />
 
             <div class="row g-3">
+
+                <!-- Sección: Datos del usuario -->
+                <div class="col-12">
+                    <h6 class="text-muted text-uppercase fs-11 mb-2">
+                        Datos del usuario
+                    </h6>
+                    <hr class="mt-1 mb-3" />
+                </div>
+
                 <div class="col-md-6 col-12">
-                    <label class="form-label">Nombre</label>
-                    <InputText class="form-control" @bind-Value="vm.NomUsu" placeholder="Nombres" />
+                    <label class="form-label">
+                        Nombre <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="ri-user-line"></i>
+                        </span>
+                        <InputText class="form-control"
+                                   @bind-Value="vm.NomUsu"
+                                   placeholder="Nombres"
+                                   autocomplete="given-name" />
+                    </div>
                     <ValidationMessage For="@(() => vm.NomUsu)" />
                 </div>
 
                 <div class="col-md-6 col-12">
-                    <label class="form-label">Apellido</label>
-                    <InputText class="form-control" @bind-Value="vm.ApeUsu" placeholder="Apellidos" />
+                    <label class="form-label">
+                        Apellido <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="ri-user-3-line"></i>
+                        </span>
+                        <InputText class="form-control"
+                                   @bind-Value="vm.ApeUsu"
+                                   placeholder="Apellidos"
+                                   autocomplete="family-name" />
+                    </div>
                     <ValidationMessage For="@(() => vm.ApeUsu)" />
                 </div>
 
                 <div class="col-md-6 col-12">
-                    <label class="form-label">Correo</label>
-                    <InputText class="form-control" @bind-Value="vm.CorUsu" placeholder="usuario@dominio.com" />
+                    <label class="form-label">
+                        Correo electrónico <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="ri-mail-line"></i>
+                        </span>
+                        <InputText class="form-control"
+                                   @bind-Value="vm.CorUsu"
+                                   placeholder="usuario@dominio.com"
+                                   inputmode="email"
+                                   autocomplete="email" />
+                    </div>
+                    <small class="form-text text-muted">
+                        Use preferentemente el correo corporativo.
+                    </small>
                     <ValidationMessage For="@(() => vm.CorUsu)" />
                 </div>
 
                 <div class="col-md-6 col-12">
-                    <label class="form-label">Teléfono</label>
-                    <input class="form-control"
-                           value="@vm.TelUsu"
-                           @oninput="OnTelefonoInput"
-                           inputmode="numeric"
-                           maxlength="10"
-                           placeholder="0999999999" />
+                    <label class="form-label">
+                        Teléfono <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="ri-phone-line"></i>
+                        </span>
+                        <input class="form-control"
+                               value="@vm.TelUsu"
+                               @oninput="OnTelefonoInput"
+                               inputmode="numeric"
+                               maxlength="10"
+                               placeholder="0999999999" />
+                    </div>
+                    <small class="form-text text-muted">
+                        10 dígitos, solo números.
+                    </small>
                     <ValidationMessage For="@(() => vm.TelUsu)" />
                 </div>
 
+                <!-- Sección: Datos laborales -->
+                <div class="col-12 mt-2">
+                    <h6 class="text-muted text-uppercase fs-11 mb-2">
+                        Datos laborales
+                    </h6>
+                    <hr class="mt-1 mb-3" />
+                </div>
+
                 <div class="col-md-6 col-12">
-                    <label class="form-label">Cargo</label>
-                    <InputText class="form-control" @bind-Value="vm.CarEmp" placeholder="Cargo del empleado" />
+                    <label class="form-label">
+                        Cargo <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="ri-briefcase-2-line"></i>
+                        </span>
+                        <InputText class="form-control"
+                                   @bind-Value="vm.CarEmp"
+                                   placeholder="Cargo del empleado"
+                                   maxlength="120" />
+                    </div>
                     <ValidationMessage For="@(() => vm.CarEmp)" />
                 </div>
 
                 <div class="col-md-6 col-12">
-                    <label class="form-label">Sueldo</label>
+                    <label class="form-label">
+                        Sueldo
+                    </label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">
+                            $
+                        </span>
                         <InputNumber class="form-control"
                                      @bind-Value="vm.SueEmp"
                                      placeholder="0.00"
+                                     step="0.01"
+                                     inputmode="decimal"
                                      ParsingErrorMessage="El valor debe ser un número." />
-                        <ValidationMessage For="@(() => vm.SueEmp)" />
                     </div>
+                    <small class="form-text text-muted">
+                        Monto bruto mensual. Se redondeará a 2 decimales.
+                    </small>
+                    <ValidationMessage For="@(() => vm.SueEmp)" />
                 </div>
             </div>
 
             <div class="d-flex justify-content-end mt-4 gap-2">
-                <button type="submit" class="btn btn-primary px-4" disabled="@_submitting">
-                    @(_submitting ? "Guardando..." : "Guardar")
+                <button type="submit"
+                        class="btn btn-primary btn-wave px-4"
+                        disabled="@_submitting">
+                    @if (_submitting)
+                    {
+                        <span class="me-2">Guardando</span>
+                        <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <i class="ri-save-line me-1"></i>
+                        <span>Guardar</span>
+                    }
                 </button>
-                <a href="/dashboards/empleados" class="btn btn-secondary px-4" onclick="return @_submitting ? false : true">Cancelar</a>
+
+                <a href="/dashboards/empleados"
+                   class="btn btn-secondary-light btn-wave px-4"
+                   onclick="return @_submitting ? false : true">
+                    <i class="ri-close-line me-1"></i>
+                    Cancelar
+                </a>
             </div>
         </EditForm>
     </div>
@@ -85,7 +195,7 @@
 @code {
     private bool _submitting;
     private UsuarioEmpleadoVM vm = new();
-    private string _sueldoText = ""; 
+    private string _sueldoText = "";
     private EditContext _ctx = default!;
     private ValidationMessageStore _store = default!;
 
@@ -124,7 +234,7 @@
         public string CarEmp { get; set; } = string.Empty;
 
         [Range(0.01, 1000000, ErrorMessage = "Ingrese un sueldo válido (> 0).")]
-        public decimal SueEmp { get; set; } = 0m; 
+        public decimal SueEmp { get; set; } = 0m;
     }
 
     private void OnTelefonoInput(ChangeEventArgs e)
@@ -141,7 +251,7 @@
                 StateHasChanged();
             }
         }
-        catch {  }
+        catch { }
     }
 
     private void OnSueldoInput(ChangeEventArgs e)
@@ -153,18 +263,17 @@
             s = new string(s.Where(ch => char.IsDigit(ch) || ch == '.' || ch == ',').ToArray());
             s = s.Replace(',', '.');
 
- 
             var first = s.IndexOf('.');
             if (first >= 0)
             {
                 var head = s[..(first + 1)];
                 var tail = s[(first + 1)..].Replace(".", "");
-                if (tail.Length > 2) tail = tail[..2]; 
+                if (tail.Length > 2) tail = tail[..2];
                 s = head + tail;
             }
             if (s.StartsWith(".")) s = "0" + s;
 
-            _sueldoText = s; 
+            _sueldoText = s;
             StateHasChanged();
         }
         catch { }
@@ -178,7 +287,6 @@
 
         try
         {
-
             vm.SueEmp = Math.Round(vm.SueEmp, 2, MidpointRounding.AwayFromZero);
 
             var req = new CreateEmpleadoRequest
