@@ -6,7 +6,10 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using sistemaFacturacion.Services
 @using sistemaFacturacion.Models
+
 @inject IProductosApiClient ProductosApi
+@inject ICategoriasApiClient CategoriasApi
+@inject ITipoTributarioApiClient TipoTributarioApi
 @inject SweetAlertService Swal
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Nav
@@ -20,10 +23,35 @@
     <ValidationSummary />
 
     <div class="form-grid">
-        <div class="campo"> 
-            <label for="tipo">Tipo de producto</label>
-            <InputText id="tipo" @bind-Value="producto.TipPro" class="form-control" />
-            <ValidationMessage For="@(() => producto.TipPro)" />
+
+        <!-- CATEGORÍA -->
+        <div class="campo">
+            <label for="categoria">Categoría</label>
+            <InputSelect id="categoria"
+                         class="form-control"
+                         @bind-Value="producto.IdCategoria">
+                <option value="">-- Selecciona una categoría --</option>
+                @foreach (var cat in categorias)
+                {
+                    <option value="@cat.Id">@cat.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => producto.IdCategoria)" />
+        </div>
+
+        <!-- TIPO TRIBUTARIO -->
+        <div class="campo">
+            <label for="tipoTrib">Tipo tributario</label>
+            <InputSelect id="tipoTrib"
+                         class="form-control"
+                         @bind-Value="producto.IdTipoTributario">
+                <option value="">-- Selecciona un tipo tributario --</option>
+                @foreach (var tt in tiposTributarios)
+                {
+                    <option value="@tt.Id">@tt.Nombre (@tt.CodigoSri)</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => producto.IdTipoTributario)" />
         </div>
 
         <div class="campo">
@@ -31,8 +59,6 @@
             <InputText id="nombre" @bind-Value="producto.NomPro" class="form-control" />
             <ValidationMessage For="@(() => producto.NomPro)" />
         </div>
-
-      
 
         <div class="campo descripcion" style="grid-column: 1 / -1;">
             <label for="descripcion">Descripción</label>
@@ -60,14 +86,19 @@
     private bool isSubmitting = false;
     private ProductoModel producto = new();
 
+    private List<CategoriaProductoDto> categorias = new();
+    private List<TipoTributarioDto> tiposTributarios = new();
+
     // ======================
     // ViewModel de producto
     // ======================
     public class ProductoModel
     {
-        [Required(ErrorMessage = "El tipo es obligatorio.")]
-        [StringLength(50, ErrorMessage = "Máximo 50 caracteres.")]
-        public string? TipPro { get; set; }
+        [Required(ErrorMessage = "La categoría es obligatoria.")]
+        public int? IdCategoria { get; set; }
+
+        [Required(ErrorMessage = "El tipo tributario es obligatorio.")]
+        public int? IdTipoTributario { get; set; }
 
         [Required(ErrorMessage = "El nombre es obligatorio.")]
         [StringLength(100, ErrorMessage = "Máximo 100 caracteres.")]
@@ -76,7 +107,27 @@
         [Required(ErrorMessage = "La descripción es obligatoria.")]
         [StringLength(200, ErrorMessage = "Máximo 200 caracteres.")]
         public string? DesPro { get; set; }
- 
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var listaCat = await CategoriasApi.ListarAsync();
+            categorias = listaCat.Where(c => c.Estado).ToList();
+
+            var listaTt = await TipoTributarioApi.ListarAsync();
+            tiposTributarios = listaTt.Where(t => t.Estado).ToList();
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync(new SweetAlertOptions
+            {
+                Icon = SweetAlertIcon.Error,
+                Title = "No se pudieron cargar los catálogos",
+                Text = Trunca(ex.Message, 200)
+            });
+        }
     }
 
     private void Cancelar() => producto = new();
@@ -91,9 +142,11 @@
         {
             var req = new ProductoCreateRequest
             {
-                Tipo = producto.TipPro!.Trim(),
+                IdCategoria = producto.IdCategoria!.Value,
+                IdTipoTributario = producto.IdTipoTributario!.Value,
                 Nombre = producto.NomPro!.Trim(),
-                Descripcion = producto.DesPro!.Trim()
+                Descripcion = producto.DesPro!.Trim(),
+                Estado = true
             };
 
             var creado = await ProductosApi.CrearAsync(req);
@@ -111,7 +164,10 @@
 $@"<div style='text-align:left;font-size:14px;line-height:1.45'>
     <div style='margin:0 0 .5rem'>
         <div style='font-weight:700;font-size:1rem;color:{titleColor}'>{Escape(creado?.Nombre)}</div>
-        <div style='font-size:.85rem;color:{subColor}'>{Escape(creado?.Tipo)} · </div>
+        <div style='font-size:.85rem;color:{subColor}'>
+            Categoría: {Escape(creado?.NombreCategoria)}<br/>
+            Tipo tributario: {Escape(creado?.NombreTipoTributario)}
+        </div>
     </div>
     <div style='background:{boxBg};border:1px solid {boxBrd};border-radius:.5rem;padding:.6rem .75rem'>
         <div style='font-size:.72rem;color:{subColor};letter-spacing:.04em;margin-bottom:.15rem'>ID PRODUCTO</div>

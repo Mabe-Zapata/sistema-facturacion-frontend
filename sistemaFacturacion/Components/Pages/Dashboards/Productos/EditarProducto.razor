@@ -4,12 +4,19 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @using sistemaFacturacion.Models
+@using sistemaFacturacion.Services
 @using CurrieTechnologies.Razor.SweetAlert2
+
 @inject IProductosApiClient ProductosApi
+@inject ICategoriasApiClient CategoriasApi
+@inject ITipoTributarioApiClient TipoTributarioApi
 @inject SweetAlertService Swal
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Nav
 @attribute [Authorize]
+
+@inject ICategoriasApiClient CategoriasApi
+@inject ITipoTributarioApiClient TipoTributarioApi
 
 
 <div class="page-header mb-3">
@@ -63,9 +70,27 @@ else if (form is not null)
                     </div>
 
                     <div class="col-md-4 col-12">
-                        <label class="form-label">Tipo</label>
-                        <InputText class="form-control" @bind-Value="form.Tipo" />
-                        <ValidationMessage For="@(() => form.Tipo)" />
+                        <label class="form-label">Categoría</label>
+                        <InputSelect class="form-control" @bind-Value="form.IdCategoria">
+                            <option value="">-- Selecciona una categoría --</option>
+                            @foreach (var cat in categorias)
+                            {
+                                <option value="@cat.Id">@cat.Nombre</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => form.IdCategoria)" />
+                    </div>
+
+                    <div class="col-md-4 col-12">
+                        <label class="form-label">Tipo tributario</label>
+                        <InputSelect class="form-control" @bind-Value="form.IdTipoTributario">
+                            <option value="">-- Selecciona un tipo tributario --</option>
+                            @foreach (var tt in tiposTributarios)
+                            {
+                                <option value="@tt.Id">@tt.Nombre (@tt.CodigoSri)</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => form.IdTipoTributario)" />
                     </div>
 
                     <div class="col-md-5 col-12">
@@ -126,8 +151,11 @@ else if (yaBusco)
     {
         public int Id { get; set; }
 
-        [Required, StringLength(50)]
-        public string? Tipo { get; set; }
+        [Required(ErrorMessage = "La categoría es obligatoria.")]
+        public int? IdCategoria { get; set; }
+
+        [Required(ErrorMessage = "El tipo tributario es obligatorio.")]
+        public int? IdTipoTributario { get; set; }
 
         [Required, StringLength(100)]
         public string? Nombre { get; set; }
@@ -136,9 +164,16 @@ else if (yaBusco)
         public string? Descripcion { get; set; }
 
         public bool Estado { get; set; }
-
-        // public decimal Precio { get; set; } // si el GET lo incluye, puedes habilitarlo solo lectura.
     }
+    private List<CategoriaProductoDto> categorias = new();
+    private List<TipoTributarioDto> tiposTributarios = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = (await CategoriasApi.ListarAsync()).Where(c => c.Estado).ToList();
+        tiposTributarios = (await TipoTributarioApi.ListarAsync()).Where(t => t.Estado).ToList();
+    }
+
 
     // ===== Ciclo de vida: cargar si viene {id} en la ruta ====
     protected override async Task OnParametersSetAsync()
@@ -208,16 +243,16 @@ else if (yaBusco)
 
     private void MapearForm(ProductoDto dto)
     {
-        productoIdActual = dto.Id;
         form = new ProductoEditVM
         {
             Id = dto.Id,
-            Tipo = dto.Tipo,
+            IdCategoria = dto.IdCategoria,
+            IdTipoTributario = dto.IdTipoTributario,
             Nombre = dto.Nombre,
             Descripcion = dto.Descripcion,
             Estado = dto.Estado
-            // Precio = dto.Precio; // si el GET lo entrega
         };
+
     }
 
     // ===== Guardado con confirmación SweetAlert2 (PUT) ====
@@ -228,7 +263,8 @@ else if (yaBusco)
         var confirmar = await Swal.FireAsync(new SweetAlertOptions
         {
             Title = "¿Guardar cambios?",
-            Text = "Se actualizarán el tipo, nombre y descripción.",
+            Text = "Se actualizarán la categoría, el tipo tributario, el nombre y la descripción.",
+
             Icon = SweetAlertIcon.Question,
             ShowCancelButton = true,
             ConfirmButtonText = "Sí, guardar",
@@ -241,10 +277,11 @@ else if (yaBusco)
         {
             var payload = new ProductoUpdateRequest
             {
-                // Se serializa como tipPro, nomPro, desPro por tus JsonPropertyName
-                Tipo = form.Tipo,
-                Nombre = form.Nombre,
-                Descripcion = form.Descripcion
+                IdCategoria = form.IdCategoria!.Value,
+                IdTipoTributario = form.IdTipoTributario!.Value,
+                Nombre = form.Nombre!.Trim(),
+                Descripcion = form.Descripcion!.Trim(),
+                Estado = form.Estado
             };
 
             var actualizado = await ProductosApi.UpdateAsync(productoIdActual.Value, payload);
