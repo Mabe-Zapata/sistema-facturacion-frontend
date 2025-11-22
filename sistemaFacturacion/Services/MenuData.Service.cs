@@ -88,40 +88,15 @@ public class MenuDataService
                  roles: new[] { "Admin","Empleado" }
             ),
 
-            }
-        ),
+            new MainMenuItems(
+                 path: "/dashboards/facturas",
+                 type: "link",
+                 title: "Gestión de Facturas",
+                 svg: "<svg xmlns='http://www.w3.org/2000/svg' class='side-menu-doublemenu__icon' viewBox='0 0 256 256'><rect x='36' y='56' width='184' height='144' rx='8' fill='none' stroke='currentColor' stroke-width='16'/><path d='M36 100h184M84 56v144M172 56v144' fill='none' stroke='currentColor' stroke-width='16' stroke-linecap='round'/></svg>",
+                 selected: false, active: false, dirChange: false,
+                 roles: new[] { "Admin","Empleado" }
+            ),
 
-        // ───────────────────────────
-        // SECCIÓN: OPERACIONES
-        // ───────────────────────────
-        new MainMenuItems(menuTitle: "Operaciones"),
-
-        new MainMenuItems(
-            type: "sub",
-            title: "Operaciones",
-            svg: "<svg xmlns='http://www.w3.org/2000/svg' class='side-menu__icon' viewBox='0 0 256 256'><rect width='256' height='256' fill='none'/><path d='M48 72h160v48H48z' fill='none' stroke='currentColor' stroke-width='16'/><path d='M32 176h192' stroke='currentColor' stroke-width='16'/></svg>",
-            selected: false, active: false, dirChange: false,
-            children: new MainMenuItems[]
-            {
-                // Contratación de Seguros
-                new MainMenuItems(
-                    path: "",
-                    type: "link",
-                    title: "Contratación de Seguros",
-                    svg: "<svg xmlns='http://www.w3.org/2000/svg' class='side-menu-doublemenu__icon' viewBox='0 0 256 256'><path d='M40 64l88-32 88 32v56a88 88 0 0 1-88 88A88 88 0 0 1 40 120Z' fill='none' stroke='currentColor' stroke-width='16'/></svg>",
-                    selected: false, active: false, dirChange: false,
-                    roles: new[] { "Admin","Empleado" }
-                ),
-
-                // Reembolsos
-                new MainMenuItems(
-                    path: "",
-                    type: "link",
-                    title: "Reembolsos",
-                    svg: "<svg xmlns='http://www.w3.org/2000/svg' class='side-menu-doublemenu__icon' viewBox='0 0 256 256'><path d='M128 40v80l48-24' fill='none' stroke='currentColor' stroke-width='16'/><rect x='40' y='120' width='176' height='72' rx='8' fill='none' stroke='currentColor' stroke-width='16'/></svg>",
-                    selected: false, active: false, dirChange: false,
-                    roles: new[] { "Admin","Empleado" }
-                ),
             }
         ),
 
