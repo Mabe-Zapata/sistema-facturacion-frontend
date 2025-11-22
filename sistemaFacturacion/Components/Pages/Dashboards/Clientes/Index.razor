@@ -182,6 +182,7 @@
                     <table class="mb-0 table align-middle">
                         <thead class="text-muted">
                             <tr>
+                                <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Apellido</th>
                                 <th>Identificación/RUC</th>
@@ -194,7 +195,7 @@
                             @if (ultimos5.Count == 0)
                             {
                                 <tr>
-                                    <td colspan="6" class="text-muted text-center">Sin registros recientes</td>
+                                    <td colspan="7" class="text-muted text-center">Sin registros recientes</td>
                                 </tr>
                             }
                             else
@@ -202,6 +203,18 @@
                                 @foreach (var c in ultimos5)
                                 {
                                     <tr>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(c.CodCli))
+                                            {
+                                                <span class="badge bg-primary-subtle text-primary fw-semibold">
+                                                    @c.CodCli
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
                                         <td>@c.NomCli</td>
                                         <td>@c.ApeCli</td>
                                         <td>@c.IdeCli</td>
@@ -241,7 +254,7 @@
                     </div>
                     <div class="card-body">
                         <p class="text-muted mb-2">
-                            Campos clave del cliente: <strong>Nombre, Apellido, Identificación/RUC, Tipo de Identificación, Dirección, Teléfono, Correo</strong>.
+                            Campos clave del cliente: <strong>Código, Nombre, Apellido, Identificación/RUC, Tipo de Identificación, Dirección, Teléfono, Correo</strong>.
                         </p>
                         <p class="text-muted mb-0">
                             KPIs y gráficos calculados desde el listado actual de clientes.
@@ -314,7 +327,7 @@
                     Toast = true,
                     Position = SweetAlertPosition.TopEnd,
                     Icon = SweetAlertIcon.Success,
-                    Title = $"Datos actualizados ({totalClientes})",
+                    Title = $"Datos actualizados (@totalClientes)",
                     ShowConfirmButton = false,
                     Timer = 1200,
                     Background = isDarkMode ? "#1e1e1e" : null,

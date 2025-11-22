@@ -31,4 +31,6 @@ public class ClienteApiResponse
 
     [JsonPropertyName("estado")]
     public bool Estado { get; set; }
+    [JsonPropertyName("codigoCliente")]
+    public string CodigoCliente { get; set; }
 }

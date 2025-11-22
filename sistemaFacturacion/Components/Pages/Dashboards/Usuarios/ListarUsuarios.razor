@@ -34,7 +34,7 @@ else
         <div class="card-body">
             <div class="row g-3 align-items-end">
                 <div class="col-lg-4 col-12">
-                    <label class="form-label">Búsqueda rápida (nombre, apellido, correo, teléfono, cargo)</label>
+                    <label class="form-label">Búsqueda rápida (código, nombre, apellido, correo, teléfono, cargo)</label>
                     <input class="form-control"
                            @bind="FiltroTexto"
                            @bind:event="oninput"
@@ -84,7 +84,6 @@ else
             @if (mostrarFiltrosAvanzados)
             {
                 <div class="row g-3 mt-2">
-                    <!-- Fila 1 -->
                     <div class="col-lg-4 col-md-6">
                         <label class="form-label">Nombre / Apellido</label>
                         <div class="position-relative">
@@ -157,7 +156,6 @@ else
                         </div>
                     </div>
 
-                    <!-- Fila 2 -->
                     <div class="col-lg-4 col-md-6">
                         <label class="form-label">Cargo</label>
                         <div class="position-relative">
@@ -182,7 +180,6 @@ else
                         </div>
                     </div>
 
-                    <!-- Sueldo -->
                     <div class="col-lg-4 col-md-6">
                         <label class="form-label">Sueldo</label>
                         <div class="row g-2 align-items-center">
@@ -223,7 +220,6 @@ else
                         </div>
                     </div>
 
-                    <!-- Fecha de ingreso / periodo -->
                     <div class="col-lg-4 col-md-6">
                         <label class="form-label">Fecha de ingreso</label>
                         <select class="form-select form-select-sm" @bind="FiltroPeriodo">
@@ -276,6 +272,11 @@ else
                 <table class="table-hover mb-0 table align-middle">
                     <thead class="table-light">
                         <tr>
+                            <th @onclick="@(() => OrdenarPor(nameof(RowVM.CodEmp)))"
+                                role="button"
+                                class="user-select-none">
+                                Código @IconoOrden(nameof(RowVM.CodEmp))
+                            </th>
                             <th @onclick="@(() => OrdenarPor(nameof(RowVM.NomUsu)))"
                                 role="button"
                                 class="user-select-none">
@@ -307,8 +308,9 @@ else
                         @if (Paged.Count == 0)
                         {
                             <tr>
-                                <td colspan="9" class="text-muted py-4 text-center">
-                                    <i class="ri-inbox-line fs-3 d-block mb-2"></i>No hay resultados con los filtros aplicados.
+                                <td colspan="10" class="text-muted py-4 text-center">
+                                    <i class="ri-inbox-line fs-3 d-block mb-2"></i>
+                                    No hay resultados con los filtros aplicados.
                                 </td>
                             </tr>
                         }
@@ -317,19 +319,33 @@ else
                             @foreach (var r in Paged)
                             {
                                 <tr @key="r.IdUsu">
-                                    <td>@r.NomUsu</td>
-                                    <td>@r.ApeUsu</td>
-                                    <td><small>@r.CorUsu</small></td>
-                                    <td><small>@r.TelUsu</small></td>
-                                    <td>@r.CarEmp</td>
-                                    <td><small>@FormatMoney(r.SueEmp)</small></td>
                                     <td>
-                                        <small class="text-muted">
-                                            @(r.FecIngreso.HasValue? r.FecIngreso.Value.LocalDateTime.ToString("dd/MM/yyyy") : "-")
-                                        </small>
-                                    </td>
-                                    <td>
-                                        @if (r.Est)
+                                        @if (!string.IsNullOrWhiteSpace(r.CodEmp))
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary fw-semibold">
+                                                @r.CodEmp
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                </td>
+                                <td>@r.NomUsu</td>
+                                <td>@r.ApeUsu</td>
+                                <td><small>@r.CorUsu</small></td>
+                                <td><small>@r.TelUsu</small></td>
+                                <td>@r.CarEmp</td>
+                                <td><small>@FormatMoney(r.SueEmp)</small></td>
+                                <td>
+                                    <small class="text-muted">
+                                        @(r.FecIngreso.HasValue
+                                                                        ? r.FecIngreso.Value.LocalDateTime.ToString("dd/MM/yyyy")
+                                                                        : "-")
+                                    </small>
+                                </td>
+                                <td>
+                            @if (r.Est)
                                         {
                                             <span class="badge bg-success-subtle text-success">
                                                 <i class="ri-check-line"></i> Activo
@@ -378,7 +394,6 @@ else
     private bool cargando = true;
     private string? error;
 
-    // Filtro global y estado
     private string? _filtroTexto;
     private string? _filtroEstado;
 
@@ -408,7 +423,6 @@ else
         }
     }
 
-    // Filtros avanzados por campo
     private string? filtroNombreCompleto;
     private string? filtroCorreo;
     private string? filtroTelefono;
@@ -416,13 +430,11 @@ else
 
     private bool mostrarFiltrosAvanzados;
 
-    // Sugerencias para autocompletado
     private List<string> sugerenciasNombreCompleto = new();
     private List<string> sugerenciasCorreo = new();
     private List<string> sugerenciasTelefono = new();
     private List<string> sugerenciasCargo = new();
 
-    // Filtro de sueldo
     private string _filtroSueldoModo = "todos";
     private decimal? _filtroSueldoMin;
     private decimal? _filtroSueldoMax;
@@ -466,7 +478,6 @@ else
         }
     }
 
-    // Filtro por periodo de ingreso
     private string? _filtroPeriodo;
     private string? FiltroPeriodo
     {
@@ -566,7 +577,8 @@ else
                         CarEmp = emp?.CarEmp ?? u.CarEmp,
                         SueEmp = emp?.SueEmp ?? u.SueEmp,
                         FecIngreso = emp?.FecEmp ?? u.FecCre,
-                        Est = emp?.EstEmp ?? u.EstUsu
+                        Est = emp?.EstEmp ?? u.EstUsu,
+                        CodEmp = emp?.CodEmp
                     };
                 })
                 .OrderBy(r => r.NomUsu)
@@ -655,8 +667,6 @@ else
         mostrarFiltrosAvanzados = !mostrarFiltrosAvanzados;
     }
 
-    // Entradas de filtros avanzados + sugerencias
-
     private void OnNombreCompletoInput(ChangeEventArgs e)
     {
         filtroNombreCompleto = e.Value?.ToString();
@@ -743,11 +753,11 @@ else
         {
             var r = items.AsEnumerable();
 
-            // Filtro global
             if (!string.IsNullOrWhiteSpace(_filtroTexto))
             {
                 var q = _filtroTexto.Trim();
                 r = r.Where(x =>
+                    ContainsIgnoreCase(x.CodEmp, q) ||
                     ContainsIgnoreCase(x.NomUsu, q) ||
                     ContainsIgnoreCase(x.ApeUsu, q) ||
                     ContainsIgnoreCase(x.CorUsu, q) ||
@@ -755,7 +765,6 @@ else
                     ContainsIgnoreCase(x.CarEmp, q));
             }
 
-            // Filtros avanzados
             if (!string.IsNullOrWhiteSpace(filtroNombreCompleto))
             {
                 var q = filtroNombreCompleto.Trim();
@@ -785,10 +794,8 @@ else
                 r = r.Where(x => ContainsIgnoreCase(x.CarEmp, q));
             }
 
-            // Filtro de sueldo
             r = AplicarFiltroSueldo(r);
 
-            // Filtro por periodo de ingreso
             if (!string.IsNullOrWhiteSpace(_filtroPeriodo) || PeriodoDesde.HasValue || PeriodoHasta.HasValue)
             {
                 var now = DateTimeOffset.Now;
@@ -814,7 +821,6 @@ else
                         break;
                 }
 
-                // Permitir usar solo rango personalizado aunque no se haya seleccionado "custom"
                 if (string.IsNullOrWhiteSpace(_filtroPeriodo) && (PeriodoDesde.HasValue || PeriodoHasta.HasValue))
                 {
                     from ??= PeriodoDesde.HasValue
@@ -839,7 +845,6 @@ else
                 }
             }
 
-            // Filtro de estado
             if (!string.IsNullOrWhiteSpace(_filtroEstado))
             {
                 var activo = _filtroEstado == "activos";
@@ -907,6 +912,7 @@ else
 
         Func<RowVM, object?> key = sortBy switch
         {
+            nameof(RowVM.CodEmp) => x => x.CodEmp ?? string.Empty,
             nameof(RowVM.NomUsu) => x => x.NomUsu ?? string.Empty,
             nameof(RowVM.ApeUsu) => x => x.ApeUsu ?? string.Empty,
             nameof(RowVM.CarEmp) => x => x.CarEmp ?? string.Empty,
@@ -949,6 +955,7 @@ else
     {
         var html =
             "<div class='text-start'>" +
+            "<p><strong>Código empleado:</strong> " + Escape(r.CodEmp) + "</p>" +
             "<p><strong>Correo:</strong> " + Escape(r.CorUsu) + "</p>" +
             "<p><strong>Teléfono:</strong> " + Escape(r.TelUsu) + "</p>" +
             "<p><strong>Cargo:</strong> " + Escape(r.CarEmp) + "</p>" +
@@ -1102,5 +1109,6 @@ else
         public decimal? SueEmp { get; init; }
         public DateTimeOffset? FecIngreso { get; init; }
         public bool Est { get; set; }
+        public string? CodEmp { get; init; } = string.Empty;
     }
 }

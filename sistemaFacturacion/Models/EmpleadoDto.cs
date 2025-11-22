@@ -10,5 +10,6 @@ public sealed class EmpleadoDto
     [JsonPropertyName("suelEmp")] public decimal SueEmp { get; init; }
     [JsonPropertyName("fecIng")] public DateTimeOffset? FecEmp { get; init; }
     [JsonPropertyName("estEmp")] public bool EstEmp { get; init; }
+    [JsonPropertyName("codEmp")] public string CodEmp { get; init; } = "";
 }
 

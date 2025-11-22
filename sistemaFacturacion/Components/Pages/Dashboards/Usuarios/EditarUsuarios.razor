@@ -4,7 +4,7 @@
 @using CurrieTechnologies.Razor.SweetAlert2
 @using sistemaFacturacion.Services
 @using sistemaFacturacion.Models
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles ="Admin")]
 
 @inject IUsuariosApiClient UsuariosApi
 @inject IEmpleadosApiClient EmpleadosApi
@@ -61,10 +61,10 @@ else if (vm is not null)
                     </div>
                     <div class="d-flex align-items-center flex-wrap gap-2">
                         <span class="badge" style="@EstadoBadgeStyle">@EstadoTexto</span>
-                        <span class="badge text-bg-light">ID Usu: @IdUsu</span>
+                        <span class="badge badge-id-pill">ID Usu: @IdUsu</span>
                         @if (idEmp is not null)
                         {
-                            <span class="badge text-bg-light">ID Emp: @idEmp</span>
+                            <span class="badge badge-id-pill">ID Emp: @CodEmp</span>
                         }
                     </div>
                 </div>
@@ -207,6 +207,7 @@ else if (vm is not null)
     private string? error;
 
     private int? idEmp;
+    private string CodEmp = "";
     private string usuarioNombre = "";
     private string usuarioApellido = "";
     private string usuarioCorreo = "";
@@ -237,6 +238,7 @@ else if (vm is not null)
             if (emp is null) { error = "No existe registro de empleado asociado a este usuario."; return; }
 
             idEmp = emp.IdEmp;
+            CodEmp = emp.CodEmp;
 
             vm = new EmpleadoEditVM
             {
@@ -312,6 +314,7 @@ else if (vm is not null)
         if (emp is null) return;
 
         idEmp = emp.IdEmp;
+        CodEmp = emp.CodEmp;
         vm!.CarEmp = emp.CarEmp;
         vm!.SueEmp = emp.SueEmp;
         vm!.EstEmp = emp.EstEmp;

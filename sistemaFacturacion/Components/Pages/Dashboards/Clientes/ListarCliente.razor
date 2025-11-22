@@ -33,7 +33,7 @@ else
         <div class="card-body">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3 col-12">
-                    <label class="form-label">Buscar (nombre, apellido, identificación, correo, teléfono)</label>
+                    <label class="form-label">Buscar (código, nombre, apellido, identificación, correo, teléfono)</label>
                     <input class="form-control"
                            @bind="FiltroTexto"
                            @bind:event="oninput"
@@ -95,7 +95,6 @@ else
             @if (mostrarFiltrosAvanzados)
             {
                 <div class="row g-3 mt-2">
-                    <!-- Fila 1 -->
                     <div class="col-lg-4 col-md-6">
                         <label class="form-label">Nombre / Apellido</label>
                         <div class="position-relative">
@@ -168,7 +167,6 @@ else
                         </div>
                     </div>
 
-                    <!-- Fila 2 -->
                     <div class="col-lg-4 col-md-6">
                         <label class="form-label">Dirección</label>
                         <div class="position-relative">
@@ -223,7 +221,6 @@ else
                         }
                     </div>
 
-                    <!-- Columna "dummy" para mantener simetría 3x2 en desktop -->
                     <div class="col-lg-4 d-none d-lg-block"></div>
                 </div>
             }
@@ -287,6 +284,11 @@ else
                 <table class="table-hover mb-0 table align-middle">
                     <thead class="text-muted">
                         <tr>
+                            <th @onclick="@(() => OrdenarPor(nameof(ClienteDto.CodCli)))"
+                                role="button"
+                                class="user-select-none">
+                                Código @IconoOrden(nameof(ClienteDto.CodCli))
+                            </th>
                             <th @onclick="@(() => OrdenarPor(nameof(ClienteDto.NomCli)))"
                                 role="button"
                                 class="user-select-none">
@@ -327,7 +329,7 @@ else
                         @if (Paged.Count == 0)
                         {
                             <tr>
-                                <td colspan="10" class="text-muted py-4 text-center">
+                                <td colspan="11" class="text-muted py-4 text-center">
                                     <i class="ri-inbox-line fs-3 d-block mb-2"></i>
                                     No hay resultados con los filtros aplicados.
                                 </td>
@@ -338,6 +340,18 @@ else
                             @foreach (var c in Paged)
                             {
                                 <tr @key="c.IdCli">
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(c.CodCli))
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary fw-semibold">
+                                                @c.CodCli
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
                                     <td>@c.NomCli</td>
                                     <td>@c.ApeCli</td>
                                     <td><code>@c.IdeCli</code></td>
@@ -426,7 +440,6 @@ else
         set { if (_ordenFecha != value) { _ordenFecha = value; pageIndex = 1; } }
     }
 
-    // Filtro de periodo
     private string? _filtroPeriodo;
     private string? FiltroPeriodo
     {
@@ -474,7 +487,6 @@ else
         }
     }
 
-    // Filtros avanzados (sin identificación)
     private string? filtroNombreCompleto;
     private string? filtroCorreo;
     private string? filtroTelefono;
@@ -648,11 +660,11 @@ else
         {
             var r = clientes.AsEnumerable();
 
-            // Búsqueda global
             if (!string.IsNullOrWhiteSpace(_filtroTexto))
             {
                 var q = _filtroTexto.Trim();
                 r = r.Where(c =>
+                    ContainsIgnoreCase(c.CodCli, q) ||
                     ContainsIgnoreCase(c.NomCli, q) ||
                     ContainsIgnoreCase(c.ApeCli, q) ||
                     ContainsIgnoreCase(c.IdeCli, q) ||
@@ -660,7 +672,6 @@ else
                     ContainsIgnoreCase(c.TelCli, q));
             }
 
-            // Filtros avanzados
             if (!string.IsNullOrWhiteSpace(filtroNombreCompleto))
             {
                 var q = filtroNombreCompleto.Trim();
@@ -689,7 +700,6 @@ else
                 r = r.Where(c => ContainsIgnoreCase(c.DirCli, q));
             }
 
-            // Filtros simples
             if (!string.IsNullOrWhiteSpace(_filtroTipo))
             {
                 r = r.Where(c => c.TipCli?.Equals(_filtroTipo, StringComparison.OrdinalIgnoreCase) ?? false);
@@ -701,7 +711,6 @@ else
                 r = r.Where(c => c.EstCli == activo);
             }
 
-            // Filtro por periodo de registro
             if (!string.IsNullOrWhiteSpace(_filtroPeriodo) || PeriodoDesde.HasValue || PeriodoHasta.HasValue)
             {
                 var now = DateTimeOffset.Now;
@@ -727,7 +736,6 @@ else
                         break;
                 }
 
-                // Si el usuario selecciona solo el rango personalizado sin cambiar el select
                 if (string.IsNullOrWhiteSpace(_filtroPeriodo) && (PeriodoDesde.HasValue || PeriodoHasta.HasValue))
                 {
                     from ??= PeriodoDesde.HasValue
@@ -743,7 +751,7 @@ else
                 {
                     r = r.Where(c =>
                     {
-                        var fecha = c.FecCli; // asumiendo DateTimeOffset no nulo
+                        var fecha = c.FecCli;
                         if (from.HasValue && fecha < from.Value) return false;
                         if (to.HasValue && fecha > to.Value) return false;
                         return true;
@@ -773,6 +781,7 @@ else
         {
             Func<ClienteDto, object?> key = sortBy switch
             {
+                nameof(ClienteDto.CodCli) => c => c.CodCli ?? "",
                 nameof(ClienteDto.NomCli) => c => c.NomCli ?? "",
                 nameof(ClienteDto.ApeCli) => c => c.ApeCli ?? "",
                 nameof(ClienteDto.IdeCli) => c => c.IdeCli ?? "",
@@ -819,7 +828,6 @@ else
         filtroTelefono = null;
         filtroDireccion = null;
 
-        // Limpiar periodo
         _filtroPeriodo = null;
         _periodoDesde = null;
         _periodoHasta = null;
@@ -878,6 +886,7 @@ else
 
         var html =
             "<div class='text-start'>" +
+            $"<p><strong>Código:</strong> {c.CodCli}</p>" +
             $"<p><strong>Identificación:</strong> {c.IdeCli} ({MostrarTipo(c.TipCli)})</p>" +
             $"<p><strong>Dirección:</strong> {c.DirCli}</p>" +
             $"<p><strong>Teléfono:</strong> {c.TelCli}</p>" +
@@ -912,7 +921,6 @@ else
 
         if (r.IsConfirmed)
         {
-            // Aquí va la llamada real al API de eliminación cuando la tengas.
             await Swal.FireAsync(new SweetAlertOptions
             {
                 Title = "¡Eliminado!",

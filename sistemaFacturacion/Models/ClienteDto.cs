@@ -12,5 +12,6 @@ public class ClienteDto
     [JsonPropertyName("corCli")] public string? CorCli { get; set; }
     [JsonPropertyName("fecCli")] public DateTimeOffset FecCli { get; set; }
     [JsonPropertyName("estCli")] public bool EstCli { get; set; }
+    [JsonPropertyName("codCli")] public string? CodCli { get; set; }
     //[JsonPropertyName("facturas")] public List<FacturaDto>? Facturas { get; set; }
 }

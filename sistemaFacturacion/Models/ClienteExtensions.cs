@@ -15,7 +15,8 @@ public static class ClienteExtensions
             TelCli = response.Telefono,
             CorCli = response.CorreoElectronico,
             FecCli = response.FechaCreacion,
-            EstCli = response.Estado
+            EstCli = response.Estado,
+            CodCli = response.CodigoCliente
         };
     }
 
