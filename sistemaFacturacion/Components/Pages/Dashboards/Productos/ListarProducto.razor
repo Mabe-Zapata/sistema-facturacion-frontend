@@ -28,6 +28,7 @@
 else if (!string.IsNullOrWhiteSpace(error))
 {
     <div class="alert alert-danger">
+
         <i class="ri-error-warning-line me-2"></i>@error
     </div>
 }
@@ -37,7 +38,7 @@ else
         <div class="card-body">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4 col-12">
-                    <label class="form-label">Buscar (nombre, tipo o descripción)</label>
+                    <label class="form-label">Buscar (nombre, categoría o descripción)</label>
                     <input class="form-control"
                            @bind="filtroTexto"
                            @bind:event="oninput"
@@ -106,7 +107,7 @@ else
                             <th @onclick="@(() => OrdenarPor(nameof(ProductoDto.Nombre)))" role="button">
                                 Nombre @IconoOrden(nameof(ProductoDto.Nombre))
                             </th>
-                            <th>Tipo</th>
+                            <th>Categoria</th>
                             <th>Descripción</th>
                             <th class="text-end">Precio actual</th>
                             <th>Estado</th>
@@ -130,7 +131,7 @@ else
                                 <tr @key="p.Id">
                                     <td>@p.Id</td>
                                     <td>@p.Nombre</td>
-                                    <td>@p.Tipo</td>
+                                    <td>@p.NombreCategoria</td>
                                     <td><small>@p.Descripcion</small></td>
                                     <td class="text-end">
                                         <small>@FormatMoney(GetPrecioActual(p.Id))</small>
@@ -290,7 +291,7 @@ else
     }
 
     private async Task RecargarDatos()
-    {   
+    {
         bool isDark = await JSRuntime.InvokeAsync<bool>("isAppInDarkMode");
         await Swal.FireAsync(new SweetAlertOptions
         {
@@ -329,9 +330,11 @@ else
         string html = $@"
         <div style='text-align:left;font-size:14px;line-height:1.45'>
             <div style='margin-bottom:.6rem'>
-                <div style='font-weight:700;font-size:1.05rem;color:{colorTitle}'>{Escape(p.Nombre)}</div>
-                <div style='font-size:.85rem;color:{colorMuted}'>{Escape(p.Tipo)}</div>
-            </div>
+    <div style='font-weight:700;font-size:1.05rem;color:{colorTitle}'>{Escape(p.Nombre)}</div>
+    <div style='font-size:.85rem;color:{colorMuted}'>
+        Categoría: {Escape(p.NombreCategoria)}
+    </div>
+</div>
             <div style='background:{boxBg};border:1px solid {boxBrd};border-radius:.5rem;padding:.75rem'>
                 <div style='font-size:.82rem;color:{colorMuted};margin-bottom:.25rem'>Descripción</div>
                 <div style='font-size:.9rem;color:{colorTitle}'>{Escape(p.Descripcion)}</div>
@@ -379,9 +382,10 @@ else
                 var txt = filtroTexto.Trim().ToLower();
                 q = q.Where(p =>
                     (p.Nombre ?? string.Empty).ToLower().Contains(txt) ||
-                    (p.Tipo ?? string.Empty).ToLower().Contains(txt) ||
+                    (p.NombreCategoria ?? string.Empty).ToLower().Contains(txt) ||
                     (p.Descripcion ?? string.Empty).ToLower().Contains(txt));
             }
+
 
             if (!string.IsNullOrWhiteSpace(filtroEstado))
             {
@@ -489,7 +493,8 @@ else
         var r = await Swal.FireAsync(new SweetAlertOptions
         {
             Title = "¿Eliminar producto?",
-            Html = $"<strong>{Escape(p.Nombre)}</strong><br/><small>({Escape(p.Tipo)})</small>",
+            Html = $"<strong>{Escape(p.Nombre)}</strong><br/><small>({Escape(p.NombreCategoria)})</small>",
+
             Icon = SweetAlertIcon.Warning,
             ShowCancelButton = true,
             ConfirmButtonText = "Sí, eliminar",
@@ -522,7 +527,8 @@ else
         var confirm = await Swal.FireAsync(new SweetAlertOptions
         {
             Title = $"¿Deseas {accion} este producto?",
-            Html = $"<strong>{Escape(p.Nombre)}</strong><br/><small>({Escape(p.Tipo)})</small>",
+            Html = $"<strong>{Escape(p.Nombre)}</strong><br/><small>({Escape(p.NombreCategoria)})</small>",
+
             Icon = SweetAlertIcon.Warning,
             ShowCancelButton = true,
             ConfirmButtonText = $"Sí, {accion}",

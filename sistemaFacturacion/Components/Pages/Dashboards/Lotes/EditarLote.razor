@@ -189,8 +189,9 @@ else
             if (pSel is not null)
             {
                 vm.NombreProducto = pSel.Nombre;
-                vm.TipoProducto = pSel.Tipo;
+                vm.TipoProducto = pSel.NombreCategoria;
             }
+
 
             await ObtenerRangoPrecioAsync();
         }
@@ -220,7 +221,8 @@ else
 
         var p = productos.FirstOrDefault(x => x.Id == nuevoId) ?? await ProductosApi.GetByIdAsync(nuevoId);
         vm.NombreProducto = p?.Nombre ?? "";
-        vm.TipoProducto = p?.Tipo ?? "";
+        vm.TipoProducto = p?.NombreCategoria ?? "";
+
 
         await ObtenerRangoPrecioAsync();
     }

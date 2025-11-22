@@ -12,6 +12,7 @@
 
 <div class="productos-dashboard">
 
+    <!-- Header -->
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <div>
             <h1 class="page-title fw-semibold fs-20 mb-0">Gestión de Productos</h1>
@@ -27,6 +28,7 @@
         </div>
     </div>
 
+    <!-- KPIs -->
     <div class="row g-3 mb-3">
         <div class="col-sm-6 col-xl-3 col-12">
             <div class="card h-100 border-0 shadow-sm">
@@ -60,14 +62,79 @@
         <div class="col-sm-6 col-xl-3 col-12">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body">
-                    <div class="text-muted fs-12">Tipos distintos</div>
+                    <div class="text-muted fs-12">Categorías distintas</div>
                     <div class="fs-3 fw-semibold">@TiposDistintos</div>
-                    <div class="text-muted fs-12">Agrupado por "Tipo"</div>
+                    <div class="text-muted fs-12">Agrupado por categoría</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- TABLA: Últimos productos añadidos -->
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
+            <h6 class="mb-0">Últimos productos añadidos</h6>
+            <button class="btn btn-sm btn-outline-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/productos/listar"))">
+                Ver listado completo
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="mb-0 table align-middle">
+                    <thead class="text-muted">
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Categoría</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (cargando)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-muted py-4 text-center">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>Cargando...
+                                </td>
+                            </tr>
+                        }
+                        else if (Ultimos.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-muted py-4 text-center">
+                                    <i class="ri-inbox-line fs-3 d-block mb-2"></i>Sin registros
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var p in Ultimos)
+                            {
+                                <tr>
+                                    <td>@p.Nombre</td>
+                                    <td>@p.NombreCategoria</td>
+                                    <td>
+                                        <span class="badge @(p.Estado ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                            @(p.Estado ? "Activo" : "Inactivo")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                @onclick="@(() => Nav.NavigateTo($"/dashboards/productos/editar/{p.Id}"))"
+                                                title="Editar">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS -->
     <div class="row g-3 mb-3">
         <div class="col-lg-5 col-12">
             <div class="card h-100 border-0 shadow-sm">
@@ -97,12 +164,12 @@
 
         <div class="col-lg-7 col-12">
             <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-transparent"><h6 class="mb-0">Productos por Tipo (Top 8)</h6></div>
+                <div class="card-header bg-transparent"><h6 class="mb-0">Productos por categoría (Top 8)</h6></div>
                 <div class="card-body">
                     @if (BarData.Any())
                     {
                         <ApexChart TItem="BarItem"
-                                   Title="Por tipo"
+                                   Title="Por categoría"
                                    Options="BarOptions"
                                    @ref="BarChart">
                             <ApexPointSeries TItem="BarItem"
@@ -118,138 +185,6 @@
                         <div class="text-muted small">Sin datos para mostrar.</div>
                     }
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-3 mb-3">
-        <div class="col-lg-6 col-12">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0">Alertas de catálogo</h6>
-                </div>
-                <div class="card-body d-grid gap-2">
-                    @if (productos.Count == 0)
-                    {
-                        <div class="text-muted">No hay datos para evaluar alertas.</div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning d-flex align-items-start gap-2">
-                            <i class="ri-error-warning-line fs-5"></i>
-                            <div>
-                                <strong>@InactivosSinTipo.Count()</strong> inactivos con Tipo vacío o "(sin tipo)".
-                                <div class="small text-muted">Mejora la calidad del catálogo.</div>
-                            </div>
-                        </div>
-                        <div class="alert alert-info d-flex align-items-start gap-2">
-                            <i class="ri-information-line fs-5"></i>
-                            <div>
-                                <strong>@NombresCortos.Count()</strong> productos con nombre muy corto (&lt; 4).
-                                <div class="small text-muted">Facilita la búsqueda y comprensión.</div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6 col-12">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-transparent">
-                    <h6 class="mb-0">Actividad reciente</h6>
-                </div>
-                <div class="card-body">
-                    @if (Ultimos.Count == 0)
-                    {
-                        <div class="text-muted">Sin registros recientes.</div>
-                    }
-                    else
-                    {
-                        <ul class="list-unstyled mb-0">
-                            @foreach (var p in Ultimos)
-                            {
-                                <li class="d-flex align-items-center justify-content-between border-bottom py-2">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="ri-price-tag-3-line text-primary"></i>
-                                        <div>
-                                            <div class="fw-medium kpi-number">@p.Nombre</div>
-                                            <small class="text-muted">@p.Tipo • ID: @p.Id</small>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span class="badge @(p.Estado ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
-                                            @(p.Estado ? "Activo" : "Inactivo")
-                                        </span>
-                                    </div>
-                                </li>
-                            }
-                        </ul>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card border-0 shadow-sm">
-        <div class="card-header d-flex align-items-center justify-content-between bg-transparent">
-            <h6 class="mb-0">Últimos productos añadidos</h6>
-            <button class="btn btn-sm btn-outline-primary" @onclick="@(() => Nav.NavigateTo("/dashboards/productos/listar"))">
-                Ver listado completo
-            </button>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="mb-0 table align-middle">
-                    <thead class="text-muted">
-                        <tr>
-                            <th scope="col">Nombre</th>
-                            <th scope="col">Tipo</th>
-                            <th scope="col">Estado</th>
-                            <th scope="col" class="text-end">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (cargando)
-                        {
-                            <tr>
-                                <td colspan="4" class="text-muted py-4 text-center">
-                                    <span class="spinner-border spinner-border-sm me-2"></span>Cargando...
-                                </td>
-                            </tr>
-                        }
-                        else if (Ultimos.Count == 0)
-                        {
-                            <tr>
-                                <td colspan="4" class="text-muted py-4 text-center">
-                                    <i class="ri-inbox-line fs-3 d-block mb-2"></i>Sin registros
-                                </td>
-                            </tr>
-                        }
-                        else
-                        {
-                            @foreach (var p in Ultimos)
-                            {
-                                <tr>
-                                    <td>@p.Nombre</td>
-                                    <td>@p.Tipo</td>
-                                    <td>
-                                        <span class="badge @(p.Estado ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
-                                            @(p.Estado ? "Activo" : "Inactivo")
-                                        </span>
-                                    </td>
-                                    <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-primary"
-                                                @onclick="@(() => Nav.NavigateTo($"/dashboards/productos/editar/{p.Id}"))"
-                                                title="Editar">
-                                            <i class="ri-edit-line"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
@@ -284,8 +219,8 @@
     private List<BarItem> BarData = new();
     private ApexChartOptions<BarItem> BarOptions = new();
 
-    private IEnumerable<ProductoDto> InactivosSinTipo =>
-        productos.Where(p => !p.Estado && string.IsNullOrWhiteSpace(p.Tipo));
+    private IEnumerable<ProductoDto> InactivosSinCategoria =>
+        productos.Where(p => !p.Estado && string.IsNullOrWhiteSpace(p.NombreCategoria));
 
     private IEnumerable<ProductoDto> NombresCortos =>
         productos.Where(p => (p.Nombre ?? string.Empty).Trim().Length < 4);
@@ -401,17 +336,21 @@
 
             productos = await ProductosApi.GetAllAsync();
 
+            // KPIs
             KpiTotal = productos.Count;
             KpiActivos = productos.Count(p => p.Estado);
             KpiInactivos = KpiTotal - KpiActivos;
+
             TiposDistintos = productos
-                .Select(p => (p.Tipo ?? string.Empty).Trim())
+                .Select(p => (p.NombreCategoria ?? string.Empty).Trim())
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Count();
-            KpiNuevos = Math.Min(5, productos.Count);
-            KpiDeltaTotal = 4.8;
 
+            KpiNuevos = Math.Min(5, productos.Count);
+            KpiDeltaTotal = 4.8; // Mock estático por ahora
+
+            // Donut: Activos vs Inactivos
             DonutData = new List<EstadoProductoChartItem>
             {
                 new()
@@ -426,24 +365,38 @@
                 }
             };
 
-            var porTipo = productos
-                .GroupBy(p => (p.Tipo ?? "(sin tipo)").Trim(), StringComparer.OrdinalIgnoreCase)
-                .Select(g => new BarItem(g.Key, g.Count()))
+            // Bar: productos por categoría (agrupa por IdCategoria pero muestra NombreCategoria)
+            var porCategoria = productos
+                .GroupBy(p => p.IdCategoria)
+                .Select(g =>
+                {
+                    var nombreCat = g
+                        .Select(x => (x.NombreCategoria ?? string.Empty).Trim())
+                        .FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
+
+                    if (string.IsNullOrWhiteSpace(nombreCat))
+                    {
+                        nombreCat = "(sin categoría)";
+                    }
+
+                    return new BarItem(nombreCat, g.Count());
+                })
                 .OrderByDescending(x => x.Value)
                 .ToList();
 
-            if (porTipo.Count > 9)
+            if (porCategoria.Count > 9)
             {
-                var top8 = porTipo.Take(8).ToList();
-                var otros = porTipo.Skip(8).Sum(x => x.Value);
+                var top8 = porCategoria.Take(8).ToList();
+                var otros = porCategoria.Skip(8).Sum(x => x.Value);
                 top8.Add(new BarItem("Otros", otros));
                 BarData = top8;
             }
             else
             {
-                BarData = porTipo;
+                BarData = porCategoria;
             }
 
+            // Últimos productos añadidos
             Ultimos = productos
                 .OrderByDescending(p => p.Id)
                 .Take(8)
